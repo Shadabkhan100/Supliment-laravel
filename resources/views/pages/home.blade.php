@@ -1,6 +1,20 @@
 @extends('layout.Main')
 
 @section('content')
-    <h1>Home Page</h1>
-    <p>This is the main content area.</p>
+   
+ <main class="main-wrapper">
+  @include("modules.home-hero-banner")
+  @include("modules.home-product-categories")
+  @include("modules.home-feature-products")
+  @include("modules.deals-section")
+  @include("modules.newest-product")
+  @include("modules.benefits-section")
+@include("modules.sale-banner")
+@include("modules.testimonials")
+@include("modules.blog-section")
+@include("modules.brand-slider")
+ 
+
+ </main>
+
 @endsection
