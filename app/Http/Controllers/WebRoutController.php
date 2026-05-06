@@ -11,4 +11,10 @@ class WebRoutController extends Controller
     {
         return view('home');
     }
+     public function getAbout()
+    {
+        return view('about');
+    }
+
+   
 }
