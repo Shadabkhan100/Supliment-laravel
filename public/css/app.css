@@ -2930,9 +2930,9 @@ header .header-buttons a:hover {
   height: 100%;
 }
 .categories-section .category-block .image-box {
-  overflow: hidden;
+  /* overflow: hidden;
   background: #eaeaec;
-  border-radius: 50%;
+  border-radius: 50%; */
   padding: clamp(12px, 1.042vw, 32px) clamp(12px, 1.042vw, 32px) clamp(8px, 0.625vw, 16px);
 }
 .categories-section .category-block .image-box img {
