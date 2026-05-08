@@ -11,12 +11,12 @@
     <title>Product Management</title>
 
     <link rel="stylesheet"
-          href="{{ asset('css/bootstrap.min.css') }}">
+          href="css/bootstrap.min.css">
 
     <link rel="stylesheet"
-          href="{{ asset('css/product-management.css') }}">
+          href="css/product-management.css">
 
-    <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
+    <script src="js/jquery-3.6.3.min.js"></script>
 
 </head>
 
