@@ -164,7 +164,7 @@ class ProductController extends Controller
 
 
 
-      public function getCategories(Request $request)
+     public function getCategories(Request $request)
 {
     $categories = CategoriesModel::latest()
         ->withCount('products')
@@ -173,8 +173,10 @@ class ProductController extends Controller
     // FORMAT IMAGE URL
     $categories->getCollection()->transform(function ($category) {
 
+        $baseUrl = 'https://raw.githubusercontent.com/Shadabkhan100/Supliment-laravel/refs/heads/main/public';
+
         $category->image = $category->image
-            ? url('storage/' . $category->image)
+            ? $baseUrl . $category->image
             : null;
 
         return $category;
