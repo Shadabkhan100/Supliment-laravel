@@ -9,11 +9,11 @@
     <title>Category Management</title>
 
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
+   <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
 
     <!-- JQuery -->
-    <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
-
+    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
+<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
     <style>
 
         body{
@@ -304,7 +304,8 @@
             success:function(res){
 
                 categories = res.data;
-
+                console.log(categories);
+                
                 renderTable(categories);
 
                 renderPagination(res.data);

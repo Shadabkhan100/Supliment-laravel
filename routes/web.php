@@ -11,3 +11,16 @@ Route::get('/', [WebRoutController::class, 'getHome']);
 Route::get('/about', [ProductController::class, 'createDummyProduct']);
 Route::get('/admin/add-product', [AdminWebController::class, 'getAddProduct']);
 Route::get('/admin/add-category', [AdminWebController::class, 'getAddCatrgory']);
+Route::get('/check-storage', function () {
+
+    return [
+
+        'storage_exists' => file_exists(storage_path('app/public/categories')),
+
+        'public_storage_exists' => file_exists(public_path('storage')),
+
+        'files' => Storage::disk('public')->files('categories'),
+
+    ];
+
+});
