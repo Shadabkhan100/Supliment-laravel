@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="css/app.css" />
   </head>
 
-  <body class="tt-smooth-scroll">
+  <body class="tt-smooth-scroll" style="background-color:black">
     <!-- Preloader -->
     <div id="preloader">
       <div class="loading loading07">
