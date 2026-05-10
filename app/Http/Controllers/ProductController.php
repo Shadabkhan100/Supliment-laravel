@@ -113,24 +113,22 @@ class ProductController extends Controller
 
     public function createCategory(Request $request)
 {
-    // VALIDATION
     $validated = $request->validate([
-
         'name' => 'required|string|max:255|unique:categories_models,name',
-
         'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-
     ]);
 
-    // IMAGE UPLOAD
     $imagePath = null;
-
     if ($request->hasFile('image'))
     {
-        $imagePath = $request->file('image')
-            ->store('categories', 'public');
-    }
+       $image = $request->file('image');
 
+$imageName = time() . '_' . $image->getClientOriginalName();
+
+$image->move(public_path('categories'), $imageName);
+
+$imagePath = 'categories/' . $imageName;
+    }
     // CREATE CATEGORY
     $category = CategoriesModel::create([
 
@@ -172,12 +170,11 @@ class ProductController extends Controller
 
     // FORMAT IMAGE URL
     $categories->getCollection()->transform(function ($category) {
+$baseUrl = url('/');
 
-        $baseUrl = 'https://raw.githubusercontent.com/Shadabkhan100/Supliment-laravel/refs/heads/main/public';
-
-        $category->image = $category->image
-            ? $baseUrl . $category->image
-            : null;
+$category->image = $category->image
+    ? $baseUrl . '/' . ltrim($category->image, '/')
+    : null;
 
         return $category;
     });
