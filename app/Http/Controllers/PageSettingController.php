@@ -3,41 +3,69 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use App\Models\PageSetting;
 
 class PageSettingController extends Controller
 {
-    // CREATE / UPDATE PAGE SETTINGS
-   public function save(Request $request)
+
+public function save(Request $request)
 {
     $validated = $request->validate([
         'description' => 'nullable|string',
-        'home_banner' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'home_banner' => 'nullable|image|max:2048',
     ]);
 
-    $bannerPath = null;
+    $bannerUrl = null;
 
+    // UPLOAD IMAGE TO SUPABASE
     if ($request->hasFile('home_banner')) {
-        $image = $request->file('home_banner');
-        $imageName = time() . '_' . $image->getClientOriginalName();
-        $image->move(public_path('banners'), $imageName);
 
-        $bannerPath = 'banners/' . $imageName;
+        $file = $request->file('home_banner');
+
+        $fileName = time() . '_' . $file->getClientOriginalName();
+
+        $supabaseUrl = env('SUPABASE_URL');
+        $supabaseKey = env('SUPABASE_KEY');
+
+        $response = Http::withHeaders([
+            'apikey' => $supabaseKey,
+            'Authorization' => 'Bearer ' . $supabaseKey,
+            'Content-Type' => $file->getMimeType(),
+        ])
+        ->withBody(
+            file_get_contents($file),
+            $file->getMimeType()
+        )
+        ->post(
+            $supabaseUrl . '/storage/v1/object/slimza-images/' . $fileName
+        );
+
+        // SUCCESS
+        if ($response->successful()) {
+
+            $bannerUrl =
+                $supabaseUrl .
+                '/storage/v1/object/public/slimza-images/' .
+                $fileName;
+        } else {
+
+            return response()->json([
+                'message' => 'Upload failed',
+                'error' => $response->body()
+            ], 500);
+        }
     }
 
-    // ❗ CREATE NEW RECORD EVERY TIME (NOT UPDATE)
+    // SAVE IN DATABASE
     $setting = PageSetting::create([
         'description' => $validated['description'] ?? null,
-        'home_banner' => $bannerPath,
+        'home_banner' => $bannerUrl,
     ]);
 
     return response()->json([
-        'message' => 'Banner added successfully',
-        'data' => [
-            'id' => $setting->id,
-            'description' => $setting->description,
-            'home_banner' => $setting->home_banner ? asset($setting->home_banner) : null,
-        ]
+        'message' => 'Banner saved successfully',
+        'data' => $setting
     ]);
 }
     // GET SETTINGS
@@ -51,9 +79,7 @@ class PageSettingController extends Controller
             return [
                 'id' => $setting->id,
                 'description' => $setting->description,
-                'home_banner' => $setting->home_banner
-                    ? asset($setting->home_banner)
-                    : null,
+                'home_banner' => $setting->home_banner,
             ];
         })
     ]);

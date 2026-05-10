@@ -5,299 +5,221 @@ namespace App\Http\Controllers;
 use App\Models\ProductsModel;
 use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
+use App\Services\SupabaseStorageService;
 
 class ProductController extends Controller
 {
-public function createProduct(Request $request)
-{
-    $validated = $request->validate([
-
-        'name' => 'required|string|max:255',
-
-        'description' => 'nullable|string',
-
-        'sku' => 'required|string|unique:products_models,sku',
-
-        'category_id' => 'required|numeric|min:0',
-
-        'price' => 'required|numeric|min:0',
-
-        'old_price' => 'nullable|numeric|min:0',
-
-        'stock' => 'required|integer|min:0',
-
-        'weights' => 'nullable|array',
-
-        'weights.*' => 'string',
-
-    ]);
-
-
-    // =========================
-    // MAIN IMAGE
-    // =========================
-
-    $mainImagePath = null;
-
-    if ($request->hasFile('main_image')) {
-
-        $image = $request->file('main_image');
-
-        $imageName = time() . '_' . $image->getClientOriginalName();
-
-        $image->move(public_path('products/main'), $imageName);
-
-        $mainImagePath = 'products/main/' . $imageName;
-    }
-
-
-    // =========================
-    // GALLERY IMAGES
-    // =========================
-
-    $galleryPaths = [];
-
-    if ($request->hasFile('gallery_images')) {
-
-        foreach ($request->file('gallery_images') as $file) {
-
-            $imageName = time() . '_' . $file->getClientOriginalName();
-
-            $file->move(public_path('products/gallery'), $imageName);
-
-            $galleryPaths[] = 'products/gallery/' . $imageName;
-        }
-    }
-
-
     // =========================
     // CREATE PRODUCT
     // =========================
-
-    $product = ProductsModel::create([
-
-        'name' => $validated['name'],
-
-        'description' => $validated['description'] ?? null,
-
-        'sku' => $validated['sku'],
-
-        'price' => $validated['price'],
-
-        'category_id' => $validated['category_id'],
-
-        'old_price' => $validated['old_price'] ?? null,
-
-        'stock' => $validated['stock'],
-
-        'weights' => json_encode($validated['weights'] ?? []),
-
-        'main_image' => $mainImagePath,
-
-        'gallery_images' => json_encode($galleryPaths),
-
-    ]);
-
-
-    // =========================
-    // RESPONSE
-    // =========================
-
-    return response()->json([
-
-        'message' => 'Product created successfully',
-
-        'data' => $this->formatProduct(
-            $product,
-            CategoriesModel::pluck('name', 'id')
-        )
-
-    ], 201);
-}
-
- public function getAllProduct()
-{
-    $products = ProductsModel::latest()->get();
-
-    // preload categories (avoids N+1 query issue)
-    $categories = CategoriesModel::pluck('name', 'id');
-
-    return response()->json([
-        'message' => 'Products fetched successfully',
-        'count' => $products->count(),
-        'data' => $products->map(function ($p) use ($categories) {
-            return $this->formatProduct($p, $categories);
-        })
-    ]);
-}
-
- private function formatProduct($product, $categories = null)
-{
-    $categories = $categories ?? CategoriesModel::pluck('name', 'id');
-
-    return [
-
-        'id' => $product->id,
-
-        'name' => $product->name,
-
-        'description' => $product->description,
-
-        'sku' => $product->sku,
-
-        'price' => $product->price,
-
-        'old_price' => $product->old_price,
-
-        'stock' => $product->stock,
-
-        'category_id' => $product->category_id,
-
-        'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
-
-        'weights' => json_decode($product->weights, true) ?? [],
-
-        'main_image' => $product->main_image
-            ? asset($product->main_image)
-            : null,
-
-        'gallery_images' => collect(
-            json_decode($product->gallery_images, true) ?? []
-        )
-        ->map(fn ($img) => $img ? asset($img) : null)
-        ->values()
-        ->toArray(),
-
-    ];
-}
-
-
-
-
-
-
-    public function createCategory(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255|unique:categories_models,name',
-        'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-    ]);
-
-    $imagePath = null;
-    if ($request->hasFile('image'))
+    public function createProduct(Request $request)
     {
-       $image = $request->file('image');
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'sku' => 'required|string|unique:products_models,sku',
+            'category_id' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:0',
+            'old_price' => 'nullable|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'weights' => 'nullable|array',
+            'weights.*' => 'string',
+        ]);
 
-$imageName = time() . '_' . $image->getClientOriginalName();
+        // =========================
+        // MAIN IMAGE (SUPABASE)
+        // =========================
+        $mainImagePath = null;
 
-$image->move(public_path('categories'), $imageName);
+        if ($request->hasFile('main_image')) {
+            $mainImagePath = SupabaseStorageService::upload(
+                $request->file('main_image'),
+                'products/main'
+            );
+        }
 
-$imagePath = 'categories/' . $imageName;
+        // =========================
+        // GALLERY IMAGES (SUPABASE)
+        // =========================
+        $galleryPaths = [];
+
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $file) {
+                $galleryPaths[] = SupabaseStorageService::upload(
+                    $file,
+                    'products/gallery'
+                );
+            }
+        }
+
+        // =========================
+        // SAVE PRODUCT
+        // =========================
+        $product = ProductsModel::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'sku' => $validated['sku'],
+            'price' => $validated['price'],
+            'category_id' => $validated['category_id'],
+            'old_price' => $validated['old_price'] ?? null,
+            'stock' => $validated['stock'],
+            'weights' => json_encode($validated['weights'] ?? []),
+            'main_image' => $mainImagePath,
+            'gallery_images' => json_encode($galleryPaths),
+        ]);
+
+        return response()->json([
+            'message' => 'Product created successfully',
+            'data' => $this->formatProduct(
+                $product,
+                CategoriesModel::pluck('name', 'id')
+            )
+        ], 201);
     }
-    // CREATE CATEGORY
-    $category = CategoriesModel::create([
 
-        'name' => $validated['name'],
+    // =========================
+    // GET ALL PRODUCTS
+    // =========================
+    public function getAllProduct()
+    {
+        $products = ProductsModel::latest()->get();
+        $categories = CategoriesModel::pluck('name', 'id');
 
-        'image' => $imagePath,
+        return response()->json([
+            'message' => 'Products fetched successfully',
+            'count' => $products->count(),
+            'data' => $products->map(function ($p) use ($categories) {
+                return $this->formatProduct($p, $categories);
+            })
+        ]);
+    }
 
-    ]);
+    // =========================
+    // FORMAT PRODUCT RESPONSE
+    // =========================
+    private function formatProduct($product, $categories = null)
+    {
+        $categories = $categories ?? CategoriesModel::pluck('name', 'id');
 
-    // RESPONSE
-    return response()->json([
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'sku' => $product->sku,
+            'price' => $product->price,
+            'old_price' => $product->old_price,
+            'stock' => $product->stock,
+            'category_id' => $product->category_id,
+            'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
+            'weights' => json_decode($product->weights, true) ?? [],
 
-        'success' => true,
-
-        'message' => 'Category created successfully',
-
-        'data' => [
-
-            'id' => $category->id,
-
-            'name' => $category->name,
-
-            'image' => $category->image
-                ? url('storage/' . $category->image)
+            // =========================
+            // SUPABASE IMAGE URLS
+            // =========================
+            'main_image' => $product->main_image
+                ? SupabaseStorageService::getPublicUrl($product->main_image)
                 : null,
 
-        ]
-
-    ], 201);
-}
-
-
-
-     public function getCategories(Request $request)
-{
-    $categories = CategoriesModel::latest()
-        ->withCount('products')
-        ->paginate(10);
-
-    // FORMAT IMAGE URL
-    $categories->getCollection()->transform(function ($category) {
-$baseUrl = url('/');
-
-$category->image = $category->image
-    ? $baseUrl . '/' . ltrim($category->image, '/')
-    : null;
-
-        return $category;
-    });
-
-    // RETURN JSON RESPONSE
-    return response()->json([
-        'message' => 'Categories fetched successfully',
-        'current_page' => $categories->currentPage(),
-        'last_page' => $categories->lastPage(),
-        'per_page' => $categories->perPage(),
-        'total' => $categories->total(),
-        'data' => $categories->items(),
-    ]);
-}
-
-
-
-
-   public function deleteProduct($id)
-{
-    $product = ProductsModel::find($id);
-
-    if (!$product) {
-        return response()->json([
-            'message' => 'Product not found'
-        ], 404);
+            'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
+                ->map(fn ($img) => $img ? SupabaseStorageService::getPublicUrl($img) : null)
+                ->values()
+                ->toArray(),
+        ];
     }
 
-    // Optional: delete images if stored locally
-    // Storage::delete($product->main_image);
+    // =========================
+    // CREATE CATEGORY
+    // =========================
+    public function createCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:categories_models,name',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
 
-    $product->delete();
+        $imagePath = SupabaseStorageService::upload(
+            $request->file('image'),
+            'categories'
+        );
 
-    return response()->json([
-        'message' => 'Product deleted successfully',
-        'status' => true
-    ]);
-}
+        $category = CategoriesModel::create([
+            'name' => $validated['name'],
+            'image' => $imagePath,
+        ]);
 
-   public function deleteCategory($id)
-{
-    $category = CategoriesModel::find($id);
-
-    if (!$category) {
         return response()->json([
-            'message' => 'Category not found'
-        ], 404);
+            'success' => true,
+            'message' => 'Category created successfully',
+            'data' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'image' => SupabaseStorageService::getPublicUrl($category->image),
+            ]
+        ], 201);
     }
 
-    // Optional: delete images if stored locally
-    // Storage::delete($category->image);
+    // =========================
+    // GET CATEGORIES
+    // =========================
+    public function getCategories(Request $request)
+    {
+        $categories = CategoriesModel::latest()
+            ->withCount('products')
+            ->paginate(10);
 
-    $category->delete();
+        $categories->getCollection()->transform(function ($category) {
+            $category->image = $category->image
+                ? SupabaseStorageService::getPublicUrl($category->image)
+                : null;
 
-    return response()->json([
-        'message' => 'Category deleted successfully',
-        'status' => true
-    ]);
-}
-   
+            return $category;
+        });
+
+        return response()->json([
+            'message' => 'Categories fetched successfully',
+            'current_page' => $categories->currentPage(),
+            'last_page' => $categories->lastPage(),
+            'per_page' => $categories->perPage(),
+            'total' => $categories->total(),
+            'data' => $categories->items(),
+        ]);
+    }
+
+    // =========================
+    // DELETE PRODUCT
+    // =========================
+    public function deleteProduct($id)
+    {
+        $product = ProductsModel::find($id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Product deleted successfully',
+            'status' => true
+        ]);
+    }
+
+    // =========================
+    // DELETE CATEGORY
+    // =========================
+    public function deleteCategory($id)
+    {
+        $category = CategoriesModel::find($id);
+
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'message' => 'Category deleted successfully',
+            'status' => true
+        ]);
+    }
 }
