@@ -24,5 +24,12 @@ class AdminWebController extends Controller
        
         return view('admin.category-form');
     }
+
+    public function getUpdateBannerView()
+    {
+       
+        return view('admin.page-settings');
+    }
+   
  
 }

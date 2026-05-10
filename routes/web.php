@@ -14,6 +14,7 @@ Route::get('/railway-test', function () {
 Route::get('/about', [ProductController::class, 'createDummyProduct']);
 Route::get('/admin/add-product', [AdminWebController::class, 'getAddProduct']);
 Route::get('/admin/add-category', [AdminWebController::class, 'getAddCatrgory']);
+Route::get('/admin/update-banner', [AdminWebController::class, 'getUpdateBannerView']);
 Route::get('/check-storage', function () {
 
     return [
