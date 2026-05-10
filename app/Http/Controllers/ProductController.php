@@ -8,55 +8,112 @@ use App\Models\CategoriesModel;
 
 class ProductController extends Controller
 {
-    public function createProduct(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'sku' => 'required|string|unique:products_models,sku',
-            'category_id' => 'required|numeric|min:0',
-            'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'weights' => 'nullable|array',
-            'weights.*' => 'string',
-        ]);
+public function createProduct(Request $request)
+{
+    $validated = $request->validate([
 
-        // MAIN IMAGE
-        $mainImagePath = null;
+        'name' => 'required|string|max:255',
 
-        if ($request->hasFile('main_image')) {
-            $mainImagePath = $request->file('main_image')
-                ->store('products/main', 'public');
-        }
+        'description' => 'nullable|string',
 
-        // GALLERY IMAGES
-        $galleryPaths = [];
+        'sku' => 'required|string|unique:products_models,sku',
 
-        if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $file) {
-                $galleryPaths[] = $file->store('products/gallery', 'public');
-            }
-        }
+        'category_id' => 'required|numeric|min:0',
 
-        $product = ProductsModel::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'sku' => $validated['sku'],
-            'price' => $validated['price'],
-            'category_id' => $validated['category_id'],
-            'old_price' => $validated['old_price'] ?? null,
-            'stock' => $validated['stock'],
-            'weights' => json_encode($validated['weights'] ?? []),
-            'main_image' => $mainImagePath,
-            'gallery_images' => json_encode($galleryPaths),
-        ]);
+        'price' => 'required|numeric|min:0',
 
-        return response()->json([
-            'message' => 'Product created successfully',
-            'data' => $this->formatProduct($product,CategoriesModel::pluck('name', 'id'))
-        ], 201);
+        'old_price' => 'nullable|numeric|min:0',
+
+        'stock' => 'required|integer|min:0',
+
+        'weights' => 'nullable|array',
+
+        'weights.*' => 'string',
+
+    ]);
+
+
+    // =========================
+    // MAIN IMAGE
+    // =========================
+
+    $mainImagePath = null;
+
+    if ($request->hasFile('main_image')) {
+
+        $image = $request->file('main_image');
+
+        $imageName = time() . '_' . $image->getClientOriginalName();
+
+        $image->move(public_path('products/main'), $imageName);
+
+        $mainImagePath = 'products/main/' . $imageName;
     }
+
+
+    // =========================
+    // GALLERY IMAGES
+    // =========================
+
+    $galleryPaths = [];
+
+    if ($request->hasFile('gallery_images')) {
+
+        foreach ($request->file('gallery_images') as $file) {
+
+            $imageName = time() . '_' . $file->getClientOriginalName();
+
+            $file->move(public_path('products/gallery'), $imageName);
+
+            $galleryPaths[] = 'products/gallery/' . $imageName;
+        }
+    }
+
+
+    // =========================
+    // CREATE PRODUCT
+    // =========================
+
+    $product = ProductsModel::create([
+
+        'name' => $validated['name'],
+
+        'description' => $validated['description'] ?? null,
+
+        'sku' => $validated['sku'],
+
+        'price' => $validated['price'],
+
+        'category_id' => $validated['category_id'],
+
+        'old_price' => $validated['old_price'] ?? null,
+
+        'stock' => $validated['stock'],
+
+        'weights' => json_encode($validated['weights'] ?? []),
+
+        'main_image' => $mainImagePath,
+
+        'gallery_images' => json_encode($galleryPaths),
+
+    ]);
+
+
+    // =========================
+    // RESPONSE
+    // =========================
+
+    return response()->json([
+
+        'message' => 'Product created successfully',
+
+        'data' => $this->formatProduct(
+            $product,
+            CategoriesModel::pluck('name', 'id')
+        )
+
+    ], 201);
+}
 
  public function getAllProduct()
 {
@@ -74,35 +131,43 @@ class ProductController extends Controller
     ]);
 }
 
-    // 🔥 CLEAN FORMATTER (IMPORTANT IMPROVEMENT)
-   private function formatProduct($product, $categories)
+ private function formatProduct($product, $categories = null)
 {
+    $categories = $categories ?? CategoriesModel::pluck('name', 'id');
+
     return [
+
         'id' => $product->id,
+
         'name' => $product->name,
+
         'description' => $product->description,
+
         'sku' => $product->sku,
+
         'price' => $product->price,
+
         'old_price' => $product->old_price,
+
         'stock' => $product->stock,
 
-        // ⭐ CATEGORY NAME ADDED HERE
         'category_id' => $product->category_id,
+
         'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
 
-        // ARRAY SAFE
         'weights' => json_decode($product->weights, true) ?? [],
 
-        // MAIN IMAGE
         'main_image' => $product->main_image
-            ? asset('storage/' . $product->main_image)
+            ? asset($product->main_image)
             : null,
 
-        // GALLERY IMAGES
-        'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
-            ->map(fn ($img) => $img ? asset('storage/' . $img) : null)
-            ->values()
-            ->toArray(),
+        'gallery_images' => collect(
+            json_decode($product->gallery_images, true) ?? []
+        )
+        ->map(fn ($img) => $img ? asset($img) : null)
+        ->values()
+        ->toArray(),
+
     ];
 }
 
