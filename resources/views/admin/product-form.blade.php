@@ -434,11 +434,29 @@ hr{
 
             error: function (err) {
 
-                console.log(err.responseJSON);
+    console.log(err.responseJSON);
 
-                alert("Error Creating Product");
+    let message = "Something went wrong";
 
-            }
+    // VALIDATION ERRORS
+    if (err.responseJSON.errors) {
+
+        message = Object.values(err.responseJSON.errors)
+            .flat()
+            .join('\n');
+
+    }
+
+    // NORMAL MESSAGE
+    else if (err.responseJSON.message) {
+
+        message = err.responseJSON.message;
+
+    }
+
+    alert(message);
+
+}
 
         });
 

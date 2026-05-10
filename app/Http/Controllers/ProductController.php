@@ -54,7 +54,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Product created successfully',
-            'data' => $this->formatProduct($product)
+            'data' => $this->formatProduct($product,CategoriesModel::pluck('name', 'id'))
         ], 201);
     }
 
