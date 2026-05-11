@@ -5,8 +5,8 @@
  <main class="main-wrapper">
   @include("modules.home-hero-banner")
   @include("modules.home-product-categories")
-  @include("modules.home-feature-products")
   @include("modules.deals-section")
+  @include("modules.home-feature-products")
   @include("modules.newest-product")
   @include("modules.benefits-section")
 @include("modules.sale-banner")

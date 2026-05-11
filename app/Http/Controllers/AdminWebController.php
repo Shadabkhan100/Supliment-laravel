@@ -30,6 +30,13 @@ class AdminWebController extends Controller
        
         return view('admin.page-settings');
     }
+public function getDealsManagement()
+    {
+       
+        return view('admin.deals-management');
+    }
+
+
    
  
 }

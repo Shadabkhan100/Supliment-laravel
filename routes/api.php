@@ -4,7 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminWebController;
+use App\Http\Controllers\DealsManagement;
 use App\Http\Controllers\PageSettingController;
+
+
+
 // Simple test route
 Route::get('/test', function () {
     return response()->json([
@@ -19,3 +23,18 @@ Route::delete('/delete-product/{id}', [ProductController::class, 'deleteProduct'
 Route::delete('/delete-category/{id}', [ProductController::class, 'deleteCategory']);
 Route::post('/page-settings', [PageSettingController::class, 'save']);
 Route::get('/page-settings', [PageSettingController::class, 'get']);
+
+
+
+Route::prefix('deals')->group(function () {
+
+    Route::get('/', [DealsManagement::class, 'index']);
+
+    Route::post('/create-deal', [DealsManagement::class, 'store']);
+
+    Route::get('/{id}', [DealsManagement::class, 'show']);
+
+    Route::post('/update/{id}', [DealsManagement::class, 'update']);
+
+    Route::delete('/{id}', [DealsManagement::class, 'destroy']);
+});
