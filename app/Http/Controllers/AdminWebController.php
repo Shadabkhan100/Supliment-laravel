@@ -35,7 +35,11 @@ public function getDealsManagement()
        
         return view('admin.deals-management');
     }
-
+public function getBlogsManagements()
+    {
+       
+        return view('admin.blogs-managements');
+    }
 
    
  

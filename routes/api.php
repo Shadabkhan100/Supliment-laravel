@@ -6,7 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminWebController;
 use App\Http\Controllers\DealsManagement;
 use App\Http\Controllers\PageSettingController;
-
+use App\Http\Controllers\BlogsController;
 
 
 // Simple test route
@@ -37,4 +37,17 @@ Route::prefix('deals')->group(function () {
     Route::post('/update/{id}', [DealsManagement::class, 'update']);
 
     Route::delete('/{id}', [DealsManagement::class, 'destroy']);
+});
+
+
+Route::prefix('blogs')->group(function () {
+Route::get('/', [BlogsController::class, 'index']);
+
+Route::post('/create-blogs', [BlogsController::class, 'store']);
+
+Route::get('/get-blogs/{id}', [BlogsController::class, 'show']);
+
+Route::post('/update-blogs/{id}', [BlogsController::class, 'update']);
+
+Route::delete('/delete-blogs/{id}', [BlogsController::class, 'destroy']);
 });
