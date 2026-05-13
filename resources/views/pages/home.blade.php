@@ -7,7 +7,7 @@
   @include("modules.home-product-categories")
   @include("modules.deals-section")
   @include("modules.home-feature-products")
-  @include("modules.newest-product")
+ 
   @include("modules.benefits-section")
 @include("modules.sale-banner")
 @include("modules.testimonials")

@@ -82,7 +82,7 @@ class ProductController extends Controller
     // =========================
     public function getAllProduct()
     {
-        $products = ProductsModel::latest()->get();
+        $products = ProductsModel::all();
         $categories = CategoriesModel::pluck('name', 'id');
 
         return response()->json([
@@ -163,9 +163,8 @@ class ProductController extends Controller
     // =========================
     public function getCategories(Request $request)
     {
-        $categories = CategoriesModel::latest()
-            ->withCount('products')
-            ->paginate(10);
+      $categories = CategoriesModel::withCount('products')
+        ->paginate(10);
 
         $categories->getCollection()->transform(function ($category) {
             $category->image = $category->image

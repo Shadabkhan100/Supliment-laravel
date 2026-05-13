@@ -9,7 +9,7 @@
     <link rel="stylesheet"
           href="{{ asset('css/product-management.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
     <style>
 
         body{
@@ -191,7 +191,7 @@ hr{
 
     <input type="number" name="stock" placeholder="Stock"><br>
 
-    <textarea name="description" placeholder="Description"></textarea><br>
+  <textarea name="description" id="description"></textarea><br>
 
     <!-- WEIGHTS -->
     <h4>Weights</h4>
@@ -242,7 +242,16 @@ hr{
 </form>
 
 <script>
+let editorInstance;
 
+ClassicEditor
+    .create(document.querySelector('#description'))
+    .then(editor => {
+        editorInstance = editor;
+    })
+    .catch(error => {
+        console.error(error);
+    });
     let weights = [];
 
     let galleryFiles = [];
@@ -391,7 +400,7 @@ hr{
         formData.append('price', $('input[name="price"]').val());
         formData.append('old_price', $('input[name="old_price"]').val());
         formData.append('stock', $('input[name="stock"]').val());
-        formData.append('description', $('textarea[name="description"]').val());
+        formData.append('description', editorInstance.getData());
         // WEIGHTS ARRAY
         weights.forEach(weight => {
 

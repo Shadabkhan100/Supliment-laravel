@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
+use App\Models\SlimzaDeals;
 class WebRoutController extends Controller
 {
      public function getHome()
@@ -16,6 +17,12 @@ class WebRoutController extends Controller
     {
         return view('about');
     }
+    public function getFindProducts($slug, $id)
+{
+    $deal = SlimzaDeals::findOrFail($id);
+
+    return view('pages.find-product', compact('deal'));
+}
 
    
 }

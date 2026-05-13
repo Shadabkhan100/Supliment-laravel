@@ -15,7 +15,7 @@
 
     .deal-img-card img {
         width: 100%;
-        height: 280px;
+     
         object-fit: cover;
         display: block;
         transition: 0.3s ease;
@@ -35,7 +35,7 @@
         padding: 30px;
     }
 </style>
-  <div class="container-fluid">
+  <div class="container-fluid" >
 <section class="deal-section py-40">
 <h2 class="fw-600 mb-8" style="color:#9eef0b;">Our Latest Deals</h2>
 
@@ -43,7 +43,7 @@
    A thoughtfully curated wellbeing collection crafted to elevate daily rituals. Blending purposeful ingredients with a modern, refined touch, each product is designed to restore balance, refresh the senses, and inspire a better way of living.
     </p>
 
-    <div class="container-fluid">
+    <div class="container-fluid" style="padding:0px">
 
         <div class="row" id="dealContainer">
 
@@ -84,7 +84,7 @@ function loadDeals() {
                     <div class="col-xl-4 col-lg-6 col-md-12 mb-3">
 
                         <div class="deal-img-card"
-                             onclick="goToDeal('${slug}', this)">
+                             onclick="goToDeal('${slug}', ${deal.id}, this)">
 
                             <img src="${deal.image ?? 'https://via.placeholder.com/400x220'}" />
 
@@ -104,11 +104,11 @@ function loadDeals() {
 }
 
 // click + route
-function goToDeal(slug, el) {
+function goToDeal(slug,id, el) {
     $(".deal-img-card").removeClass("active");
     $(el).addClass("active");
 
-    window.location.href = `/deals/${slug}`;
+    window.location.href = `/find-product/${slug}/${id}`;
 }
 </script>
 <!-- DEALS SECTION END -->

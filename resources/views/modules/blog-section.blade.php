@@ -6,9 +6,10 @@
       class="d-flex align-items-center justify-content-between flex-sm-row flex-column gap-sm-0 gap-24 mb-48"
     >
       <div>
-        <h2 class="fw-600 black mb-12">Our Recent Blogs</h2>
-        <p>
-          Catch up on the latest insights, tips, and trends from our recent blogs.
+        <h2 class="fw-600 mb-12" style="color:#9eef0b;">OUR LATEST JOURNAL</h2>
+        <p style="color:white">
+         Explore refined insights, expert perspectives, and emerging trends through our latest articles and editorials. Thoughtfully curated to inspire, inform, and elevate your experience.
+Discover More Articles
         </p>
       </div>
 

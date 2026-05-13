@@ -5,8 +5,8 @@
               class="d-flex align-content-end justify-content-between flex-sm-row flex-column gap-sm-0 gap-24 mb-48"
             >
               <div>
-                <h2 class="fw-600 black mb-12">Why Choose Us</h2>
-                <p>Experience unmatched quality, trust, and results with our premium products.</p>
+                <h2 class="fw-600  mb-12"  style="color:#9eef0b;">Why Choose Us</h2>
+                <p style="color:white;">Experience unmatched quality, trust, and results with our premium products.</p>
               </div>
             </div>
             <div class="row row-gap-3">

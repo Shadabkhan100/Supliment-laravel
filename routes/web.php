@@ -12,6 +12,8 @@ Route::get('/railway-test', function () {
     return 'LATEST VERSION 999';
 });
 Route::get('/about', [ProductController::class, 'createDummyProduct']);
+Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
+
 Route::get('/admin/add-product', [AdminWebController::class, 'getAddProduct']);
 Route::get('/admin/add-category', [AdminWebController::class, 'getAddCatrgory']);
 Route::get('/admin/update-banner', [AdminWebController::class, 'getUpdateBannerView']);

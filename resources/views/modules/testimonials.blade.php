@@ -5,8 +5,8 @@
               class="d-flex align-content-end justify-content-between flex-sm-row flex-column gap-sm-0 gap-24 mb-48"
             >
               <div>
-                <h2 class="fw-600 black mb-12">Testimonials</h2>
-                <p>Hear from our satisfied customers who’ve transformed their journey with us.</p>
+                <h2 class="fw-600 black mb-12" style="color:#9eef0b;">Testimonials</h2>
+                <p style="color:white;">Hear from our satisfied customers who’ve transformed their journey with us.</p>
               </div>
             </div>
             <div class="slider-container">

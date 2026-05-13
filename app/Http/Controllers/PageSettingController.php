@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\PageSetting;
-
+use App\Services\SupabaseStorageService;
 class PageSettingController extends Controller
 {
 
@@ -18,43 +18,16 @@ public function save(Request $request)
 
     $bannerUrl = null;
 
-    // UPLOAD IMAGE TO SUPABASE
+    // UPLOAD USING SERVICE
     if ($request->hasFile('home_banner')) {
 
-        $file = $request->file('home_banner');
-
-        $fileName = time() . '_' . $file->getClientOriginalName();
-
-        $supabaseUrl = env('SUPABASE_URL');
-        $supabaseKey = env('SUPABASE_KEY');
-
-        $response = Http::withHeaders([
-            'apikey' => $supabaseKey,
-            'Authorization' => 'Bearer ' . $supabaseKey,
-            'Content-Type' => $file->getMimeType(),
-        ])
-        ->withBody(
-            file_get_contents($file),
-            $file->getMimeType()
-        )
-        ->post(
-            $supabaseUrl . '/storage/v1/object/slimza-images/' . $fileName
+        $path = SupabaseStorageService::upload(
+            $request->file('home_banner'),
+            'slimza-images'
         );
 
-        // SUCCESS
-        if ($response->successful()) {
-
-            $bannerUrl =
-                $supabaseUrl .
-                '/storage/v1/object/public/slimza-images/' .
-                $fileName;
-        } else {
-
-            return response()->json([
-                'message' => 'Upload failed',
-                'error' => $response->body()
-            ], 500);
-        }
+        // STORE FULL PUBLIC URL
+        $bannerUrl = SupabaseStorageService::getPublicUrl($path);
     }
 
     // SAVE IN DATABASE
@@ -64,11 +37,11 @@ public function save(Request $request)
     ]);
 
     return response()->json([
+        'status' => true,
         'message' => 'Banner saved successfully',
         'data' => $setting
     ]);
 }
-    // GET SETTINGS
     public function get()
 {
     $settings = PageSetting::latest()->get();

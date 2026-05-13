@@ -13,7 +13,7 @@ class DealsManagement extends Controller
     // GET ALL SlimzaDealsS
     public function index()
     {
-        $SlimzaDealss = SlimzaDeals::latest()->get();
+        $SlimzaDealss = SlimzaDeals::all();
 
         $SlimzaDealss->transform(function ($SlimzaDeals) {
             $SlimzaDeals->image = $SlimzaDeals->image
