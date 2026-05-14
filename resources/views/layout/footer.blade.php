@@ -5,11 +5,12 @@
               <div class="row row-gap-4">
                 <div class="col-lg-4">
                   <div class="store-desc">
-                    <a href="index.html"><img src="images/logo.png" alt="" class="mb-16" /></a>
-                    <p class="white mb-xl-32 mb-lg-0 mb-32">
+                    <a href="/about-us"><img src="images/logo.png" alt="" class="mb-16" /></a>
+                                   <a href="/about-us">   <p class="white mb-xl-32 mb-lg-0 mb-32">
                       Lorem ipsum dolor sit amet consectetur. Ornare amet enim vel varius purus
                       consequat ultrices. Id mi viverra euismod risus viverra tortor cursus.
-                    </p>
+                    </p></a>
+
                     <h5 class="fw-500 white mb-16">Follow Us</h5>
                     <ul class="list-unstyled social-link">
                       <li>
@@ -104,10 +105,10 @@
                   <div class="footer-link-block spacing-block">
                     <h5 class="white mb-24">Quick Links</h5>
                     <ul class="list-unstyled m-0">
-                      <li class="white mb-8"><a href="about.html">About us</a></li>
-                      <li class="white mb-8"><a href="blog-grid.html">Blogs</a></li>
-                      <li class="white mb-8"><a href="shop-grid.html">Shop</a></li>
-                      <li class="white mb-8"><a href="shop-grid-sidebar.html">Find a store</a></li>
+                      <li class="white mb-8"><a href="/about-us">About us</a></li>
+                      <li class="white mb-8"><a href="/slimza-blogs">Blogs</a></li>
+                      <li class="white mb-8"><a href="/shop">Shop</a></li>
+                      <li class="white mb-8"><a href="/find-store">Find a store</a></li>
                       <li class="white"><a href="contact.html">Privacy Policy</a></li>
                     </ul>
                   </div>

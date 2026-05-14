@@ -9,15 +9,15 @@
     <title>SLIMZA || Dietary Products</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="images/favicon.png" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('images/favicon.png') }}" />
 
     <!-- All CSS files -->
-    <link rel="stylesheet" href="css/font-awesome.css" />
-    <link rel="stylesheet" href="css/slick-theme.css" />
-    <link rel="stylesheet" href="css/slick-slider.css" />
-    <link rel="stylesheet" href="css/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/slick-animation.css" />
-    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/slick-theme.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/slick-slider.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
   </head>
 
   <body class="tt-smooth-scroll" style="background-color:black">
@@ -32,19 +32,20 @@
         <span data-text="A">A</span>
       </div>
     </div>
-    <!-- Preloader -->
-     @include('layout.header')
-    @yield('content')
-    <div id="sidebar-cart-curtain" class="close-popup"></div>
-    <!-- Shopping Cart Popup End -->
-     @include('layout.footer')
-    <!-- Jquery Js -->
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery-3.6.3.min.js"></script>
-    <script src="js/slick.min.js"></script>
-    <script src="js/jquery.countdown.min.js"></script>
-    <script src="js/slickAnimation.js"></script>
 
-    <script src="js/app.js"></script>
+    @include('layout.header')
+    @yield('content')
+
+    <div id="sidebar-cart-curtain" class="close-popup"></div>
+
+    @include('layout.footer')
+
+    <!-- JS files -->
+    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
+    <script src="{{ asset('js/slick.min.js') }}"></script>
+    <script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
+    <script src="{{ asset('js/slickAnimation.js') }}"></script>
+    <script src="{{ asset('js/app.js') }}"></script>
   </body>
 </html>

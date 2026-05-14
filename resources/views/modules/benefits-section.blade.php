@@ -57,6 +57,26 @@
                   </div>
                 </div>
               </div>
+<div class="col-xl-3 col-lg-4 col-sm-6">
+    <div class="benefit-block d-flex flex-column gap-24 p-24">
+
+        <div class="benefit-icon">
+            <img src="images/home/commercial.png" alt="Return Policy" />
+        </div>
+
+        <div class="d-flex flex-column gap-12 black">
+
+            <h6>Easy Return Policy</h6>
+
+            <p>
+                Shop confidently with our hassle-free return policy,
+                allowing easy returns and exchanges within the eligible period.
+            </p>
+
+        </div>
+
+    </div>
+</div>
             </div>
           </div>
         </section>

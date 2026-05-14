@@ -113,7 +113,7 @@
                       <div class="main-menu__nav">
                         <ul class="main-menu__list">
                           <li>
-                            <a href="index.html" class="active">Home</a>
+                            <a href="/" class="active">Home</a>
                           </li>
                           <li class="dropdown">
                             <a href="javascript:void(0);"

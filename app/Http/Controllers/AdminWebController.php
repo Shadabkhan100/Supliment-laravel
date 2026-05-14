@@ -40,7 +40,11 @@ public function getBlogsManagements()
        
         return view('admin.blogs-managements');
     }
+public function getFutureProducts()
+    {
+       
+        return view('admin.future-products-management');
+    }
 
-   
  
 }

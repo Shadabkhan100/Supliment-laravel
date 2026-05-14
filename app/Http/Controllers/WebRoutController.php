@@ -24,5 +24,11 @@ class WebRoutController extends Controller
     return view('pages.find-product', compact('deal'));
 }
 
+  public function aboutUsView()
+{
+
+    return view('pages.about-us');
+}
+
    
 }

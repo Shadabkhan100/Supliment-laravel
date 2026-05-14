@@ -1,10 +1,10 @@
-<!-- DEALS SECTION START -->
 <style>
     .deal-section {
         background: black;
     }
 
     .deal-img-card {
+        width: 100%;
         position: relative;
         cursor: pointer;
         border-radius: 14px;
@@ -15,10 +15,11 @@
 
     .deal-img-card img {
         width: 100%;
-     
-        object-fit: cover;
+        height: auto;
         display: block;
+        object-fit: cover;
         transition: 0.3s ease;
+        border-radius: 14px;
     }
 
     .deal-img-card:hover {
@@ -34,29 +35,65 @@
         text-align: center;
         padding: 30px;
     }
+
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+        .deal-col {
+            width: 100%;
+        }
+
+        .deal-img-card {
+            max-width: 100%;
+        }
+    }
+
+    /* Tablet */
+    @media (min-width: 768px) and (max-width: 991px) {
+        .deal-col {
+            width: 50%;
+        }
+    }
+
+    /* Laptop/Desktop */
+    @media (min-width: 992px) {
+        .deal-col {
+            width: 33.333%;
+        }
+    }
 </style>
-  <div class="container-fluid" >
-<section class="deal-section py-40">
-<h2 class="fw-600 mb-8" style="color:#9eef0b;">Our Latest Deals</h2>
 
-    <p class="mb-24" style="color: #bab4b4;">
-   A thoughtfully curated wellbeing collection crafted to elevate daily rituals. Blending purposeful ingredients with a modern, refined touch, each product is designed to restore balance, refresh the senses, and inspire a better way of living.
-    </p>
+<div class="container-fluid">
+    <section class="deal-section py-40">
 
-    <div class="container-fluid" style="padding:0px">
+        <h2 class="fw-600 mb-8" style="color:#9eef0b;">
+            Our Latest Deals
+        </h2>
 
-        <div class="row" id="dealContainer">
+        <p class="mb-24" style="color: #bab4b4;">
+            A thoughtfully curated wellbeing collection crafted to elevate daily rituals.
+        </p>
 
-            <!-- Loader -->
-            <div class="col-12 deal-loader" id="dealLoader">
-                <div class="spinner-border text-success"></div>
+        <div class="container-fluid p-0">
+
+            <div class="row g-3 justify-content-center" id="dealContainer">
+
+                <!-- Loader -->
+                <div class="col-12 deal-loader" id="dealLoader">
+                    <div class="spinner-border text-success"></div>
+                </div>
+
             </div>
 
         </div>
 
-    </div>
-</section>
- </div>
+    </section>
+</div>
+
 <script>
 const DEAL_API = "/api/deals";
 
@@ -65,11 +102,13 @@ $(document).ready(function () {
 });
 
 function loadDeals() {
+
     $("#dealLoader").show();
 
     $.ajax({
         url: DEAL_API,
         type: "GET",
+
         success: function (res) {
 
             let html = "";
@@ -81,12 +120,12 @@ function loadDeals() {
                     : deal.id;
 
                 html += `
-                    <div class="col-xl-4 col-lg-6 col-md-12 mb-3">
+                    <div class="deal-col mb-3">
 
                         <div class="deal-img-card"
                              onclick="goToDeal('${slug}', ${deal.id}, this)">
 
-                            <img src="${deal.image ?? 'https://via.placeholder.com/400x220'}" />
+                            <img src="${deal.image ?? 'https://via.placeholder.com/400x220'}">
 
                         </div>
 
@@ -97,18 +136,19 @@ function loadDeals() {
             $("#dealContainer").html(html);
             $("#dealLoader").hide();
         },
+
         error: function () {
             $("#dealLoader").html("<p>Failed to load deals</p>");
         }
     });
 }
 
-// click + route
-function goToDeal(slug,id, el) {
+function goToDeal(slug, id, el) {
+
     $(".deal-img-card").removeClass("active");
+
     $(el).addClass("active");
 
     window.location.href = `/find-product/${slug}/${id}`;
 }
 </script>
-<!-- DEALS SECTION END -->

@@ -10,25 +10,24 @@ use App\Services\SupabaseStorageService;
 class DealsManagement extends Controller
 {
   
-    // GET ALL SlimzaDealsS
-    public function index()
-    {
-        $SlimzaDealss = SlimzaDeals::all();
+    // GET ALL SlimzaDeals
+public function index()
+{
+    $SlimzaDeals = SlimzaDeals::all();
 
-        $SlimzaDealss->transform(function ($SlimzaDeals) {
-            $SlimzaDeals->image = $SlimzaDeals->image
-                ? SupabaseStorageService::getPublicUrl($SlimzaDeals->image)
-                : null;
+    $SlimzaDeals = $SlimzaDeals->map(function ($deal) {
+        $deal->image = $deal->image
+            ? SupabaseStorageService::getPublicUrl($deal->image)
+            : null;
 
-            return $SlimzaDeals;
-        });
+        return $deal;
+    });
 
-        return response()->json([
-            'message' => 'SlimzaDealss fetched successfully',
-            'data' => $SlimzaDealss
-        ]);
-    }
-
+    return response()->json([
+        'message' => 'SlimzaDeals fetched successfully',
+        'data' => $SlimzaDeals
+    ]);
+}
     // CREATE SlimzaDeals
     public function store(Request $request)
     {

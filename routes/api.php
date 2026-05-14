@@ -7,7 +7,7 @@ use App\Http\Controllers\AdminWebController;
 use App\Http\Controllers\DealsManagement;
 use App\Http\Controllers\PageSettingController;
 use App\Http\Controllers\BlogsController;
-
+use App\Http\Controllers\FutureProductController;
 
 // Simple test route
 Route::get('/test', function () {
@@ -51,3 +51,7 @@ Route::post('/update-blogs/{id}', [BlogsController::class, 'update']);
 
 Route::delete('/delete-blogs/{id}', [BlogsController::class, 'destroy']);
 });
+
+Route::get('/get-future-products', [FutureProductController::class, 'index']);
+Route::post('/future-products', [FutureProductController::class, 'store']);
+Route::delete('/future-products/{id}', [FutureProductController::class, 'destroy']);

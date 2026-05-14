@@ -68,7 +68,7 @@ function loadCategories()
 
                             <div class="text-box">
 
-                                <p class="subtitle dark-gray"
+                                <p style="color:white" class="subtitle"
                                    style="margin-top: -20px;">
 
                                     ${category.products_count ?? 0}+ Items
