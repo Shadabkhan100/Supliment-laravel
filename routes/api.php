@@ -9,6 +9,8 @@ use App\Http\Controllers\PageSettingController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\FutureProductController;
 
+use App\Http\Controllers\TestimonialsController;
+
 // Simple test route
 Route::get('/test', function () {
     return response()->json([
@@ -24,6 +26,10 @@ Route::delete('/delete-category/{id}', [ProductController::class, 'deleteCategor
 Route::post('/page-settings', [PageSettingController::class, 'save']);
 Route::get('/page-settings', [PageSettingController::class, 'get']);
 
+
+Route::get('/testimonials', [TestimonialsController::class, 'index']);
+Route::post('/create-testimonials', [TestimonialsController::class, 'store']);
+Route::delete('/testimonials/{id}', [TestimonialsController::class, 'destroy']);
 
 
 Route::prefix('deals')->group(function () {

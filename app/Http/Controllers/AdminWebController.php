@@ -45,6 +45,10 @@ public function getFutureProducts()
        
         return view('admin.future-products-management');
     }
-
+public function getTestimonialmanagement()
+    {
+       
+        return view('admin.testimonials');
+    }
  
 }

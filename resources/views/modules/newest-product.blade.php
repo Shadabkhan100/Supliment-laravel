@@ -1,7 +1,7 @@
   <!-- NEWEST PRODUCTS START -->
 
 
-<div class="coming-soon-wrapper" style:"margin:auto 20px">
+<div class="coming-soon-wrapper" style="justify-content: center;display: flex;margin: auto;">
     <img src="{{ asset('images/home/coming-soon.png') }}" alt="Coming Soon">
 </div>
 
@@ -66,7 +66,7 @@
 
 <script>
 
-const FUTURE_API = "http://127.0.0.1:8000/api/get-future-products";
+const FUTURE_API = "/api/get-future-products";
 
 $(document).ready(function () {
     loadNewestProducts();

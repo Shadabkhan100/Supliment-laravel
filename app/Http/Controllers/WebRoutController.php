@@ -30,5 +30,36 @@ class WebRoutController extends Controller
     return view('pages.about-us');
 }
 
-   
+     public function faqView()
+{
+
+    return view('pages.faq');
+}
+  public function returnView()
+{
+
+    return view('pages.policy');
+}
+
+
+
+
+
+
+public function shippingCost()
+    {
+        return view('connections.shipping-cost');
+    }
+
+    public function thirtyDaysGuarantee()
+    {
+        return view('connections.30-days-guarantee');
+    }
+
+  
+
+    public function privacyPolicy()
+    {
+        return view('connections.privacy-policy');
+    }
 }

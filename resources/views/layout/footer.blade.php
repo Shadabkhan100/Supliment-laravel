@@ -1,6 +1,6 @@
  <!-- FOOTER Start -->
         <footer>
-          <div class="container-fluid">
+          <div class="container-fluid" style="background-color:black">
             <div class="footer-wrapper pt-48 mb-32">
               <div class="row row-gap-4">
                 <div class="col-lg-4">
@@ -106,8 +106,8 @@
                     <h5 class="white mb-24">Quick Links</h5>
                     <ul class="list-unstyled m-0">
                       <li class="white mb-8"><a href="/about-us">About us</a></li>
-                      <li class="white mb-8"><a href="/slimza-blogs">Blogs</a></li>
-                      <li class="white mb-8"><a href="/shop">Shop</a></li>
+                      <li class="white mb-8"><a href="/faq">FAQ</a></li>
+                      <li class="white mb-8"><a href="/return-policy">Return & Refund Policy</a></li>
                       <li class="white mb-8"><a href="/find-store">Find a store</a></li>
                       <li class="white"><a href="contact.html">Privacy Policy</a></li>
                     </ul>
@@ -132,7 +132,7 @@
                             ></path>
                           </svg>
                         </div>
-                        <a href="tel:12348684" class="h6 white fw-600">+001 123 456 987</a>
+                        <a href="tel:12348684" class="h6 white fw-600">Live Chat</a>
                       </li>
                       <li>
                         <div class="icon-box">
@@ -149,7 +149,7 @@
                             ></path>
                           </svg>
                         </div>
-                        <a href="mailto:info@example.com" class="white">exampleinfo@gmail.com</a>
+                        <a href="mailto:info@slimza.com" class="white">info@slimza.com</a>
                       </li>
                     </ul>
                     <h5 class="white fw- mb-16">Subscribe to Our Newslatter</h5>
@@ -195,9 +195,8 @@
             <div class="py-32">
               <div class="footer-bottom-bar">
                 <p class="white">
-                  @2026 All Rights Copyright <a href="" class="color-primary"> PowerUp</a>. Design &
-                  Developed By <span class="color-primary"> UIPARADOX</span>
-                </p>
+                  @2026 All Rights Copyright <a href="/" class="color-primary">Slimza</a>
+                                  </p>
                 <div class="payment-cards d-flex align-items-center gap-16">
                   <div class="card-block">
                     <img src="images/card-1.png" alt="" />

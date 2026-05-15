@@ -19,7 +19,7 @@
         align-items: center;
       ">
 
-      <div class="row w-100">
+      <div class="row w-100" style="justify-content: center;">
         <div class="col-lg-6 col-md-8">
 
           <div class="sale-text d-flex flex-column gap-32">
@@ -45,63 +45,4 @@
 
 
 
-<div class="full-image-wrapper">
-
-    <img src="{{ asset('images/home/footer.jpg') }}"
-         alt="Coming Soon">
-
-</div>
-
-<style>
-
-.full-image-wrapper{
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 30px;
-    background: #000;
-    overflow: hidden;
-}
-
-.full-image-wrapper img{
-    width: 100%;
-    max-width: 1400px;
-    height: auto;
-    max-height: 90vh;
-    object-fit: contain;
-    display: block;
-}
-
-/* TABLET */
-@media (max-width: 992px){
-
-    .full-image-wrapper{
-        min-height: auto;
-        padding: 20px;
-    }
-
-    .full-image-wrapper img{
-        width: 100%;
-        max-height: 80vh;
-    }
-
-}
-
-/* MOBILE */
-@media (max-width: 576px){
-
-    .full-image-wrapper{
-        padding: 15px;
-    }
-
-    .full-image-wrapper img{
-        width: 100%;
-        max-height: 70vh;
-    }
-
-}
-
-</style>
 <!-- SALE BANNER END -->

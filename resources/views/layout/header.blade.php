@@ -17,7 +17,7 @@
                 <div class="col-lg-6 col-md-6 d-lg-block d-none text-center">
                   <p>
                     <span class="text-16 semibold"> Black Friday Sale:</span> Save up to 60% with
-                    code <span class="text-16 semibold">PowerUp.</span>
+                    code <span class="text-16 semibold">Slimza.</span>
                   </p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-6 header-end">
