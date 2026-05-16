@@ -7,8 +7,8 @@
                   <div class="store-desc">
                     <a href="/about-us"><img src="images/logo.png" alt="" class="mb-16" /></a>
                                    <a href="/about-us">   <p class="white mb-xl-32 mb-lg-0 mb-32">
-                      Lorem ipsum dolor sit amet consectetur. Ornare amet enim vel varius purus
-                      consequat ultrices. Id mi viverra euismod risus viverra tortor cursus.
+                      At Slimza, we believe that living well should feel simple, empowering, and sustainable. Our mission is to provide premium-quality health 
+and wellbeing products......
                     </p></a>
 
                     <h5 class="fw-500 white mb-16">Follow Us</h5>
@@ -85,6 +85,24 @@
                           </svg>
                         </a>
                       </li>
+
+
+<li>
+  <a href="">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.388.566a2.997 2.997 0 0 0-2.11 2.12C0 8.08 0 12 0 12s0 3.92.502 5.814a2.997 2.997 0 0 0 2.11 2.12C4.495 20.5 12 20.5 12 20.5s7.505 0 9.388-.566a2.997 2.997 0 0 0 2.11-2.12C24 15.92 24 12 24 12s0-3.92-.502-5.814ZM9.75 15.568V8.432L15.818 12 9.75 15.568Z"
+        fill="#141516"
+      />
+    </svg>
+  </a>
+</li>
                     </ul>
                   </div>
                 </div>
