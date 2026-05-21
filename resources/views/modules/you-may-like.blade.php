@@ -30,11 +30,25 @@
 
       if (!json || !Array.isArray(json.data)) return;
 
+       
+
       container.innerHTML = '';
 
       const currentDealId = @json($deal->id);
+      
 
-      json.data.forEach(product => {
+
+
+      const filteredProducts = json.data.filter(product =>
+    Number(product.deal_id) !== Number(currentDealId)
+);
+
+const randomProducts = filteredProducts
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 8);
+
+
+      randomProducts.forEach(product => {
 
         // FILTER SAME DEAL PRODUCTS
         if (Number(product.deal_id) === Number(currentDealId)) return;

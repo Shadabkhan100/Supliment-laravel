@@ -146,12 +146,17 @@ async function loadProducts() {
               ${product.category_name ?? 'Product'}
             </p>
 
-            <a href="product-detail/${product.name}/${product.id}"
-               class="product-title h6 fw-500 mb-12">
+          <a href="/product-details/${product.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()}/${product.id}"
+   class="product-title h6 fw-500 mb-12">
 
-              ${product.name}
+  ${product.name}
 
-            </a>
+</a>
 
             <div class="d-flex align-items-center gap-8 mb-16">
 

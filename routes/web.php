@@ -16,6 +16,8 @@ Route::get('/faq', [WebRoutController::class, 'faqView']);
 Route::get('/return-policy', [WebRoutController::class, 'returnView']);
 Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
 
+Route::get('/product-details/{slug}/{id}', [WebRoutController::class, 'getProductDetails']);
+
 Route::get('/shipping-cost', [WebRoutController::class, 'shippingCost'])->name('shipping.cost');
 Route::get('/30-days-guarantee', [WebRoutController::class, 'thirtyDaysGuarantee'])->name('guarantee.30days');
 Route::get('/privacy-policy', [WebRoutController::class, 'privacyPolicy'])->name('privacy.policy');

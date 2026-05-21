@@ -93,4 +93,51 @@ public function shippingCost()
     {
         return view('connections.privacy-policy');
     }
+
+ public function getProductDetails($slug,$id)
+{
+    $product = ProductsModel::findOrFail($id);
+
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    $formattedProduct = $this->formatProduct($product, $categories);
+
+    return view('products.product-details', [
+        'product' => (object) $formattedProduct
+    ]);
+}
+
+
+private function formatProduct($product, $categories = null)
+{
+    $categories = $categories ?? CategoriesModel::pluck('name', 'id');
+
+    return [
+        'id' => $product->id,
+        'name' => $product->name,
+        'description' => $product->description,
+        'sku' => $product->sku,
+        'price' => $product->price,
+        'old_price' => $product->old_price,
+        'stock' => $product->stock,
+        'category_id' => $product->category_id,
+        'deal_id' => $product->deal_id,
+
+        'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
+
+        'weights' => json_decode($product->weights, true) ?: [],
+
+        'main_image' => $product->main_image
+            ? SupabaseStorageService::getPublicUrl($product->main_image)
+            : null,
+
+        'gallery_images' => collect(json_decode($product->gallery_images, true) ?: [])
+            ->filter()
+            ->map(fn ($img) => SupabaseStorageService::getPublicUrl($img))
+            ->values()
+            ->toArray(),
+    ];
+}
+
+   
 }
