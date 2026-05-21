@@ -6,18 +6,24 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
 use App\Models\ProductsModel;
-
+use App\Models\SlimzaDeals;
 class AdminWebController extends Controller
 {
     
-       public function getAddProduct()
-    {
-        // FETCH ALL CATEGORIES
-        $categories = CategoriesModel::latest()->get();
-        $products = ProductsModel::latest()->get();
-        // SEND TO VIEW
-        return view('admin.product-management', compact('categories','products'));
-    }
+      public function getAddProduct()
+{
+    // FETCH ALL CATEGORIES
+    $categories = CategoriesModel::latest()->get();
+
+    // FETCH ALL PRODUCTS
+    $products = ProductsModel::latest()->get();
+
+    // FETCH ALL DEALS (from SlimzaDeals DB/model)
+    $deals = SlimzaDeals::latest()->get();
+
+    // SEND TO VIEW
+    return view('admin.product-management', compact('categories', 'products', 'deals'));
+}
 
     public function getAddCatrgory()
     {

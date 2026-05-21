@@ -212,11 +212,11 @@
         <ul class="mobile-nav__contact list-unstyled">
           <li>
             <i class="fas fa-envelope"></i>
-            <a href="mailto:example@company.com">example@company.com</a>
+            <a href="mailto:example@company.com">slimza@info.com</a>
           </li>
           <li>
             <i class="fa fa-phone-alt"></i>
-            <a href="tel:+12345678">+123 (4567) -890</a>
+            <a href="tel:+12345678">Live Chat</a>
           </li>
         </ul>
         <div class="mobile-nav__social">

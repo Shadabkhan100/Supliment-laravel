@@ -19,6 +19,7 @@ class ProductsModel extends Model
         'weights',
         'main_image',
         'gallery_images',
+        'deal_id',
     ];
 
     protected $casts = [

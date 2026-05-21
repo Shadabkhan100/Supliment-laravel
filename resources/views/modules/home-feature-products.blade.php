@@ -1,5 +1,5 @@
 <!-- FEATURE PRODUCTS START -->
-<section class="feature-products py-40">
+<section class="feature-products p-40">
   <div class="container-fluid">
 
     <h2 class="fw-600 mb-8" style="color:#9eef0b;">Product Range</h2>

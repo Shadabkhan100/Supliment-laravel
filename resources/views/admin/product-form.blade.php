@@ -183,6 +183,25 @@ hr{
 
 <br><br>
 
+<select name="deal_id" id="deal_id">
+
+    <option value="">
+        Select deal
+    </option>
+
+    @foreach($deals as $deal)
+
+        <option value="{{ $deal->id }}">
+            {{ $deal->title }}
+        </option>
+
+    @endforeach
+
+</select>
+
+<br><br>
+
+
     <input type="text" name="sku" placeholder="SKU"><br>
 
     <input type="number" name="price" placeholder="Price"><br>
@@ -396,6 +415,7 @@ ClassicEditor
         // TEXT FIELDS
         formData.append('name', $('input[name="name"]').val());
         formData.append('category_id',$('#category_id').val());
+        formData.append('deal_id',$('#deal_id').val());
         formData.append('sku', $('input[name="sku"]').val());
         formData.append('price', $('input[name="price"]').val());
         formData.append('old_price', $('input[name="old_price"]').val());

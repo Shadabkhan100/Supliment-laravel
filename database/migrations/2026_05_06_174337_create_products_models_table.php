@@ -21,6 +21,8 @@ return new class extends Migration
 
         // Category (if you have categories table)
         $table->foreignId('category_id')->nullable()->constrained('categories_models')->nullOnDelete();
+        $table->foreignId('deal_id')->nullable()->constrained('slimza_deals')->nullOnDelete();
+
 
         // Pricing
         $table->decimal('price', 10, 2);

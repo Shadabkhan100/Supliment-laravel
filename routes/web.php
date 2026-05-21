@@ -11,7 +11,7 @@ Route::get('/', [WebRoutController::class, 'getHome']);
 Route::get('/railway-test', function () {
     return 'LATEST VERSION 999';
 });
-Route::get('/about-us', [WebRoutController::class, 'aboutUsView']);
+Route::get('/about-us/2/2', [WebRoutController::class, 'aboutUsView']);
 Route::get('/faq', [WebRoutController::class, 'faqView']);
 Route::get('/return-policy', [WebRoutController::class, 'returnView']);
 Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);

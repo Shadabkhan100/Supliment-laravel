@@ -19,6 +19,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'sku' => 'required|string|unique:products_models,sku',
             'category_id' => 'required|numeric|min:0',
+ 'deal_id' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
             'old_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
@@ -61,6 +62,7 @@ class ProductController extends Controller
             'sku' => $validated['sku'],
             'price' => $validated['price'],
             'category_id' => $validated['category_id'],
+            'deal_id' => $validated['deal_id'],
             'old_price' => $validated['old_price'] ?? null,
             'stock' => $validated['stock'],
             'weights' => json_encode($validated['weights'] ?? []),
@@ -110,6 +112,8 @@ class ProductController extends Controller
             'old_price' => $product->old_price,
             'stock' => $product->stock,
             'category_id' => $product->category_id,
+           'deal_id' => $product->deal_id,
+
             'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
             'weights' => json_decode($product->weights, true) ?? [],
 
