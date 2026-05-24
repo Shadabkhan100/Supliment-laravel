@@ -18,6 +18,7 @@ Route::get('/test', function () {
     ]);
 });
 Route::post('/create-product', [ProductController::class, 'createProduct']);
+Route::post('/update-product/{id}', [ProductController::class, 'updateProduct']);
 Route::get('/get-all-product', [ProductController::class, 'getAllProduct']);
 Route::post('/create-category', [ProductController::class, 'createCategory']);
 Route::get('/categories', [ProductController::class, 'getCategories']);

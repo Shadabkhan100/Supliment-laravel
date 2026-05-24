@@ -224,7 +224,15 @@ hr{
     <div id="weightList"></div>
 
     <hr>
+     <h4>Tags</h4>
 
+<select id="tagSelect">
+    <option value="">Select Tag</option>
+</select>
+
+<div id="tagList"></div>
+
+<hr>
     <!-- MAIN IMAGE -->
     <h4>Main Image</h4>
 
@@ -251,7 +259,7 @@ hr{
     <br><br>
 
     <div id="galleryPreview"></div>
-
+  
     <hr>
 
     <button type="submit">
@@ -262,6 +270,70 @@ hr{
 
 <script>
 let editorInstance;
+let tags = [];
+
+
+const availableTags = [
+    "Cleanse & Reset",
+    "Daily Energy",
+    "Peak Performance",
+    "Radiance & Beauty",
+    "Mind & Focus",
+    "Total Wellness",
+    "Restore & Renew"
+];
+
+availableTags.forEach(tag => {
+    $('#tagSelect').append(`<option value="${tag}">${tag}</option>`);
+});
+
+$('#tagSelect').on('change', function () {
+
+    let value = $(this).val();
+
+    if (!value) return;
+
+    if (!tags.includes(value)) {
+        tags.push(value);
+    }
+
+    $(this).val('');
+
+    renderTags();
+});
+
+
+function renderTags()
+{
+    $('#tagList').html('');
+
+    tags.forEach((tag, index) => {
+
+        $('#tagList').append(`
+
+            <div class="weight-tag">
+
+                ${tag}
+
+                <button type="button"
+                        onclick="removeTag(${index})">
+                    x
+                </button>
+
+            </div>
+
+        `);
+
+    });
+}
+
+function removeTag(index)
+{
+    tags.splice(index, 1);
+    renderTags();
+}
+
+
 
 ClassicEditor
     .create(document.querySelector('#description'))
@@ -423,11 +495,12 @@ ClassicEditor
         formData.append('description', editorInstance.getData());
         // WEIGHTS ARRAY
         weights.forEach(weight => {
-
             formData.append('weights[]', weight);
 
         });
-
+        tags.forEach(tag => {
+    formData.append('tags[]', tag);
+});
         // MAIN IMAGE
         if(mainImageFile)
         {

@@ -16,6 +16,7 @@ class ProductsModel extends Model
         'price',
         'old_price',
         'stock',
+        'tags',
         'weights',
         'main_image',
         'gallery_images',
@@ -24,6 +25,7 @@ class ProductsModel extends Model
 
     protected $casts = [
         'weights' => 'array',
+        'tags' => 'array',
         'gallery_images' => 'array',
     ];
 }

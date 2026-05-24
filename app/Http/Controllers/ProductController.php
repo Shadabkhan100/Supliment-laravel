@@ -19,12 +19,14 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'sku' => 'required|string|unique:products_models,sku',
             'category_id' => 'required|numeric|min:0',
- 'deal_id' => 'required|numeric|min:0',
+            'deal_id' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
             'old_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'weights' => 'nullable|array',
+              'weights' => 'nullable|array',
             'weights.*' => 'string',
+           'tags.*' => 'string',
         ]);
 
         // =========================
@@ -66,6 +68,8 @@ class ProductController extends Controller
             'old_price' => $validated['old_price'] ?? null,
             'stock' => $validated['stock'],
             'weights' => json_encode($validated['weights'] ?? []),
+             'tags' => json_encode($validated['tags'] ?? []),
+
             'main_image' => $mainImagePath,
             'gallery_images' => json_encode($galleryPaths),
         ]);
@@ -78,7 +82,18 @@ class ProductController extends Controller
             )
         ], 201);
     }
+public function editPage($id)
+{
+    $product = ProductsModel::findOrFail($id);
 
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    $formattedProduct = $this->formatProduct($product, $categories);
+ return view('admin.editProductPage', [
+        'product' => $formattedProduct
+    ]);
+    
+}
     // =========================
     // GET ALL PRODUCTS
     // =========================
@@ -111,11 +126,12 @@ class ProductController extends Controller
             'price' => $product->price,
             'old_price' => $product->old_price,
             'stock' => $product->stock,
-            'category_id' => $product->category_id,
+             'category_id' => $product->category_id,
            'deal_id' => $product->deal_id,
-
             'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
             'weights' => json_decode($product->weights, true) ?? [],
+            'tags' => json_decode($product->tags, true) ?? [],
+
 
             // =========================
             // SUPABASE IMAGE URLS
@@ -225,4 +241,93 @@ class ProductController extends Controller
             'status' => true
         ]);
     }
+
+
+
+
+
+
+
+
+
+
+   public function updateProduct(Request $request, $id)
+{
+    $product = ProductsModel::findOrFail($id);
+
+    // =========================
+    // VALIDATION
+    // =========================
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'sku' => 'required|string|unique:products_models,sku,' . $id,
+        'category_id' => 'required|numeric|min:0',
+        'deal_id' => 'required|numeric|min:0',
+        'price' => 'required|numeric|min:0',
+        'old_price' => 'nullable|numeric|min:0',
+        'stock' => 'required|integer|min:0',
+        'weights' => 'nullable|array',
+        'tags' => 'nullable|array',
+        'weights.*' => 'string',
+        'tags.*' => 'string',
+    ]);
+
+    // =========================
+    // MAIN IMAGE (ONLY IF NEW UPLOADED)
+    // =========================
+    $mainImagePath = $product->main_image;
+
+    if ($request->hasFile('main_image')) {
+        $mainImagePath = SupabaseStorageService::upload(
+            $request->file('main_image'),
+            'products/main'
+        );
+    }
+
+    // =========================
+    // GALLERY IMAGES (APPEND OR REPLACE)
+    // =========================
+    $galleryPaths = json_decode($product->gallery_images, true) ?? [];
+
+    if ($request->hasFile('gallery_images')) {
+
+        $galleryPaths = []; // reset if replacing (IMPORTANT)
+
+        foreach ($request->file('gallery_images') as $file) {
+            $galleryPaths[] = SupabaseStorageService::upload(
+                $file,
+                'products/gallery'
+            );
+        }
+    }
+
+    // =========================
+    // UPDATE PRODUCT
+    // =========================
+    $product->update([
+        'name' => $validated['name'],
+        'description' => $validated['description'] ?? null,
+        'sku' => $validated['sku'],
+        'price' => $validated['price'],
+        'old_price' => $validated['old_price'] ?? null,
+        'stock' => $validated['stock'],
+        'category_id' => $validated['category_id'],
+        'deal_id' => $validated['deal_id'],
+
+        'weights' => json_encode($validated['weights'] ?? []),
+        'tags' => json_encode($validated['tags'] ?? []),
+
+        'main_image' => $mainImagePath,
+        'gallery_images' => json_encode($galleryPaths),
+    ]);
+
+    return response()->json([
+        'message' => 'Product updated successfully',
+        'data' => $this->formatProduct(
+            $product->fresh(),
+            CategoriesModel::pluck('name', 'id')
+        )
+    ]);
+}
 }

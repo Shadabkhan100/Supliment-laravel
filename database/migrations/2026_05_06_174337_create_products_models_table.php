@@ -33,6 +33,7 @@ return new class extends Migration
 
         // Product Options (like 250g, 500g)
         $table->json('weights')->nullable(); 
+         $table->json('tags')->nullable(); 
         // Example: ["250g","500g","1000g"]
 
         // Images

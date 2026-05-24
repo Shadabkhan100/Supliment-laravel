@@ -8,6 +8,7 @@ use App\Models\CategoriesModel;
 use App\Models\SlimzaDeals;
 use App\Services\SupabaseStorageService;
 use App\Models\ProductsModel;
+use Illuminate\Support\Str;
 
 
 class WebRoutController extends Controller
@@ -139,5 +140,51 @@ private function formatProduct($product, $categories = null)
     ];
 }
 
-   
-}
+public function searchByTag($tag)
+{
+    $products = ProductsModel::all()
+        ->filter(function ($product) use ($tag) {
+
+            $tags = json_decode($product->tags, true) ?? [];
+
+            $normalizedTags = array_map(function ($t) {
+                return Str::slug($t);
+            }, $tags);
+
+            return in_array($tag, $normalizedTags);
+        })
+        ->map(function ($product) {
+
+            $tags = json_decode($product->tags, true) ?? [];
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'sku' => $product->sku,
+                'price' => $product->price,
+                'old_price' => $product->old_price,
+                'stock' => $product->stock,
+                'category_id' => $product->category_id,
+                'deal_id' => $product->deal_id,
+                'category_name' => $product->category_name ?? 'Uncategorized',
+
+                // ✅ TAGS (keep original + normalized if needed)
+                'tags' => $tags,
+
+                // =========================
+                // SUPABASE IMAGE URLS
+                // =========================
+                'main_image' => $product->main_image
+                    ? SupabaseStorageService::getPublicUrl($product->main_image)
+                    : null,
+
+                'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
+                    ->map(fn ($img) => $img ? SupabaseStorageService::getPublicUrl($img) : null)
+                    ->values()
+                    ->toArray(),
+            ];
+        });
+
+    return view('products.searchProducts', compact('products', 'tag'));
+}}

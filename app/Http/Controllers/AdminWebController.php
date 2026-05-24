@@ -7,9 +7,24 @@ use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
 use App\Models\ProductsModel;
 use App\Models\SlimzaDeals;
+use App\Services\SupabaseStorageService;
 class AdminWebController extends Controller
 {
     
+public function editPage($id)
+{
+    $product = ProductsModel::findOrFail($id);
+
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    $product = $this->formatProduct($product, $categories);
+
+    return view('admin.editProductPage', compact('product'));
+}
+
+
+
+
       public function getAddProduct()
 {
     // FETCH ALL CATEGORIES

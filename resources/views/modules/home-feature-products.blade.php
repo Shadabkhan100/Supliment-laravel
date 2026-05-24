@@ -10,25 +10,7 @@
       each product is created to restore, rebalance and inspire.
     </p>
 
-    <div class="d-flex align-items-start justify-content-between flex-lg-row flex-column pb-40">
-
-      <ul class="tabs list-unstyled">
-        <li class="tab-link active" data-tab="1">Cleanse & Reset</li>
-        <li class="tab-link" data-tab="2">Daily Energy</li>
-        <li class="tab-link" data-tab="3">Peak Performance</li>
-        <li class="tab-link" data-tab="4">Radiance & Beauty</li>
-        <li class="tab-link" data-tab="5">Total Wellness</li>
-        <li class="tab-link" data-tab="6">Restore & Renew</li>
-      </ul>
-
-      <a href="shop-grid-sidebar.html" class="cus-btn-arrow">
-        See All Products
-        <div class="icon">
-          <i class="fa-light fa-chevron-right"></i>
-        </div>
-      </a>
-
-    </div>
+   @include("modules.searchTags")
 
     <div class="content-wrapper">
 
@@ -63,7 +45,7 @@
 
   </div>
 </section>
-<!-- FEATURE PRODUCTS END -->
+
 
 <script>
 async function loadProducts() {
@@ -104,13 +86,14 @@ async function loadProducts() {
 
             <div class="shopping-btns">
 
-              <a href="#"
-                 data-bs-toggle="modal"
-                 data-bs-target="#productQuickView">
+             <a href="#"
+   class="open-quick-view"
+   data-bs-toggle="modal"
+   data-bs-target="#productQuickView"
+   data-product='${encodeURIComponent(JSON.stringify(product))}'>
 
-                <i class="fa-regular fa-eye"></i>
-
-              </a>
+   <i class="fa-regular fa-eye"></i>
+</a>
 
               <a href="javascript:;">
                 <i class="fa-light fa-heart"></i>
@@ -186,7 +169,6 @@ async function loadProducts() {
                  class="sm-btn light"
                  data-bs-toggle="modal"
                  data-bs-target="#productQuickView">
-
                 <svg xmlns="http://www.w3.org/2000/svg"
                      width="20"
                      height="20"

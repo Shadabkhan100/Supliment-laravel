@@ -94,7 +94,7 @@
                             </div>
 
                             <!-- DESCRIPTION SHORT -->
-                            <p class="quick-view-text mb-16">
+                            <p class="quick-view-text mb-16" style="color:white">
                                 {{ \Illuminate\Support\Str::limit(strip_tags($product->description), 180) }}
                             </p>
 
@@ -109,13 +109,13 @@
                             <div class="select-size mb-32">
                                 @if(!empty($product->weights))
                                     @foreach($product->weights as $index => $weight)
-                                        <input class="hidden radio-label"
+                                        <input style="color:white" class="hidden radio-label"
                                                type="radio"
                                                name="sizes"
                                                id="weight{{ $index }}"
                                                @if($loop->first) checked @endif>
 
-                                        <label class="button-label" for="weight{{ $index }}">
+                                        <label style="color:white" class="button-label" for="weight{{ $index }}">
                                             {{ $weight }} g
                                         </label>
                                     @endforeach
@@ -125,11 +125,11 @@
                             <!-- QUANTITY -->
                             <p class="subtitle font-primary fw-600 text-white mb-8">Quantity:</p>
 
-                            <div class="quantity quantity-wrap mb-16">
-                                <div class="input-area quantity-wrap">
-                                    <input class="decrement" type="button" value="-">
-                                    <input type="text" name="quantity" value="1" class="number">
-                                    <input class="increment" type="button" value="+">
+                            <div class="quantity quantity-wrap mb-16" style="color:white;border-color:white">
+                                <div class="input-area quantity-wrap" >
+                                    <input class="decrement" type="button" value="-" style="color:white" >
+                                    <input type="text" name="quantity" value="1" class="number" style="color:white;border-color:white">
+                                    <input class="increment" type="button" value="+" style="color:white">
                                 </div>
                             </div>
 
@@ -160,12 +160,12 @@
                             </div>
 
                             <!-- FEATURES -->
-                            <div class="d-flex align-items-center gap-12 mb-16">
-                                <p>90 day returns policy</p>
+                            <div  class="d-flex align-items-center gap-12 mb-16">
+                                <p style="color:white">90 day returns policy</p>
                             </div>
 
                             <div class="d-flex align-items-center gap-12 mb-16">
-                                <p>Free shipping on eligible orders</p>
+                                <p style="color:white">Free shipping on eligible orders</p>
                             </div>
 
                         </div>

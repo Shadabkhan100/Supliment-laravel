@@ -143,207 +143,155 @@
 
 <script src="{{ asset('js/bootstrap.min.js') }}"></script>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script>
+let allProducts = [];
 
-    let allProducts = [];
+$(document).ready(function () {
 
-    /* =========================
-       LOAD PRODUCTS
-    ========================== */
+    console.log("Product list loaded ✅");
 
-    function loadProducts()
-    {
+    // =========================
+    // LOAD PRODUCTS
+    // =========================
+    function loadProducts() {
 
         $.ajax({
+            url: "/api/get-all-product",
+            type: "GET",
 
-            url:'/api/get-all-product',
+            success: function (res) {
 
-            type:'GET',
+                console.log("PRODUCT RESPONSE =>", res);
 
-            success:function(res){
-
-                allProducts = res.data;
+                allProducts = res.data ?? [];
 
                 renderProducts(allProducts);
+            },
 
+            error: function (err) {
+                console.log("LOAD ERROR =>", err.responseText);
             }
-
         });
-
     }
 
-    /* =========================
-       RENDER PRODUCTS
-    ========================== */
+    // =========================
+    // RENDER TABLE
+    // =========================
+    function renderProducts(products) {
 
-    function renderProducts(products)
-    {
+        let html = "";
 
-        $('#productTableBody').html('');
+        products.forEach((p, i) => {
 
-        products.forEach((product,index)=>{
-
-            $('#productTableBody').append(`
-
+            html += `
                 <tr>
-
-                    <td>${index + 1}</td>
+                    <td>${i + 1}</td>
 
                     <td>
-
-                        <img src="${product.main_image}">
-
+                        <img src="${p.main_image}" width="60" height="60" style="object-fit:cover;">
                     </td>
 
                     <td>
-
-                        <div class="fw-bold">
-                            ${product.name}
-                        </div>
-
-                        <div class="text-muted small">
-                            SKU : ${product.sku}
-                        </div>
-
+                        <div class="fw-bold">${p.name}</div>
+                        <small>SKU: ${p.sku}</small>
                     </td>
 
                     <td>
-
-                        ${product.category?.name ?? 'N/A'}
-
+                        ${p.category?.name ?? 'N/A'}
                     </td>
 
                     <td>
-
-                        SAR ${product.price}
-
+                        SAR ${p.price}
                     </td>
 
                     <td>
-
-                        ${
-                            product.stock > 0
-                            ?
-                            `<span class="badge-stock in-stock">
-                                In Stock (${product.stock})
-                             </span>`
-                            :
-                            `<span class="badge-stock out-stock">
-                                Out Of Stock
-                             </span>`
+                        ${p.stock > 0
+                            ? `<span class="text-success">In Stock (${p.stock})</span>`
+                            : `<span class="text-danger">Out of Stock</span>`
                         }
-
                     </td>
+
+                    <td>${p.weights?.length ?? 0}</td>
+                    <td>${p.gallery_images?.length ?? 0}</td>
 
                     <td>
 
-                        ${product.weights?.length ?? 0}
-
-                    </td>
-
-                    <td>
-
-                        ${product.gallery_images?.length ?? 0}
-
-                    </td>
-
-                    <td>
-
-                        <button class="btn btn-info btn-sm btn-action">
-
+                        <button class="btn btn-info btn-sm">
                             View
-
                         </button>
 
-                        <button class="btn btn-warning btn-sm btn-action">
-
+                        <button class="btn btn-warning btn-sm"
+                                onclick="openEdit(${p.id})">
                             Edit
-
                         </button>
 
-                        <button class="btn btn-secondary btn-sm btn-action">
-
-                            Suspend
-
-                        </button>
-
-                        <button class="btn btn-danger btn-sm btn-action"
-                                onclick="deleteProduct(${product.id})">
-
+                        <button class="btn btn-danger btn-sm"
+                                onclick="deleteProduct(${p.id})">
                             Delete
-
                         </button>
 
                     </td>
-
                 </tr>
-
-            `);
-
+            `;
         });
 
+        $("#productTableBody").html(html);
     }
 
-    /* =========================
-       SEARCH PRODUCT
-    ========================== */
+    // =========================
+    // EDIT REDIRECT
+    // =========================
+    window.openEdit = function (id) {
+        window.location.href = "/admin/products/" + id + "/edit";
+    };
 
-    $('#searchProduct').on('keyup', function(){
+    // =========================
+    // DELETE PRODUCT
+    // =========================
+    window.deleteProduct = function (id) {
 
-        let value = $(this).val().toLowerCase();
-
-        let filtered = allProducts.filter(product => {
-
-            return product.name.toLowerCase().includes(value)
-                || product.sku.toLowerCase().includes(value);
-
-        });
-
-        renderProducts(filtered);
-
-    });
-
-    /* =========================
-       DELETE PRODUCT
-    ========================== */
-
-    function deleteProduct(id)
-    {
-
-        if(!confirm('Delete this product?'))
-        {
+        if (!confirm("Are you sure you want to delete this product?")) {
             return;
         }
 
         $.ajax({
-
-            url:'/api/delete-product/' + id,
-
-            type:'DELETE',
-
-            data:{
-                _token:'{{ csrf_token() }}'
+            url: "/api/delete-product/" + id,
+            type: "DELETE",
+            data: {
+                _token: "{{ csrf_token() }}"
             },
 
-            success:function(res){
-
-                alert('Product Deleted Successfully');
-
+            success: function (res) {
+                alert("Deleted successfully");
                 loadProducts();
+            },
 
+            error: function (err) {
+                console.log("DELETE ERROR =>", err.responseText);
             }
+        });
+    };
 
+    // =========================
+    // SEARCH
+    // =========================
+    $("#searchProduct").on("keyup", function () {
+
+        let value = $(this).val().toLowerCase();
+
+        let filtered = allProducts.filter(p => {
+            return (p.name ?? "").toLowerCase().includes(value)
+                || (p.sku ?? "").toLowerCase().includes(value);
         });
 
-    }
+        renderProducts(filtered);
+    });
 
-    /* =========================
-       INITIAL LOAD
-    ========================== */
-
+    // INIT
     loadProducts();
 
-</script>
-
-</body>
+});
+</script></body>
 </html>
