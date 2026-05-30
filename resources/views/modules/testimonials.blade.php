@@ -52,31 +52,30 @@ function loadTestimonials() {
 
                     <div class="d-flex flex-column gap-16">
 
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex" style="justify-content: center;">
                             ${stars}
                         </div>
 
-                        <p class="dark-gray">
+                        <p class="dark-gray" style="text-align:center">
                             “${item.message}”
                         </p>
 
                     </div>
-
+<hr class="qv-divider">
                     <div class="d-flex align-items-center justify-content-between">
 
-                        <div class="d-flex align-items-center gap-16">
+                        <div class="d-flex gap-16" style="margin: auto;">
 
-                            <img src="${img}" alt="user" class="user-image" />
+                          
 
-                            <div class="d-flex flex-column black">
+                            <div class="d-flex flex-column black" >
                                 <h6 class="mb-8">${item.name}</h6>
                                 <p>${item.role ?? 'Customer'}</p>
                             </div>
 
                         </div>
 
-                        <img src="images/quote.png" alt="quote" />
-
+                        
                     </div>
 
                 </div>

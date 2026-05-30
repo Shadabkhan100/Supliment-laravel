@@ -9,7 +9,7 @@ use App\Models\SlimzaDeals;
 use App\Services\SupabaseStorageService;
 use App\Models\ProductsModel;
 use Illuminate\Support\Str;
-
+use App\Models\Blogs;
 
 class WebRoutController extends Controller
 {
@@ -187,4 +187,41 @@ public function searchByTag($tag)
         });
 
     return view('products.searchProducts', compact('products', 'tag'));
-}}
+}
+
+
+
+      public function getAllBlogs()
+    {
+        return view('pages.blogs');
+    }
+
+ public function contactView()
+    {
+        return view('pages.contact');
+    }
+
+     
+
+public function shopDetails($slug, $id)
+{
+    // 1. Get products using category_id ONLY
+    $products = ProductsModel::where('category_id', $id)->get();
+
+    // 2. Convert product images using Supabase
+    $products = $products->map(function ($product) {
+
+        $product->image = $product->main_image
+            ? SupabaseStorageService::getPublicUrl($product->main_image)
+            : null;
+
+        return $product;
+    });
+
+    // 3. Pass slug + products to view
+    return view('pages.shop-details', [
+        'category_slug' => $slug,
+        'products' => $products,
+    ]);
+}
+}

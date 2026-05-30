@@ -449,7 +449,9 @@ Helpers
 .black {
   color: #0c0c0d;
 }
-
+.black2 {
+  color: #fff;
+}
 .medium-black {
   color: #1e1f20;
 }
@@ -4310,10 +4312,10 @@ footer .footer-bottom-bar .payment-cards .card-block img {
 .blog-tags-wrapper .blog-tags {
   padding: clamp(8px, 0.625vw, 40px) clamp(12px, 0.833vw, 48px);
   border-radius: 48px;
-  border: 1px solid #0c0c0d;
+  border: 1px solid white;
   transition: all 0.5s ease-in-out;
   background: transparent;
-  color: #0c0c0d;
+  color: white;
   font-weight: 500;
 }
 .blog-tags-wrapper .blog-tags:hover {

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
-
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
     <style>
         body{
             background:#f8f8f8;
@@ -225,14 +225,15 @@
                             ></textarea>
                         </div>
 
-                        <div class="col-12 mb-3">
-                            <label class="form-label">Description</label>
+                       <div class="col-12 mb-3">
+    <label class="form-label">Description</label>
 
-                            <textarea
-                                class="form-control"
-                                id="description"
-                            ></textarea>
-                        </div>
+    <textarea
+        class="form-control"
+        id="description"
+        name="description"
+    ></textarea>
+</div>
 <div class="col-12 mb-3">
 
     <label class="form-label fw-bold mb-2">
@@ -295,7 +296,29 @@
 <script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
 <script src="{{ asset('js/slickAnimation.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
-
+<script>
+ClassicEditor
+    .create(document.querySelector('#description'), {
+        toolbar: [
+            'heading',
+            '|',
+            'bold',
+            'italic',
+            'link',
+            'bulletedList',
+            'numberedList',
+            '|',
+            'blockQuote',
+            'insertTable',
+            'imageUpload',
+            'undo',
+            'redo'
+        ]
+    })
+    .catch(error => {
+        console.error(error);
+    });
+</script>
 <script>
 
     let allBlogs = [];

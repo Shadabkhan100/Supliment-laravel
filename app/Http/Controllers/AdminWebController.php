@@ -71,5 +71,12 @@ public function getTestimonialmanagement()
        
         return view('admin.testimonials');
     }
+
+public function getDashboardView()
+    {
+       
+        return view('admin.dashboard');
+    }
+
  
 }

@@ -126,7 +126,7 @@ and wellbeing products......
                       <li class="white mb-8"><a href="/about-us">About us</a></li>
                       <li class="white mb-8"><a href="/faq">FAQ</a></li>
                       <li class="white mb-8"><a href="/return-policy">Return & Refund Policy</a></li>
-                      <li class="white mb-8"><a href="/find-store">Find a store</a></li>
+                    
                       <li class="white"><a href="contact.html">Privacy Policy</a></li>
                     </ul>
                   </div>

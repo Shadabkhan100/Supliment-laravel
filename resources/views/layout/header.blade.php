@@ -1,5 +1,9 @@
-<!-- Header Menu Start -->
+
+<!-- Slick CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+
 <header>
+
   <!-- Main Header Start -->
   <div class="header-section bg-white dark-black main-menu">
     <div class="container-fluid">
@@ -39,20 +43,23 @@
                         stroke-linejoin="round"/>
                 </svg>
 
-                <ul class="topbar-dropdown bg-lightest-gray">
-                  <li class="item dark-black d-flex align-items-center gap-8">
-                    <img src="{{ asset('images/usd.png') }}" alt=""> USD
-                  </li>
-                  <li class="item dark-black d-flex align-items-center gap-8">
-                    <img src="{{ asset('images/aed.png') }}" alt=""> AED
-                  </li>
-                  <li class="item dark-black d-flex align-items-center gap-8">
-                    <img src="{{ asset('images/lb.png') }}" alt=""> LB
-                  </li>
-                  <li class="item dark-black d-flex align-items-center gap-8">
-                    <img src="{{ asset('images/dem.png') }}" alt=""> DEM
-                  </li>
-                </ul>
+          <ul class="topbar-dropdown bg-lightest-gray">
+@php
+    $currency = session('currency', 'USD');
+@endphp
+    <li class="currency-item {{ $currency === 'USD' ? 'active' : '' }}" data-currency="USD">
+        <img src="{{ asset('images/usd.png') }}" alt=""> USD
+    </li>
+
+    <li class="currency-item {{ $currency === 'SAR' ? 'active' : '' }}" data-currency="SAR">
+        <img src="{{ asset('images/sar.png') }}" alt=""> SAR
+    </li>
+
+    <li class="currency-item {{ $currency === 'EUR' ? 'active' : '' }}" data-currency="EUR">
+        <img src="{{ asset('images/eur.png') }}" alt=""> EUR
+    </li>
+
+</ul>
               </div>
             </div>
 
@@ -102,38 +109,38 @@
 
                     <li><a href="{{ url('/') }}" class="active">Home</a></li>
 
-                    <li class="dropdown">
-                      <a href="javascript:void(0);">
-                        Shop <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
-                      </a>
-                      <ul class="sub-menu">
-                        <li><a href="{{ url('shop-grid') }}">Shop Grid</a></li>
-                        <li><a href="{{ url('shop-grid-sidebar') }}">Shop Grid Sidebar</a></li>
-                        <li><a href="{{ url('product-detail') }}">Product Detail</a></li>
-                      </ul>
-                    </li>
+<li class="dropdown" id="shop-category-dropdown">
+
+    <a href="javascript:void(0);">
+        Shop
+        <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
+    </a>
+
+    <ul class="sub-menu" id="category-menu">
+        <li>
+            <a href="javascript:void(0);">Loading...</a>
+        </li>
+    </ul>
+
+</li>
 
                     <li><a href="{{ url('about') }}">About Us</a></li>
-
-                    <li class="dropdown">
-                      <a href="javascript:void(0);">
-                        Blogs <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
-                      </a>
-                      <ul>
-                        <li><a href="{{ url('blog-grid') }}">Blog Grid</a></li>
-                        <li><a href="{{ url('blog-grid-sidebar') }}">Blog Grid Sidebar</a></li>
-                        <li><a href="{{ url('blog-detail') }}">Blog Detail</a></li>
-                      </ul>
-                    </li>
+                     <li><a href="{{ url('all-blogs') }}">Blogs</a></li>
 
                     <li class="dropdown">
                       <a href="javascript:void(0);">
                         Pages <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
                       </a>
                       <ul class="sub-menu">
-                        <li><a href="{{ url('contact') }}">Contact Us</a></li>
-                        <li><a href="{{ url('404') }}">404</a></li>
-                        <li><a href="{{ url('coming-soon') }}" class="active">Coming soon</a></li>
+
+
+
+
+                        <li><a href="{{ url('/contact') }}">Contact Us</a></li>
+                        <li><a href="{{ url('/about-us') }}">About us</a></li>
+                        <li><a href="{{ url('/faq') }}" class="active">FAQ</a></li>
+                         <li><a href="{{ url('/return-policy') }}">Return & Refund Policy</a></li>
+                        <li><a href="{{ url('/privacy-policy') }}">Privacy Policy</a></li>
                       </ul>
                     </li>
 
@@ -232,4 +239,115 @@
     </div>
   </div>
 </div>
+
+<!-- jQuery FIRST -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Slick JS -->
+<script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+
+<script>
+window.currentCurrency = "{{ session('currency', 'USD') }}";
+document.addEventListener('DOMContentLoaded', async function () {
+
+    console.log('🚀 CATEGORY SCRIPT LOADED');
+
+    const categoryMenus = document.querySelectorAll('#category-menu');
+
+    if (!categoryMenus.length) {
+        console.error('No category menus found');
+        return;
+    }
+
+    try {
+
+        const response = await fetch('/api/categories');
+        const result = await response.json();
+
+        const categories = result.data || [];
+
+        console.log('Categories:', categories);
+
+        categoryMenus.forEach(menu => {
+
+            if (!categories.length) {
+                menu.innerHTML = `<li><a href="#">No Categories Found</a></li>`;
+                return;
+            }
+
+            menu.innerHTML = categories.map(cat => `
+                <li>
+                    <a href="/shop/${cat.name}/${cat.id}">
+                        ${cat.name}
+                    </a>
+                </li>
+            `).join('');
+
+        });
+
+        console.log('✅ Desktop + Mobile menus updated');
+
+    } catch (error) {
+        console.error('❌ Category Error:', error);
+
+        categoryMenus.forEach(menu => {
+            menu.innerHTML = `<li><a href="#">Failed To Load Categories</a></li>`;
+        });
+    }
+
+});
+</script>
+
+<script src="{{ asset('js/currency.js') }}"></script>
+<script>
+
+
+document.querySelectorAll('.currency-item').forEach(item => {
+
+    item.addEventListener('click', function () {
+
+        let currency = this.getAttribute('data-currency');
+
+        fetch("{{ route('change.currency') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                currency: currency
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // refresh entire site with new currency
+            }
+        });
+
+    });
+
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const currentCurrency = "{{ session('currency', 'USD') }}";
+
+    const selected = document.querySelector("#destination2");
+
+    const activeItem = document.querySelector(`.currency-item[data-currency="${currentCurrency}"]`);
+
+    if (selected && activeItem) {
+
+        const img = activeItem.querySelector("img")?.src;
+        const text = activeItem.textContent.trim();
+
+        selected.innerHTML = `
+            <img src="${img}" alt="">
+            ${text}
+        `;
+    }
+
+});
+</script>
 <!-- Mobile Menu End -->

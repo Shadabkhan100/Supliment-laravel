@@ -114,5 +114,48 @@
 
 </div>
 </div>
+<script>
+
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'USD') }}";
+
+function formatPrice(price) {
+
+  const currency = window.currentCurrency || window.currencyConfig.default || "USD";
+  const config = window.currencyConfig?.currencies?.[currency];
+
+  if (!config) return price;
+
+  const converted = price * config.rate;
+
+  return `${config.symbol} ${converted.toFixed(2)}`;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // convert main prices
+    document.querySelectorAll('.main-price').forEach(el => {
+        const value = parseFloat(el.innerText);
+        if (!isNaN(value)) {
+            el.innerText = formatPrice(value);
+        }
+    });
+
+    // convert old prices
+    document.querySelectorAll('.old-price').forEach(el => {
+        const value = parseFloat(el.innerText);
+        if (!isNaN(value)) {
+            el.innerHTML = formatPrice(value);
+        }
+    });
+
+});
+
+
+</script>
+
 
 @endsection
+
+
+

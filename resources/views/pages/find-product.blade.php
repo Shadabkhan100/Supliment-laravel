@@ -69,6 +69,29 @@
 <!-- FEATURE PRODUCTS END -->
 
 <script>
+
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'USD') }}";
+console.log(currentCurrency);
+function formatPrice(price) {
+
+  const currency = window.currentCurrency || window.currencyConfig.default || "USD";
+
+  const config = window.currencyConfig?.currencies?.[currency];
+
+  if (!config) {
+    console.warn("Currency not found:", currency);
+    return `$ ${price}`;
+  }
+
+  const converted = price * config.rate;
+
+  return `${config.symbol} ${converted.toFixed(2)}`;
+}
+
+
+
+
 function loadProducts() {
 
   const json = { data: @json($products) };
@@ -96,13 +119,21 @@ function loadProducts() {
 
     const mainImage = product.main_image || '';
 
-    const discountLabel = product.old_price
-      ? `-${Math.round(((product.old_price - product.price) / product.old_price) * 100)}%`
-      : '';
 
-    const oldPriceHTML = product.old_price
-      ? `<span class="h6 text-decoration-line-through dark-gray">$${product.old_price}</span>`
-      : '';
+
+    const discountLabel = product.old_price
+        ? `-${Math.round(((product.old_price - product.price) / product.old_price) * 100)}%`
+        : '';
+
+      /* ✅ FIXED: moved inside loop + currency applied */
+      const oldPriceHTML = product.old_price
+        ? `<span class="h6 text-decoration-line-through dark-gray">
+              ${formatPrice(product.old_price)}
+           </span>`
+        : '';
+
+
+
 
     // ✅ YOUR EXACT CARD DESIGN (UNCHANGED)
     const productHTML = `
@@ -167,7 +198,11 @@ function loadProducts() {
           <div class="d-flex align-items-center justify-content-between">
 
             <h5 class="black">
-              ${oldPriceHTML} $${product.price}
+              ${oldPriceHTML}
+
+                ${formatPrice(product.price)}
+
+
             </h5>
 
            <a href="#"

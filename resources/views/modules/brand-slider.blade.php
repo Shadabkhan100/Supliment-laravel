@@ -3,7 +3,7 @@
           <div class="container-fluid">
  <h2 class="fw-600 mb-12" style="color:#9eef0b;">Trusted By</h2>
         <p style="color:white">
-         Trusted by growing businesses and service providers who rely on smart, scalable digital solutions.
+        Trusted and Featured within leading retail venues and prominent events across the U.K., reinforcing our reputation for premium wellness products and a strong customer-focused approach.
         </p>
 
             <div class="brand-slider">

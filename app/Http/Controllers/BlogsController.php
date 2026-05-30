@@ -201,4 +201,100 @@ class BlogsController extends Controller
             'message' => 'Blog deleted successfully',
         ]);
     }
+
+public function blogsDetailsView($slug, $id)
+{
+    $blog = Blogs::findOrFail($id);
+
+    // Optional safety check: slug mismatch handling
+    if ($blog->slug !== $slug) {
+        return redirect()->to("/blog-details/{$blog->slug}/{$blog->id}");
+    }
+
+    // Convert Supabase image to public URL
+    $blog->image = $blog->image
+        ? SupabaseStorageService::getPublicUrl($blog->image)
+        : null;
+
+    // -------------------------------
+    // STATIC AUTHOR (demo object)
+    // -------------------------------
+    $author = (object) [
+        'name' => 'Emily Brooks',
+        'bio' => 'Emily Brooks is a content writer with strong expertise in health, fitness, and lifestyle topics. She creates engaging and research-based articles.',
+        'image' => asset('/images/blogs/user.png'),
+        'social' => [
+            'facebook' => '#',
+            'twitter' => '#',
+            'instagram' => '#',
+            'linkedin' => '#',
+        ]
+    ];
+
+   $comments = [
+    [
+        'id' => 101,
+        'blog_id' => $blog->id,
+        'user_id' => 11,
+        'content' => 'Really helpful article. I learned a lot about nutrition timing and recovery.',
+        'created_at' => '2025-08-24',
+
+        'author' => [
+            'name' => 'Jacob Thomas',
+            'image' => asset('/images/blogs/user.png'),
+            'description' => 'Fitness enthusiast and nutrition learner'
+        ],
+
+        'replies' => [
+            [
+                'id' => 201,
+                'comment_id' => 101,
+                'blog_id' => $blog->id,
+                'user_id' => 1,
+                'content' => 'Glad it helped you! Stay consistent and you’ll see results.',
+                'created_at' => '2025-08-24',
+
+                'author' => [
+                    'name' => 'Emily Brooks',
+                    'image' => asset('/images/blogs/user.png'),
+                    'description' => 'Content writer & nutrition specialist'
+                ],
+            ],
+            [
+                'id' => 202,
+                'comment_id' => 101,
+                'blog_id' => $blog->id,
+                'user_id' => 12,
+                'content' => 'This made things much clearer, thanks!',
+                'created_at' => '2025-08-25',
+
+                'author' => [
+                    'name' => 'Michael Scott',
+                    'image' => asset('/images/blogs/user.png'),
+                    'description' => 'Gym enthusiast'
+                ],
+            ]
+        ],
+    ],
+
+    [
+        'id' => 102,
+        'blog_id' => $blog->id,
+        'user_id' => 13,
+        'content' => 'Great breakdown of vitamins. Very simple and clear.',
+        'created_at' => '2025-08-24',
+
+        'author' => [
+            'name' => 'Ethan Michael',
+            'image' => asset('/images/blogs/user.png'),
+            'description' => 'Health blogger'
+        ],
+
+        'replies' => []
+    ]
+];
+
+    return view('Modules.blogs-details', compact('blog', 'author', 'comments'));
+}
+
 }

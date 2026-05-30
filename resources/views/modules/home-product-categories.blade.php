@@ -56,9 +56,8 @@ function loadCategories()
                 html += `
                     <div class="col-lg-2 col-md-4 col-sm-6 col-6">
 
-                        <a href="/shop?category=${category.id}"
+                        <a href="/shop/${category.name}/${category.id}"
                            class="category-block">
-
                             <div class="image-box mb-16">
 
                                 <img src="${category.image || '/images/default.png'}"
