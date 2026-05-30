@@ -110,12 +110,10 @@ and wellbeing products......
                   <div class="footer-link-block">
                     <h5 class="white mb-24">Useful Links</h5>
                     <ul class="list-unstyled m-0">
-                      <li class="white mb-8"><a href="">Wholesale</a></li>
-                      <li class="white mb-8"><a href="">Become a retailer</a></li>
-                      <li class="white mb-8"><a href="">Corporate orders</a></li>
-                      <li class="white mb-8"><a href="">Affiliates</a></li>
-                      <li class="white mb-8"><a href="">F.A.Q.</a></li>
-                      <li class="white"><a href="contact.html">Contact</a></li>
+                      <li class="white mb-8"><a href="/all-blogs">Blogs</a></li>
+                      <li class="white mb-8"><a href="{{ url('/contact') }}">Contact Us</a></li>
+                      <li class="white mb-8"><a href="{{ url('/faq') }}">F.A.Q.</a></li>
+                   
                     </ul>
                   </div>
                 </div>

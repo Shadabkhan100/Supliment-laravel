@@ -49,17 +49,17 @@
 
 <script>
 window.currencyConfig = @json(config('currency'));
-window.currentCurrency = "{{ session('currency', 'USD') }}";
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
 console.log(currentCurrency);
 function formatPrice(price) {
 
-  const currency = window.currentCurrency || window.currencyConfig.default || "USD";
+  const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
 
   const config = window.currencyConfig?.currencies?.[currency];
 
   if (!config) {
     console.warn("Currency not found:", currency);
-    return `$ ${price}`;
+    return `£ ${price}`;
   }
 
   const converted = price * config.rate;

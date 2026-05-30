@@ -8,6 +8,8 @@ use App\Http\Controllers\DealsManagement;
 use App\Http\Controllers\PageSettingController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\FutureProductController;
+use App\Http\Controllers\AuthController;
+
 
 use App\Http\Controllers\TestimonialsController;
 
@@ -31,6 +33,8 @@ Route::get('/page-settings', [PageSettingController::class, 'get']);
 Route::get('/testimonials', [TestimonialsController::class, 'index']);
 Route::post('/create-testimonials', [TestimonialsController::class, 'store']);
 Route::delete('/testimonials/{id}', [TestimonialsController::class, 'destroy']);
+
+Route::post('/signup-user', [AuthController::class,'registerUser']);
 
 
 Route::prefix('deals')->group(function () {

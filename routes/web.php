@@ -16,7 +16,7 @@ Route::get('/faq', [WebRoutController::class, 'faqView']);
 Route::get('/return-policy', [WebRoutController::class, 'returnView']);
 Route::get('/shop/{slug}/{id}', [WebRoutController::class, 'shopDetails']);
 Route::get('/contact', [WebRoutController::class, 'contactView']);
-
+Route::get('/login', [WebRoutController::class, 'authPage']);
 
 Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
 Route::get('/all-blogs', [WebRoutController::class, 'getAllBlogs']);

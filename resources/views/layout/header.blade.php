@@ -29,8 +29,8 @@
             <div class="drop-container">
               <div class="wrapper-dropdown dark-black" id="dropdown2">
                 <span class="selected-display d-inline-flex align-items-center gap-8" id="destination2">
-                  <img src="{{ asset('images/usd.png') }}" alt="">
-                  USD
+                  <img src="{{ asset('images/eur.png') }}" alt="">
+                  GBP
                 </span>
 
                 <svg id="drp-arrow2" width="24" height="24" viewBox="0 0 24 24"
@@ -45,20 +45,17 @@
 
           <ul class="topbar-dropdown bg-lightest-gray">
 @php
-    $currency = session('currency', 'USD');
+    $currency = session('currency', 'GBP');
 @endphp
+     <li class="currency-item {{ $currency === 'GBP' ? 'active' : '' }}" data-currency="GBP">
+          <img src="{{ asset('images/eur.png') }}" alt=""> GBP
+    </li>
     <li class="currency-item {{ $currency === 'USD' ? 'active' : '' }}" data-currency="USD">
         <img src="{{ asset('images/usd.png') }}" alt=""> USD
     </li>
-
     <li class="currency-item {{ $currency === 'SAR' ? 'active' : '' }}" data-currency="SAR">
         <img src="{{ asset('images/sar.png') }}" alt=""> SAR
     </li>
-
-    <li class="currency-item {{ $currency === 'EUR' ? 'active' : '' }}" data-currency="EUR">
-        <img src="{{ asset('images/eur.png') }}" alt=""> EUR
-    </li>
-
 </ul>
               </div>
             </div>
@@ -79,8 +76,6 @@
 
                 <ul class="topbar-dropdown bg-lightest-gray">
                   <li class="item dark-black">English</li>
-                  <li class="item dark-black">Spanish</li>
-                  <li class="item dark-black">Italian</li>
                   <li class="item dark-black">Arabic</li>
                 </ul>
               </div>
@@ -245,9 +240,15 @@
 
 <!-- Slick JS -->
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-
 <script>
-window.currentCurrency = "{{ session('currency', 'USD') }}";
+window.Currency.init(
+    @json(config('currency')),
+    "{{ session('currency', 'GBP') }}"
+);
+</script>
+<script>
+
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
 document.addEventListener('DOMContentLoaded', async function () {
 
     console.log('🚀 CATEGORY SCRIPT LOADED');
@@ -307,7 +308,7 @@ document.querySelectorAll('.currency-item').forEach(item => {
     item.addEventListener('click', function () {
 
         let currency = this.getAttribute('data-currency');
-
+          console.log(currency);
         fetch("{{ route('change.currency') }}", {
             method: "POST",
             headers: {
@@ -331,7 +332,7 @@ document.querySelectorAll('.currency-item').forEach(item => {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    const currentCurrency = "{{ session('currency', 'USD') }}";
+    const currentCurrency = "{{ session('currency', 'GBP') }}";
 
     const selected = document.querySelector("#destination2");
 

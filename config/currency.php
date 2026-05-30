@@ -2,14 +2,15 @@
 
 return [
 
-    'default' => 'USD',
+    'default' => 'GBP',
 
     'currencies' => [
 
-        'USD' => ['symbol' => '$', 'rate' => 1],
-        'SAR' => ['symbol' => '﷼', 'rate' => 3.75],
-        'EUR' => ['symbol' => '€', 'rate' => 0.92],
+    'USD' => ['symbol' => '$', 'rate' => 1],
+    'SAR' => ['symbol' => '﷼', 'rate' => 3.75],
+    'GBP' => ['symbol' => '£', 'rate' => 0.79],
 
-    ],
+],
+
 
 ];

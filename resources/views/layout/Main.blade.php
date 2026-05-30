@@ -100,7 +100,9 @@ s0.parentNode.insertBefore(s1,s0);
 
 
 
+
 <script>
+
 // 🔥 QUICK VIEW SCRIPT HERE
 document.addEventListener("click", function (e) {
 
@@ -124,11 +126,13 @@ document.addEventListener("click", function (e) {
 document.getElementById("qv-description").innerText =
   desc.split(' ').slice(0, 35).join(' ') + '...';
 
-  // PRICE
-  document.getElementById("qv-price").innerText = "$" + product.price;
+  // PRICE (with currency support)
+document.getElementById("qv-price").innerText =
+  formatPrice(product.price);
 
-  document.getElementById("qv-old-price").innerText =
-    product.old_price ? "$" + product.old_price : '';
+// OLD PRICE (with currency support)
+document.getElementById("qv-old-price").innerText =
+  product.old_price ? formatPrice(product.old_price) : '';
 
   // SKU
   document.getElementById("qv-sku").innerText = product.sku || '';
@@ -165,7 +169,29 @@ function stripHtml(html) {
   div.innerHTML = html;
   return div.textContent || div.innerText || "";
 }
+
+
+function formatPrice(price) {
+
+  const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
+
+  const config = window.currencyConfig?.currencies?.[currency];
+
+  if (!config) {
+    console.warn("Currency not found:", currency);
+    return `$ ${price}`;
+  }
+
+  const converted = price * config.rate;
+
+  return `${config.symbol} ${converted.toFixed(2)}`;
+}
+
+
 </script>
+
+
+
 
   </body>
 </html>

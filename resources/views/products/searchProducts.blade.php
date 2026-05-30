@@ -79,15 +79,15 @@
 
         <div class="d-flex align-items-center justify-content-between">
 
-          <h5 class="black">
-            @if(!empty($product['old_price']) && $product['old_price'] > $product['price'])
-              <span class="h6 text-decoration-line-through dark-gray">
-                ${{ $product['old_price'] }}
-              </span>
-            @endif
+<h5 class="black">
+    @if(!empty($product['old_price']) && $product['old_price'] > $product['price'])
+        <span class="old-price h6 text-decoration-line-through dark-gray">
+            {{ $product['old_price'] }}
+        </span>
+    @endif
 
-            ${{ $product['price'] }}
-          </h5>
+    <span class="main-price">{{ $product['price'] }}</span>
+</h5>
 
           <a href="javascript:;"
              class="sm-btn light open-quick-view"
@@ -117,13 +117,12 @@
 <script>
 
 window.currencyConfig = @json(config('currency'));
-window.currentCurrency = "{{ session('currency', 'USD') }}";
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
 
 function formatPrice(price) {
 
-  const currency = window.currentCurrency || window.currencyConfig.default || "USD";
+  const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
   const config = window.currencyConfig?.currencies?.[currency];
-
   if (!config) return price;
 
   const converted = price * config.rate;

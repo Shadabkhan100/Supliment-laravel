@@ -201,6 +201,10 @@ public function searchByTag($tag)
         return view('pages.contact');
     }
 
+ public function authPage()
+    {
+        return view('pages.auth');
+    }
      
 
 public function shopDetails($slug, $id)

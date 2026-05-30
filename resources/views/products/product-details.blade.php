@@ -79,19 +79,19 @@
                             </div>
 
                             <!-- PRICE -->
-                            <div class="d-flex align-items-center gap-16 mb-16">
+                         <div class="d-flex align-items-center gap-16 mb-16">
 
-                                @if($product->old_price)
-                                    <h6 class="dark-gray text-decoration-line-through">
-                                        ${{ number_format($product->old_price, 2) }}
-                                    </h6>
-                                @endif
+    @if($product->old_price)
+        <h6 class="dark-gray text-decoration-line-through old-price">
+            {{ number_format($product->old_price, 2) }}
+        </h6>
+    @endif
 
-                                <h4 class="text-white">
-                                    ${{ number_format($product->price, 2) }}
-                                </h4>
+    <h4 class="text-white main-price">
+        {{ number_format($product->price, 2) }}
+    </h4>
 
-                            </div>
+</div>
 
                             <!-- DESCRIPTION SHORT -->
                             <p class="quick-view-text mb-16" style="color:white">
@@ -194,5 +194,47 @@
     </section>
 
 </main>
+<script>
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
+
+function formatPrice(value) {
+    const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
+    const config = window.currencyConfig?.currencies?.[currency];
+ console.log("Currency:", currency);
+    console.log("Config found:", config);
+    console.log("Symbol:", config?.symbol);
+      if (!config) return value;
+
+    const converted = value * config.rate;
+
+    return `${config.symbol} ${converted.toFixed(2)}`;
+}
+
+function getNumber(text) {
+    return parseFloat(text.replace(/[^0-9.]/g, ''));
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // MAIN PRICE
+    document.querySelectorAll('.main-price').forEach(el => {
+        const value = getNumber(el.innerText);
+        if (!isNaN(value)) {
+            el.innerText = formatPrice(value);
+        }
+    });
+
+    // OLD PRICE
+    document.querySelectorAll('.old-price').forEach(el => {
+        const value = getNumber(el.innerText);
+        if (!isNaN(value)) {
+            el.innerText = formatPrice(value);
+        }
+    });
+
+});
+
+</script>
 
 @endsection
