@@ -50,6 +50,7 @@
     <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
 
   <body class="tt-smooth-scroll" style="background-color:black">
@@ -65,18 +66,49 @@
       </div>
     </div>
 
+
     @include('layout.header')
     @yield('content')
-
     <div id="sidebar-cart-curtain" class="close-popup"></div>
-
     @include('layout.footer')
     @include("products.productQuickView")
     @include("products.comparepopup")
     @include("products.cart-popup")
 
+
+@if(session('success'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: @json(session('success')),
+        showConfirmButton: false,
+        timer: 6000,
+        timerProgressBar: true
+    });
+});
 </script>
-    <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
+@endif
+
+@if(session('error'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: @json(session('error')),
+        showConfirmButton: false,
+        timer: 6000,
+        timerProgressBar: true
+    });
+});
+</script>
+@endif
+
+<script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
 <script src="{{ asset('js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('js/slick.min.js') }}"></script>
 <script src="{{ asset('js/jquery.countdown.min.js') }}"></script>

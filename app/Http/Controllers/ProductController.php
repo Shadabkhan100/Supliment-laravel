@@ -27,6 +27,7 @@ class ProductController extends Controller
               'weights' => 'nullable|array',
             'weights.*' => 'string',
            'tags.*' => 'string',
+            'options' => 'nullable|array',
         ]);
 
         // =========================
@@ -69,7 +70,7 @@ class ProductController extends Controller
             'stock' => $validated['stock'],
             'weights' => json_encode($validated['weights'] ?? []),
              'tags' => json_encode($validated['tags'] ?? []),
-
+                'options' => json_encode($validated['options'] ?? []),
             'main_image' => $mainImagePath,
             'gallery_images' => json_encode($galleryPaths),
         ]);
@@ -131,6 +132,7 @@ public function editPage($id)
             'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
             'weights' => json_decode($product->weights, true) ?? [],
             'tags' => json_decode($product->tags, true) ?? [],
+             'options' => json_decode($product->options, true) ?? [],
 
 
             // =========================
@@ -269,6 +271,8 @@ public function editPage($id)
         'stock' => 'required|integer|min:0',
         'weights' => 'nullable|array',
         'tags' => 'nullable|array',
+         'options' => 'nullable|array',
+
         'weights.*' => 'string',
         'tags.*' => 'string',
     ]);
@@ -317,6 +321,7 @@ public function editPage($id)
 
         'weights' => json_encode($validated['weights'] ?? []),
         'tags' => json_encode($validated['tags'] ?? []),
+          'options' => json_encode($validated['options'] ?? []),
 
         'main_image' => $mainImagePath,
         'gallery_images' => json_encode($galleryPaths),

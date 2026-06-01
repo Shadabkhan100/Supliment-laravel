@@ -6,6 +6,12 @@ use App\Http\Controllers\WebRoutController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminWebController;
 use App\Http\Controllers\BlogsController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\ProfileController;
+
+
+
 
 Route::get('/', [WebRoutController::class, 'getHome']);
 Route::get('/railway-test', function () {
@@ -23,16 +29,17 @@ Route::get('/all-blogs', [WebRoutController::class, 'getAllBlogs']);
 Route::get('/blog-details/{slug}/{id}', [BlogsController::class, 'blogsDetailsView']);
 Route::get('/product-details/{slug}/{id}', [WebRoutController::class, 'getProductDetails']);
 
+Route::get('/profile', [ProfileController::class, 'getProfileView']);
 
-
-
+Route::post('/login', [AuthController::class, 'LoginUser']);
+Route::get('/logout', [AuthController::class, 'logoutUser']);
 
 Route::get('/shipping-cost', [WebRoutController::class, 'shippingCost'])->name('shipping.cost');
 Route::get('/30-days-guarantee', [WebRoutController::class, 'thirtyDaysGuarantee'])->name('guarantee.30days');
 Route::get('/privacy-policy', [WebRoutController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/search-product/{tag}', [WebRoutController::class, 'searchByTag']);
-
-
+Route::post('/cart/add', [CartController::class, 'addToCart']);
+Route::get('/cart', [CartController::class, 'cartView']);
 
 Route::get('/admin', [AdminWebController::class, 'getDashboardView']);
 Route::get('/admin/add-product', [AdminWebController::class, 'getAddProduct']);

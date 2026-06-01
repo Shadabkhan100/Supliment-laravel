@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+
+
+
 return new class extends Migration
 {
     /**
@@ -31,11 +34,12 @@ return new class extends Migration
         // Stock
         $table->integer('stock')->default(0);
 
-        // Product Options (like 250g, 500g)
+       
         $table->json('weights')->nullable(); 
          $table->json('tags')->nullable(); 
-        // Example: ["250g","500g","1000g"]
-
+        
+         $table->json('options')->nullable(); 
+        
         // Images
         $table->string('main_image')->nullable();
         $table->json('gallery_images')->nullable();

@@ -121,16 +121,13 @@
 
                     <li><a href="{{ url('about') }}">About Us</a></li>
                      <li><a href="{{ url('all-blogs') }}">Blogs</a></li>
+                    
 
                     <li class="dropdown">
                       <a href="javascript:void(0);">
                         Pages <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
                       </a>
                       <ul class="sub-menu">
-
-
-
-
                         <li><a href="{{ url('/contact') }}">Contact Us</a></li>
                         <li><a href="{{ url('/about-us') }}">About us</a></li>
                         <li><a href="{{ url('/faq') }}" class="active">FAQ</a></li>
@@ -139,6 +136,9 @@
                       </ul>
                     </li>
 
+                    @if(Auth::check())
+                   <li><a href="{{ url('/logout') }}">Logout</a></li>
+                      @endif
                   </ul>
                 </div>
               </div>
@@ -163,12 +163,15 @@
                   </div>
                 </form>
               </div>
-
-              <a href="{{ url('contact') }}" class="account-btn">
-                <i class="fa-light fa-user"></i>
-              </a>
-
-              <a href="javascript:;" class="cart-button">
+@if(Auth::check())
+    <a href="{{ url('profile') }}" class="account-btn">
+        <i class="fa-light fa-user"></i>
+    </a>
+@else
+    <a href="{{ url('login') }}" class="account-btn">
+        <i class="fa-light fa-user"></i>
+    </a>
+@endif              <a href="{{ url('cart') }}" class="cart-button">
                 <i class="fa-light fa-cart-shopping"></i>
               </a>
 
@@ -240,12 +243,7 @@
 
 <!-- Slick JS -->
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-<script>
-window.Currency.init(
-    @json(config('currency')),
-    "{{ session('currency', 'GBP') }}"
-);
-</script>
+
 <script>
 
 window.currentCurrency = "{{ session('currency', 'GBP') }}";

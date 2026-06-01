@@ -129,17 +129,19 @@
         </div>
 
         {{-- LOGIN FORM --}}
-        <form id="loginForm">
-            <div class="input-group">
-                <input type="email" id="login_email" placeholder="Email Address" required>
-            </div>
+        <form method="POST" action="/login">
+    @csrf
 
-            <div class="input-group">
-                <input type="password" id="login_password" placeholder="Password" required>
-            </div>
+    <div class="input-group">
+        <input type="email" name="email" placeholder="Email Address" required>
+    </div>
 
-            <button type="submit" class="auth-btn">Login</button>
-        </form>
+    <div class="input-group">
+        <input type="password" name="password" placeholder="Password" required>
+    </div>
+
+    <button type="submit" class="auth-btn">Login</button>
+</form>
         {{-- Divider --}}
         <div class="hr-line">OR</div>
 
@@ -196,7 +198,7 @@ signupTab.onclick = () => {
 loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const res = await fetch("/login-user", {
+    const res = await fetch("/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

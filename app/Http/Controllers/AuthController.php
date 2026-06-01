@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeUserMail;
+use Illuminate\Support\Facades\Auth;
+
 
 class AuthController extends Controller
 {
@@ -43,4 +45,41 @@ class AuthController extends Controller
             'user' => $user
         ]);
     }
+
+
+
+
+
+public function LoginUser(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
+    if (Auth::attempt([
+        'email' => $request->email,
+        'password' => $request->password
+    ])) {
+
+        $request->session()->regenerate();
+
+        return redirect('/')
+            ->with('success', 'User logged in successfully.');
+    }
+
+    return back()->with('error', 'Invalid email or password.');
+}
+
+
+   public function logoutUser(Request $request)
+{
+    Auth::logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/')
+    ->with('success', 'User logged out successfully.');
+}
 }

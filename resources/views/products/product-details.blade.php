@@ -141,23 +141,7 @@
                                 </span>
                             </p>
 
-                            <!-- BUTTONS -->
-                            <div class="row row-gap-3 mb-16">
-                                <div class="col-sm-6">
-                                    <a href="javascript:;"
-                                       class="cus-btn-2 text-center w-100 cart-button"
-                                       data-id="{{ $product->id }}">
-                                        Add to Cart
-                                    </a>
-                                </div>
-
-                                <div class="col-sm-6">
-                                    <a href="javascript:;"
-                                       class="cus-btn text-center w-100">
-                                        Buy It Now
-                                    </a>
-                                </div>
-                            </div>
+                           
 
                             <!-- FEATURES -->
                             <div  class="d-flex align-items-center gap-12 mb-16">
@@ -167,17 +151,7 @@
                             <div class="d-flex align-items-center gap-12 mb-16">
                                 <p style="color:white">Free shipping on eligible orders</p>
                             </div>
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- DESCRIPTION + REVIEWS -->
-    <section class="product-description pt-40 pb-80">
+  <section class="product-description pt-40 pb-80">
         <div class="container-fluid">
 
             <div class="tab-content">
@@ -192,6 +166,39 @@
             </div>
         </div>
     </section>
+
+
+
+@include("products.buying-options")
+
+
+                           <!-- BUTTONS -->
+                            <div class="row row-gap-3 mb-16 mt-4">
+                                <div class="col-sm-6">
+                                    <a href="javascript:;"
+                                       class="cus-btn-2 text-center w-100 cart-button22"
+                                       data-id="{{ $product->id }}">
+                                        Add to Cart
+                                    </a>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <a href="javascript:;"
+                                       class="cus-btn text-center w-100">
+                                        Buy It Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DESCRIPTION + REVIEWS -->
+  
 
 </main>
 <script>
@@ -232,6 +239,97 @@ document.addEventListener('DOMContentLoaded', function () {
             el.innerText = formatPrice(value);
         }
     });
+
+});
+
+document.querySelector('.cart-button22').addEventListener('click', function () {
+
+    const productId = this.dataset.id;
+
+    if (!window.selectedOption) {
+        alert("Please select a buying option first");
+        return;
+    }
+
+    const payload = {
+        product_id: productId,
+        option: window.selectedOption,
+        purchase_type: window.purchaseMode || "one_time",
+        quantity: document.querySelector('input[name="quantity"]').value
+    };
+
+    console.log("ADDING TO CART:");
+    console.log(payload);
+
+    // Example AJAX (if needed)
+   fetch('/cart/add', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify(payload)
+})
+.then(async res => {
+
+    const data = await res.json();
+
+    // ❌ NOT LOGGED IN
+    if (res.status === 401) {
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 6000,
+            timerProgressBar: true
+        });
+
+      
+
+
+    }
+
+    // ✅ SUCCESS
+    if (data.status) {
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 6000,
+            timerProgressBar: true
+        });
+
+    } else {
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: data.message || "Something went wrong",
+            showConfirmButton: false,
+            timer: 6000,
+            timerProgressBar: true
+        });
+    }
+
+})
+.catch(() => {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: "Server error occurred",
+        showConfirmButton: false,
+        timer: 6000,
+        timerProgressBar: true
+    });
+});
 
 });
 

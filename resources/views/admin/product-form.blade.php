@@ -261,6 +261,34 @@ hr{
     <div id="galleryPreview"></div>
   
     <hr>
+   
+
+<h4>Pack Options</h4>
+
+<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+    <input type="number" id="packInput" placeholder="No. of Packs" style="width:150px;">
+    <input type="number" id="priceInput" placeholder="Price" style="width:150px;">
+    <input type="text" id="durationInput" placeholder="Duration (e.g. 15 days)" style="width:200px;">
+
+    <input type="file"
+           id="optionImageInput"
+           accept="image/*"
+           style="width:200px;">
+
+    <button type="button" id="addPackOption">
+        Add Option
+    </button>
+
+</div>
+
+<div id="packOptionList"></div>
+
+<hr>
+
+
+
+
 
     <button type="submit">
         Submit Product
@@ -268,11 +296,65 @@ hr{
 
 </form>
 
+
+
+
 <script>
+
+const SUPABASE_URL = "{{ $supabaseUrl }}";
+const SUPABASE_KEY = "{{ $supabaseKey }}";
+const SUPABASE_BUCKET = "{{ $supabaseBucket }}";
+
+ 
+
 let editorInstance;
 let tags = [];
+let packOptions = [];
+let optionImageFile = null;
 
+async function uploadToSupabase(file)
+{
+    if (!file) {
+        console.error("No file provided");
+        return null;
+    }
 
+    const fileName = `options/${Date.now()}_${file.name}`;
+
+    const url = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${fileName}`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST", // ✅ Supabase browser-safe method
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+            },
+            body: file
+        });
+
+        const text = await res.text();
+        console.log("Supabase raw response:", text);
+
+        if (!res.ok) {
+            console.error("Upload failed:", text);
+            return null;
+        }
+
+        return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`;
+    }
+    catch (err) {
+        console.error("Upload error:", err);
+        return null;
+    }
+}
+
+$('#optionImageInput').on('change', function (e) {
+    optionImageFile = e.target.files[0] || null;
+
+    
+   
+});
 const availableTags = [
     "Cleanse & Reset",
     "Daily Energy",
@@ -334,7 +416,81 @@ function removeTag(index)
 }
 
 
+function renderOptions()
+{
+    $('#packOptionList').html('');
 
+    packOptions.forEach((opt, i) => {
+
+        $('#packOptionList').append(`
+
+            <span class="weight-tag" style="display:flex;align-items:center;gap:10px;">
+
+                ${opt.image ? `<img src="${opt.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : ''}
+
+                <div>
+                    <div>Packs: ${opt.pack}</div>
+                    <div>Price: ${opt.price}</div>
+                    <div>Duration: ${opt.duration}</div>
+                </div>
+
+                <button type="button" onclick="removePackOption(${i})">×</button>
+
+            </span>
+
+        `);
+
+    });
+}
+
+/* =========================
+   ADD PACK OPTION
+========================== */
+
+$('#addPackOption').click(async function () {
+
+    let pack = $('#packInput').val().trim();
+    let price = $('#priceInput').val().trim();
+    let duration = $('#durationInput').val().trim();
+
+    if (!pack || !price || !duration) return;
+
+    let imageUrl = null;
+
+    if (optionImageFile) {
+        imageUrl = await uploadToSupabase(optionImageFile);
+    }
+
+    packOptions.push({
+        pack: parseInt(pack),
+        price: parseFloat(price),
+        duration: duration,
+        image: imageUrl
+    });
+
+    $('#packInput').val('');
+    $('#priceInput').val('');
+    $('#durationInput').val('');
+    $('#optionImageInput').val('');
+
+    optionImageFile = null;
+
+    renderOptions();
+});
+/* =========================
+   RENDER CARDS
+========================== */
+
+
+
+/* =========================
+   REMOVE
+========================== */
+function removePackOption(index)
+{
+    packOptions.splice(index, 1);
+    renderOptions();
+}
 ClassicEditor
     .create(document.querySelector('#description'))
     .then(editor => {
@@ -493,6 +649,17 @@ ClassicEditor
         formData.append('old_price', $('input[name="old_price"]').val());
         formData.append('stock', $('input[name="stock"]').val());
         formData.append('description', editorInstance.getData());
+        
+
+        packOptions.forEach((item, index) => {
+
+    formData.append(`options[${index}][pack]`, item.pack);
+    formData.append(`options[${index}][price]`, item.price);
+    formData.append(`options[${index}][duration]`, item.duration);
+    formData.append(`options[${index}][image]`, item.image);
+
+
+});
         // WEIGHTS ARRAY
         weights.forEach(weight => {
             formData.append('weights[]', weight);

@@ -19,26 +19,30 @@ public function editPage($id)
 
     $product = $this->formatProduct($product, $categories);
 
-    return view('admin.editProductPage', compact('product'));
+    return view('admin.editProductPage', [
+        'product' => $product,
+
+        'supabaseUrl' => config('supabase.url'),
+        'supabaseKey' => config('supabase.key'),
+        'supabaseBucket' => config('supabase.bucket'),
+    ]);
 }
 
 
 
-
-      public function getAddProduct()
+public function getAddProduct()
 {
-    // FETCH ALL CATEGORIES
-    $categories = CategoriesModel::latest()->get();
+    return view('admin.product-management', [
+        'categories' => CategoriesModel::latest()->get(),
+        'products' => ProductsModel::latest()->get(),
+        'deals' => SlimzaDeals::latest()->get(),
 
-    // FETCH ALL PRODUCTS
-    $products = ProductsModel::latest()->get();
-
-    // FETCH ALL DEALS (from SlimzaDeals DB/model)
-    $deals = SlimzaDeals::latest()->get();
-
-    // SEND TO VIEW
-    return view('admin.product-management', compact('categories', 'products', 'deals'));
+        'supabaseUrl' => config('supabase.url'),
+        'supabaseKey' => config('supabase.key'),
+        'supabaseBucket' => config('supabase.bucket'),
+    ]);
 }
+
 
     public function getAddCatrgory()
     {

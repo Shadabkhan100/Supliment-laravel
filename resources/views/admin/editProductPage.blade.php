@@ -7,7 +7,30 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
 
     <style>
+.pack-card {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
 
+.pack-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: #dc3545;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
         .tag-chip,
         .weight-chip{
             background:#111;
@@ -66,7 +89,7 @@
 <div class="container py-5">
 
     <h2 class="mb-4">
-        Edit Product
+        Edit Product 
     </h2>
 
     <form id="editForm" enctype="multipart/form-data">
@@ -266,7 +289,54 @@
             <div id="weightBox"></div>
 
         </div>
+<!-- PACK OPTIONS -->
+<div class="mb-3">
 
+    <label class="form-label">
+        Pack Options
+    </label>
+
+    <div class="row g-2 mb-3">
+
+        <div class="col-md-3">
+            <input type="number"
+                   id="packInput"
+                   class="form-control"
+                   placeholder="Packs">
+        </div>
+
+        <div class="col-md-3">
+            <input type="number"
+                   id="packPriceInput"
+                   class="form-control"
+                   placeholder="Price">
+        </div>
+
+        <div class="col-md-4">
+            <input type="text"
+                   id="packDurationInput"
+                   class="form-control"
+                   placeholder="Duration (e.g. 15 days)">
+        </div>
+
+       <input type="file"
+           id="optionImageInput"
+           accept="image/*"
+           style="width:200px;">
+
+        <div class="col-md-2">
+            <button type="button"
+                    id="addPackOption"
+                    class="btn btn-dark w-100">
+                Add
+            </button>
+        </div>
+
+    </div>
+
+    <div id="packBox"></div>
+
+</div>
         <!-- SUBMIT -->
         <button type="submit"
                 class="btn btn-primary w-100">
@@ -285,6 +355,61 @@
 <script src="/js/bootstrap.min.js"></script>
 
 <script>
+const SUPABASE_URL = "https://dulladbjjuutgcgyliou.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LvoiRePLm78hYnz56-Iw6A_yWqVt_vs";
+const SUPABASE_BUCKET = "slimza-images";
+
+let optionImageFile = null;
+
+
+
+async function uploadToSupabase(file)
+{
+    if (!file) {
+        console.error("No file provided");
+        return null;
+    }
+
+    const fileName = `options/${Date.now()}_${file.name}`;
+
+    const url = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${fileName}`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST", // ✅ Supabase browser-safe method
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+            },
+            body: file
+        });
+
+        const text = await res.text();
+        console.log("Supabase raw response:", text);
+
+        if (!res.ok) {
+            console.error("Upload failed:", text);
+            return null;
+        }
+
+        return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`;
+    }
+    catch (err) {
+        console.error("Upload error:", err);
+        return null;
+    }
+}
+
+
+
+$('#optionImageInput').on('change', function (e) {
+    optionImageFile = e.target.files[0] || null;
+
+    
+   
+});
+
+
 $(document).ready(function () {
 
 /* =========================
@@ -316,7 +441,89 @@ let selectedWeights = Array.isArray(@json($product['weights'] ?? []))
 let galleryImages = Array.isArray(@json($product['gallery_images'] ?? []))
     ? @json($product['gallery_images'] ?? [])
     : [];
+let selectedOptions = Array.isArray(@json($product['options'] ?? []))
+    ? @json($product['options'] ?? [])
+    : [];
 
+function renderOptions()
+{
+    $('#packBox').html('');
+
+    selectedOptions.forEach((opt, i) => {
+
+        $('#packBox').append(`
+            <div class="position-relative d-flex align-items-center gap-3 p-2 mb-2 border rounded">
+
+                ${opt.image ? `
+                    <img src="${opt.image}"
+                         style="width:60px;height:60px;object-fit:cover;border-radius:6px;">
+                ` : ''}
+
+                <div>
+                    <div><b>Packs:</b> ${opt.pack}</div>
+                    <div><b>Price:</b> ${opt.price}</div>
+                    <div><b>Duration:</b> ${opt.duration}</div>
+                </div>
+
+                <!-- DELETE BUTTON -->
+                <button type="button"
+                        onclick="removeOption(${i})"
+                        style="
+                            position:absolute;
+                            top:6px;
+                            right:6px;
+                            width:24px;
+                            height:24px;
+                            border:none;
+                            border-radius:50%;
+                            background:#dc3545;
+                            color:#fff;
+                            font-weight:bold;
+                            line-height:1;
+                        ">
+                    ×
+                </button>
+
+            </div>
+        `);
+
+    });
+}
+window.removeOption = function (index)
+{
+    selectedOptions.splice(index, 1);
+    renderOptions();
+};
+$('#addPackOption').click(async function () {
+
+    let pack = $('#packInput').val().trim();
+    let price = $('#packPriceInput').val()?.trim();
+let duration = $('#packDurationInput').val()?.trim();
+
+    if (!pack || !price || !duration) return;
+
+    let imageUrl = null;
+
+    if (optionImageFile) {
+        imageUrl = await uploadToSupabase(optionImageFile);
+    }
+
+    selectedOptions.push({
+        pack: parseInt(pack),
+        price: parseFloat(price),
+        duration: duration,
+        image: imageUrl
+    });
+
+    $('#packInput').val('');
+    $('#priceInput').val('');
+    $('#durationInput').val('');
+    $('#optionImageInput').val('');
+
+    optionImageFile = null;
+
+    renderOptions();
+});
 /* =========================
    CATEGORY + DEAL STATE
 ========================= */
@@ -569,7 +776,7 @@ initTagDropdown();
 renderTags();
 renderWeights();
 renderGalleryImages();
-
+renderOptions();
 loadCategories(selectedCategoryId);
 loadDeals(selectedDealId);
 
@@ -586,10 +793,12 @@ $('#editForm').on('submit', function (e) {
     formData.append('category_id', selectedCategoryId);
     formData.append('deal_id', selectedDealId);
 
-    // 🔥 IMPORTANT: always stringify arrays properly
-      // =========================
-    // SEND TAGS AS ARRAY
-    // =========================
+    selectedOptions.forEach((item, index) => {
+    formData.append(`options[${index}][pack]`, item.pack);
+    formData.append(`options[${index}][price]`, item.price);
+    formData.append(`options[${index}][duration]`, item.duration);
+    formData.append(`options[${index}][image]`, item.image);
+});
     selectedTags.forEach(tag => {
         formData.append('tags[]', tag);
     });

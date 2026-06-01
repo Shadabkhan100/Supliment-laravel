@@ -9,7 +9,7 @@ use App\Http\Controllers\PageSettingController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\FutureProductController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\CartController;
 
 use App\Http\Controllers\TestimonialsController;
 
@@ -29,6 +29,10 @@ Route::delete('/delete-category/{id}', [ProductController::class, 'deleteCategor
 Route::post('/page-settings', [PageSettingController::class, 'save']);
 Route::get('/page-settings', [PageSettingController::class, 'get']);
 
+
+
+Route::get('/cart-item/{id}', [CartController::class, 'getCartItemById']);
+Route::delete('/cart/delete/{id}', [CartController::class, 'deleteCartItem']);
 
 Route::get('/testimonials', [TestimonialsController::class, 'index']);
 Route::post('/create-testimonials', [TestimonialsController::class, 'store']);

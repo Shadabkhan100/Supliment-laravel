@@ -128,6 +128,13 @@ private function formatProduct($product, $categories = null)
 
         'weights' => json_decode($product->weights, true) ?: [],
 
+        // ✔️ FIX OPTIONS HERE (SAFE + CONSISTENT)
+        'options' => collect(
+            is_string($product->options)
+                ? json_decode($product->options, true)
+                : $product->options
+        )->filter()->values()->toArray(),
+
         'main_image' => $product->main_image
             ? SupabaseStorageService::getPublicUrl($product->main_image)
             : null,
@@ -139,7 +146,6 @@ private function formatProduct($product, $categories = null)
             ->toArray(),
     ];
 }
-
 public function searchByTag($tag)
 {
     $products = ProductsModel::all()
