@@ -142,22 +142,25 @@
 
             @forelse($cartItems as $item)
 
-                @php
-                    $product = $item->product;
-                    $price = $product->price ?? 0;
-                    $qty = $item->quantity ?? 1;
+@php
+    $product = $item->product;
+    $qty = $item->quantity ?? 1;
+    $option = $item->option ?? [];
+    $pack = $option['pack'] ?? 1;
 
-                    // FINAL SUBTOTAL (base logic)
-                    $subtotal = $price * $qty;
+    // ✅ SAFE: always get price from cart first
+    $unitPrice = $item->unit_price ?? $item->price ?? ($product->price ?? 0);
 
-                    $grandTotal += $subtotal;
-                @endphp
+    $subtotal = $unitPrice * $qty;
+
+    $grandTotal += $subtotal;
+@endphp
 
                 <div class="cartItemCardX1">
 
                     <!-- IMAGE -->
                     <div class="cartImgX1">
-                        <img src="{{ $product->main_image_url ?? '/placeholder.png' }}">
+                        <img src="{{ $item->option['image'] ?? $product->main_image_url ?? '/placeholder.png' }}">
                     </div>
 
                     <!-- INFO -->
@@ -167,7 +170,7 @@
                         </div>
 
                         <div class="cartMetaX1">
-                            Qty: {{ $qty }} | SKU: {{ $product->sku ?? '-' }}
+                            Qty: {{ $qty }} | {{ $pack }} Packs
                         </div>
                     </div>
 
@@ -177,14 +180,16 @@
                         <!-- SUBTOTAL -->
                         <div class="cartPriceMainX1 currency-price"
                              data-value="{{ $subtotal }}">
-                            £{{ number_format($subtotal,2) }}
+                           {{ number_format($item->subtotal, 2) }}
                         </div>
 
                         <!-- UNIT PRICE -->
-                        <div class="cartPriceSubX1 currency-price"
-                             data-value="{{ $price }}">
-                            £{{ number_format($price,2) }} each
-                        </div>
+                      <!-- UNIT PRICE -->
+                      <div class="cartPriceSubX1 currency-price"
+     data-value="{{ $unitPrice / max($pack,1) }}">
+
+    {{ number_format($unitPrice / max($pack,1), 2) }} each
+</div>
 
                         <!-- VIEW -->
                         <div class="mt-3">
@@ -198,8 +203,8 @@
                         <i class="fas fa-eye"></i>
                         </a>    
                      <a
-    href="javascript:void(0)"
-    class="btn btn-sm btn-outline-danger delete-cart-btn mx-1"
+                   href="javascript:void(0)"
+                class="btn btn-sm btn-outline-danger delete-cart-btn mx-1"
     data-cart-id="{{ $item->id }}"
 >
     <i class="fas fa-trash"></i>
@@ -233,7 +238,7 @@
                     <span>Subtotal</span>
                     <span class="currency-price"
                           data-value="{{ $grandTotal }}">
-                        £{{ number_format($grandTotal,2) }}
+                        {{ number_format($grandTotal, 2) }}
                     </span>
                 </div>
 
@@ -299,25 +304,36 @@ function formatCurrency(value) {
     const currency = window.currentCurrency || "GBP";
     const config = window.currencyConfig?.currencies?.[currency];
 
-    if (!config) return value;
+    if (!config) {
+        return value.toFixed(2);
+    }
 
-    const converted = value * config.rate;
+    const converted = parseFloat(value) * parseFloat(config.rate);
 
-    return `${config.symbol} ${converted.toFixed(2)}`;
+    return `${config.symbol}${converted.toFixed(2)}`;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function updateAllPrices() {
 
     document.querySelectorAll('.currency-price').forEach(el => {
 
-        const raw = parseFloat(el.dataset.value);
+        const raw = parseFloat(el.dataset.value || 0);
 
-        if (!isNaN(raw)) {
-            el.innerText = formatCurrency(raw);
+        if (isNaN(raw)) return;
+
+        let formatted = formatCurrency(raw);
+
+        if (el.classList.contains('cartPriceSubX1')) {
+            formatted += ' each';
         }
 
+        el.innerText = formatted;
     });
 
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    updateAllPrices();
 });
 
 
@@ -378,8 +394,26 @@ document.addEventListener('click', async function (e) {
                 showConfirmButton: false
             });
 
-            // remove item from UI instantly
-            btn.closest('.cartItemCardX1').remove();
+            const card = btn.closest('.cartItemCardX1');
+
+            const subtotalEl = card.querySelector('.cartPriceMainX1');
+            const removedAmount = parseFloat(subtotalEl.dataset.value || 0);
+            card.remove();
+
+// Update summary
+document.querySelectorAll('.summaryRowX1 .currency-price, .summaryTotalX1 .currency-price')
+.forEach(el => {
+
+    let current = parseFloat(el.dataset.value || 0);
+
+    current -= removedAmount;
+
+    if (current < 0) current = 0;
+
+    el.dataset.value = current;
+});
+
+updateAllPrices();
 
         } else {
 

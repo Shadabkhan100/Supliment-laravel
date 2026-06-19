@@ -9,7 +9,13 @@ $tabs = [
 ];
 @endphp
 
+<style>
 
+.tabs .tab-link.active a {
+    color: #000 !important;
+    font-weight: 700;
+}
+</style>
 <div class="d-flex align-items-start justify-content-between flex-lg-row flex-column pb-40">
 
     <ul class="tabs list-unstyled">
@@ -22,7 +28,7 @@ $tabs = [
         @endforeach
     </ul>
 
-    <a href="{{ url('search-product/all') }}" class="cus-btn-arrow">
+    <a href="{{ url('/shop/all') }}" class="cus-btn-arrow">
         See All Products
         <div class="icon">
             <i class="fa-light fa-chevron-right"></i>

@@ -1,26 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+   
+@extends('admin.main')
 
-<head>
+@section('title', 'Deals Management')
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Deals Management</title>
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/slick-theme.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/slick-slider.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+@section('page-title', 'Deals Management')
+@section('content')
 
     <style>
-        body {
-            background: #f5f7fb;
-            font-family: sans-serif;
-        }
+      
 .custom-upload-wrapper {
     width: 100%;
 }
@@ -858,6 +846,4 @@
 
     </script>
 
-</body>
-
-</html>
+@endsection

@@ -32,13 +32,27 @@
 <script>
 async function loadHeroBanners() {
   try {
+
     const res = await fetch(`${window.location.origin}/api/page-settings`);
     const json = await res.json();
 
     const container = document.getElementById('heroBannerSlider');
+
+    // safety check
+    if (!container) {
+      console.error('Hero banner container not found');
+      return;
+    }
+
     container.innerHTML = '';
 
     const banners = Array.isArray(json.data) ? json.data : [];
+
+    // if no banners, stop here (prevents slick crash)
+    if (banners.length === 0) {
+      console.warn('No banners found from API');
+      return;
+    }
 
     banners.forEach(banner => {
 
@@ -48,7 +62,7 @@ async function loadHeroBanners() {
 
             <!-- MAIN IMAGE -->
             <img
-              src="${banner.home_banner}"
+              src="${banner.home_banner || ''}"
               class="hero-image"
               alt="hero image"
               data-animation-in="zoomIn"
@@ -64,7 +78,7 @@ async function loadHeroBanners() {
                 </p>
 
                 <div class="mb-48">
-                  <a href="/deal/${banner.id}" class="cus-btn-arrow">
+                  <a href="/shop/all" class="cus-btn-arrow">
                     View Collection
                     <div class="icon">
                       <i class="fa-light fa-chevron-right"></i>
@@ -79,31 +93,47 @@ async function loadHeroBanners() {
         </div>
       `;
 
-      container.innerHTML += slide;
+      container.insertAdjacentHTML('beforeend', slide);
     });
 
-    // 🔥 IMPORTANT: INIT SLIDER AFTER CONTENT LOAD
-    setTimeout(() => {
-      if ($('.hero-banner-slider').hasClass('slick-initialized')) {
-        $('.hero-banner-slider').slick('refresh');
-      } else {
-        $('.hero-banner-slider').slick({
-          autoplay: true,
-          dots: false,
-          arrows: false,
-          infinite: true,
-          speed: 800,
-          slidesToShow: 1,
-          slidesToScroll: 1
-        });
-      }
-    }, 200);
+    // Wait for DOM update before initializing slick
+requestAnimationFrame(() => {
+  const $slider = $('.hero-banner-slider');
+
+  if (!$slider.length) return;
+
+  // destroy old instance safely
+  if ($slider.hasClass('slick-initialized')) {
+    $slider.slick('unslick');
+  }
+
+  // initialize ONCE only
+  $slider.slick({
+    autoplay: true,
+    autoplaySpeed: 2500,
+    speed: 800,
+    infinite: true,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: false,
+    dots: false,
+    pauseOnHover: false,
+    pauseOnFocus: false,
+    draggable: true,
+    swipe: true
+  });
+
+  // force restart autoplay (important for dynamic content)
+  $slider.slick('slickPlay');
+});
+
+  
 
   } catch (error) {
     console.error('Hero banner load failed:', error);
   }
 }
 
-
-loadHeroBanners();
+// Run after page load to avoid race conditions
+document.addEventListener('DOMContentLoaded', loadHeroBanners);
 </script>

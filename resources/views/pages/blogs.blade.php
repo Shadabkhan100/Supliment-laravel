@@ -7,7 +7,7 @@
     <!-- TITLE -->
     <section class="title-banner">
         <div class="container">
-            <h2 class="white fw-600 text-center">Blog</h2>
+            <h1 class="white fw-600 text-center">OUR LATEST JOURNAL</h1>
         </div>
     </section>
 
@@ -38,7 +38,7 @@
                 <!-- SEARCH -->
                 <div class="col-xl-3 col-lg-5 col-md-6">
                     <form class="newsletter-form" onsubmit="return false;">
-                        <input type="text" id="searchInput" class="form-control search-input" placeholder="Search Here...">
+                        <input style="text-color:white" type="text" id="searchInput" class="form-control search-input" placeholder="Search Here...">
                     </form>
                 </div>
 

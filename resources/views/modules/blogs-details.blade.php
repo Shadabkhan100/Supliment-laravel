@@ -77,25 +77,7 @@
     margin: 16px 0;
 }
 </style>
-<section class="title-banner">
-    <div class="container">
 
-        <h2 class="white fw-600 text-center mb-24">
-            {{ $blog->title }}
-        </h2>
-
-        <p class="white text-center">
-            {{ \Carbon\Carbon::parse($blog->publish_date)->format('d M, Y') }}
-
-            @if($blog->author)
-                <span class="light-gray">
-                    • By {{ $blog->author }}
-                </span>
-            @endif
-        </p>
-
-    </div>
-</section>
 <!-- TITLE BANNER END -->
 
 <!-- Blog Detail Section Start -->
@@ -106,19 +88,36 @@
                 <div class="blog-detail-wrapper">
 
                     <!-- SHORT DESCRIPTION -->
-                    @if($blog->short_description)
-                        <p class="mb-24">
-                            {{ $blog->short_description }}
-                        </p>
-                    @endif
+                
 
                     <!-- MAIN IMAGE -->
                     @if($blog->image)
                         <div class="main-image mb-24">
                             <img src="{{ $blog->image }}" alt="{{ $blog->title }}" class="w-100 br-10">
                         </div>
-                    @endif
 
+
+        <h2 class="white fw-600 text-left mb-24">
+            {{ $blog->title }}
+        </h2>
+
+        <p class="white text-left">
+            {{ \Carbon\Carbon::parse($blog->publish_date)->format('d M, Y') }}
+
+            @if($blog->author)
+                <span class="light-gray">
+                    • By {{ $blog->author }}
+                </span>
+            @endif
+        </p>
+
+
+                    @endif
+                        @if($blog->short_description)
+                        <p class="mb-24">
+                            {{ $blog->short_description }}
+                        </p>
+                    @endif
                     <!-- FULL DESCRIPTION (MARKDOWN HTML) -->
                     <div class="blog-content mb-24">
                         {!! $blog->description !!}

@@ -25,7 +25,8 @@ class User extends Authenticatable
     'country',
     'address',
     'avatar',
-    'dob'
+    'dob',
+    'status'
 ];
 
     /**

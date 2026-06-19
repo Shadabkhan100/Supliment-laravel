@@ -114,10 +114,34 @@
 .hidden{
     display:none;
 }
-
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 
 <div class="auth-wrapper">
+<!-- GLOBAL LOADER -->
+<div id="globalLoader" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+">
+    <div style="
+        width:50px;
+        height:50px;
+        border:4px solid #fff;
+        border-top:4px solid #9eef0b;
+        border-radius:50%;
+        animation:spin 1s linear infinite;
+    "></div>
+</div>
+
 
     <div class="auth-box">
 
@@ -128,19 +152,32 @@
             <button id="signupTab">Sign Up</button>
         </div>
 
-        {{-- LOGIN FORM --}}
-        <form method="POST" action="/login">
+       <form id="loginForm" method="POST" action="/login">
     @csrf
 
     <div class="input-group">
-        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="email"
+               id="login_email"
+               name="email"
+               placeholder="Email Address"
+               required>
     </div>
 
     <div class="input-group">
-        <input type="password" name="password" placeholder="Password" required>
+        <input type="password"
+               id="login_password"
+               name="password"
+               placeholder="Password"
+               required>
     </div>
 
     <button type="submit" class="auth-btn">Login</button>
+ <button type="button"
+        class="auth-btn"
+        style="margin-top:10px; background:#1c1c1c; color:#aaa;"
+        onclick="continueAsGuest()">
+    Continue as Guest
+</button>
 </form>
         {{-- Divider --}}
         <div class="hr-line">OR</div>
@@ -174,6 +211,45 @@
 </div>
 
 <script>
+
+async function continueAsGuest()
+{
+    try {
+        const response = await fetch('/api/ensure-guest-id', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.guest_id) {
+
+            // store guest id in cookie (1 year expiry)
+            document.cookie = `guest_id=${data.guest_id}; path=/; max-age=${60 * 60 * 24 * 365}`;
+
+            // redirect to shop
+            window.location.href = "/profile/guest-profile";
+
+        } else {
+            alert(data.message || "Failed to continue as guest");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Something went wrong. Please try again.");
+    }
+}
+
+function showLoader() {
+    document.getElementById("globalLoader").style.display = "flex";
+}
+
+function hideLoader() {
+    document.getElementById("globalLoader").style.display = "none";
+}
+
 // TAB SWITCH
 const loginTab = document.getElementById('loginTab');
 const signupTab = document.getElementById('signupTab');
@@ -194,48 +270,96 @@ signupTab.onclick = () => {
     loginForm.classList.add('hidden');
 };
 
-// LOGIN API
 loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const res = await fetch("/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({
-            email: document.getElementById("login_email").value,
-            password: document.getElementById("login_password").value
-        })
-    });
+    showLoader(); // 🔥 start loader
 
-    const data = await res.json();
-    alert(data.message || "Login response received");
+    try {
+        const res = await fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                email: document.getElementById("login_email").value,
+                password: document.getElementById("login_password").value
+            })
+        });
+
+        const data = await res.json();
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: data.success ? 'success' : 'error',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 3000
+        });
+
+        if (data.success) {
+            window.location.href = data.redirect || "/";
+        }
+
+    } catch (err) {
+        Swal.fire({
+            icon: "error",
+            title: "Network Error",
+            text: "Please try again"
+        });
+    } finally {
+        hideLoader(); // 🔥 stop loader
+    }
 });
 
 // SIGNUP API
 signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const res = await fetch("/api/signup-user", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({
-            name: document.getElementById("name").value,
-            email: document.getElementById("email").value,
-            phone: document.getElementById("phone").value,
-            password: document.getElementById("password").value,
-            password_confirmation: document.getElementById("password_confirmation").value
-        })
-    });
+    showLoader(); // 🔥 start loader
 
-    const data = await res.json();
-    alert(data.message || "Signup response received");
-});
-</script>
+    try {
+        const res = await fetch("/signup-user", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+                password: document.getElementById("password").value,
+                password_confirmation: document.getElementById("password_confirmation").value
+            })
+        });
+
+        const data = await res.json();
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: data.success ? 'success' : 'error',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 3000
+        });
+
+        if (data.success) {
+            window.location.href = data.redirect || "/";
+        }
+
+    } catch (err) {
+        Swal.fire({
+            icon: "error",
+            title: "Network Error",
+            text: "Please try again"
+        });
+    } finally {
+        hideLoader(); // 🔥 stop loader
+    }
+});</script>
 @include("modules.subscribe-us")
 @endsection

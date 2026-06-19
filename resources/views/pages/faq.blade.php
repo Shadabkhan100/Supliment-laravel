@@ -40,11 +40,11 @@
             <!-- Q1 -->
             <div class="accordion-item mb-12">
                 <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
                         What is Slimza?
                     </button>
                 </h2>
-                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
                         Slimza is a wellness brand focused on providing premium health and wellbeing products
                         designed to support healthier lifestyles, confidence, and everyday wellness naturally.

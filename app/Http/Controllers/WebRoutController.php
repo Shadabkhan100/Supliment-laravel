@@ -11,6 +11,8 @@ use App\Models\ProductsModel;
 use Illuminate\Support\Str;
 use App\Models\Blogs;
 
+use App\Models\GuestOrder;
+
 class WebRoutController extends Controller
 {
      public function getHome()
@@ -24,8 +26,43 @@ class WebRoutController extends Controller
     }
 
 
+public function shopAll()
+{
+    $products = ProductsModel::all()
+        ->map(function ($product) {
 
+            $tags = json_decode($product->tags, true) ?? [];
 
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'sku' => $product->sku,
+                'price' => $product->price,
+                'old_price' => $product->old_price,
+                'stock' => $product->stock,
+                'category_id' => $product->category_id,
+                'deal_id' => $product->deal_id,
+                'category_name' => $product->category_name ?? 'Uncategorized',
+
+                // TAGS (raw)
+                'tags' => $tags,
+
+                // MAIN IMAGE (Supabase URL)
+                'main_image' => $product->main_image
+                    ? SupabaseStorageService::getPublicUrl($product->main_image)
+                    : null,
+
+                // GALLERY IMAGES (Supabase URLs)
+                'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
+                    ->map(fn ($img) => $img ? SupabaseStorageService::getPublicUrl($img) : null)
+                    ->values()
+                    ->toArray(),
+            ];
+        });
+
+    return view('pages.shop-all', compact('products'));
+}
  public function getFindProducts($slug, $id)
 {
     // FETCH DEAL
@@ -95,7 +132,7 @@ public function shippingCost()
         return view('connections.privacy-policy');
     }
 
- public function getProductDetails($slug,$id)
+public function getProductDetails($slug, $id)
 {
     $product = ProductsModel::findOrFail($id);
 
@@ -103,37 +140,100 @@ public function shippingCost()
 
     $formattedProduct = $this->formatProduct($product, $categories);
 
+    // =========================
+    // FIND LOWEST OPTION PRICE (SAFE ARRAY FIX)
+    // =========================
+    if (
+        isset($formattedProduct['options']) &&
+        is_array($formattedProduct['options']) &&
+        count($formattedProduct['options']) > 0
+    ) {
+
+        $prices = array_values(array_filter(array_map(function ($opt) {
+            return isset($opt['price']) ? (float) $opt['price'] : null;
+        }, $formattedProduct['options'])));
+
+        if (count($prices) > 0) {
+            $formattedProduct['price'] = min($prices);
+        }
+    }
+
+    // =========================
+    // FIND MATCHING DEAL (BASED ON PRODUCT deal_id)
+    // =========================
+    $deal = SlimzaDeals::where('id', $product->deal_id)->first();
+
     return view('products.product-details', [
-        'product' => (object) $formattedProduct
+        'product' => (object) $formattedProduct,
+        'deal' => $deal
     ]);
 }
-
 
 private function formatProduct($product, $categories = null)
 {
     $categories = $categories ?? CategoriesModel::pluck('name', 'id');
+
+    // =========================
+    // OPTIONS NORMALIZATION
+    // =========================
+    $options = is_string($product->options)
+        ? json_decode($product->options, true)
+        : $product->options;
+
+    $options = is_array($options) ? array_values(array_filter($options)) : [];
+
+    // =========================
+    // DEFAULT PRICE (DB PRICE)
+    // =========================
+    $finalPrice = (float) $product->price;
+
+    // =========================
+    // OVERRIDE WITH LOWEST OPTION PRICE
+    // =========================
+    if (count($options) > 0) {
+
+        $prices = array_values(array_filter(array_map(function ($opt) {
+            return (isset($opt['price']) && is_numeric($opt['price']))
+                ? (float) $opt['price']
+                : null;
+        }, $options)));
+
+        if (count($prices) > 0) {
+            $finalPrice = min($prices);
+        }
+    }
 
     return [
         'id' => $product->id,
         'name' => $product->name,
         'description' => $product->description,
         'sku' => $product->sku,
-        'price' => $product->price,
+
+        // FINAL PRICE
+        'price' => $finalPrice,
         'old_price' => $product->old_price,
+
         'stock' => $product->stock,
         'category_id' => $product->category_id,
         'deal_id' => $product->deal_id,
+            'ingredients' => $product->ingredients,
 
         'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
 
         'weights' => json_decode($product->weights, true) ?: [],
 
-        // ✔️ FIX OPTIONS HERE (SAFE + CONSISTENT)
-        'options' => collect(
-            is_string($product->options)
-                ? json_decode($product->options, true)
-                : $product->options
-        )->filter()->values()->toArray(),
+        // normalized options
+        'options' => $options,
+
+        // =========================
+        // NEW FIELDS ADDED (SAFE)
+        // =========================
+        'shipping_info' => $product->shipping_info ?? null,
+        'supplement_facts' => $product->supplement_facts ?? null,
+        'how_to_use' => $product->how_to_use ?? null,
+        'halal_certification' => $product->halal_certification
+            ? SupabaseStorageService::getPublicUrl($product->halal_certification)
+            : null,
 
         'main_image' => $product->main_image
             ? SupabaseStorageService::getPublicUrl($product->main_image)
@@ -146,6 +246,9 @@ private function formatProduct($product, $categories = null)
             ->toArray(),
     ];
 }
+
+
+
 public function searchByTag($tag)
 {
     $products = ProductsModel::all()
@@ -215,10 +318,18 @@ public function searchByTag($tag)
 
 public function shopDetails($slug, $id)
 {
-    // 1. Get products using category_id ONLY
+     // 1. Get category
+    $category = CategoriesModel::findOrFail($id);
+
+    // 2. Convert category image (SUPABASE)
+    $category->image = $category->image
+        ? SupabaseStorageService::getPublicUrl($category->image)
+        : null;
+
+    // 3. Get products under this category
     $products = ProductsModel::where('category_id', $id)->get();
 
-    // 2. Convert product images using Supabase
+    // 4. Convert product images (SUPABASE)
     $products = $products->map(function ($product) {
 
         $product->image = $product->main_image
@@ -227,11 +338,115 @@ public function shopDetails($slug, $id)
 
         return $product;
     });
-
     // 3. Pass slug + products to view
     return view('pages.shop-details', [
         'category_slug' => $slug,
+         "category" => $category,
         'products' => $products,
     ]);
+}
+
+
+
+public function getGuestProfileView(Request $request)
+{
+    $guestId = $_COOKIE['guest_id'] ?? null;
+
+    if (!$guestId) {
+        return redirect('/login');
+    }
+
+    $orders = GuestOrder::where('guest_id', trim($guestId))
+        ->latest()
+        ->get()
+        ->map(function ($o) {
+
+          return [
+    'id'             => $o->id,
+    'order_id'       => $o->id,
+    'product_id'     => $o->product_id,
+
+    'quantity'       => $o->quantity,
+    'purchase_type'  => $o->purchase_type,
+
+    'name'           => $o->name,
+    'email'          => $o->email,
+    'phone'          => $o->phone,
+
+    'address1'       => $o->address1,
+    'city'           => $o->city,
+    'postal'         => $o->postal,
+    'country'        => $o->country,
+    'lat'            => $o->lat,
+    'lng'            => $o->lng,
+
+    'order_status'   => $o->order_status ?? 'pending',
+    'payment_status' => $o->payment_status ?? 'unpaid',
+
+   'product_option' => !empty($o->product_option)
+    ? (is_string($o->product_option)
+        ? json_decode($o->product_option, true)
+        : $o->product_option)
+    : [
+        'image' => $o->product->main_image
+            ? \App\Services\SupabaseStorageService::getPublicUrl($o->product->main_image)
+            : null,
+
+        'price' => $o->product->price ?? null,
+        'pack' => null,
+        'duration' => null,
+    ],
+
+    'cart_payload' => is_string($o->cart_payload)
+        ? json_decode($o->cart_payload, true)
+        : $o->cart_payload,
+
+    'product_name'   => $o->product->name ?? 'Product',
+    'product_image'  => $o->product->image ?? null,
+    'product_price'  => $o->product->price ?? null,
+
+    'created_at'     => $o->created_at,
+    'updated_at'     => $o->updated_at,
+];
+        });
+
+    if ($orders->isEmpty()) {
+        return redirect('/login');
+    }
+
+    $user = (object)[
+        'name'    => 'Guest User',
+        'email'   => 'guest@local',
+        'phone'   => null,
+        'country' => null,
+        'address' => null,
+    ];
+
+    return view('profile.guest', compact('user', 'orders', 'guestId'));
+}
+
+
+
+   public function ensureGuestId(Request $request)
+{
+    $guestId = $request->cookie('guest_id');
+
+    if (!$guestId) {
+        $guestId = (string) Str::uuid();
+
+        return response()
+            ->json(['guest_id' => $guestId])
+            ->cookie(
+                'guest_id',
+                $guestId,
+                60 * 24 * 30, // 30 days
+                '/',
+                null,
+                false,
+                false
+            );
+    }
+
+    return response()->json(['guest_id' => $guestId]);
 }
 }

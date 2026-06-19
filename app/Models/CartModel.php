@@ -14,7 +14,8 @@ class CartModel extends Model
         'option',
         'quantity',
         'purchase_type',
-        'price'
+        'price',
+        'guest_id'
     ];
 
     protected $casts = [

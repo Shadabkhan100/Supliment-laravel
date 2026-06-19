@@ -6,83 +6,123 @@ use App\Models\ProductsModel;
 use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
 use App\Services\SupabaseStorageService;
+use Illuminate\Validation\Rule;
+
 
 class ProductController extends Controller
 {
     // =========================
     // CREATE PRODUCT
     // =========================
-    public function createProduct(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'sku' => 'required|string|unique:products_models,sku',
-            'category_id' => 'required|numeric|min:0',
-            'deal_id' => 'required|numeric|min:0',
-            'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'weights' => 'nullable|array',
-              'weights' => 'nullable|array',
-            'weights.*' => 'string',
-           'tags.*' => 'string',
-            'options' => 'nullable|array',
-        ]);
+ public function createProduct(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'sku' => 'required|string|unique:products_models,sku',
+        'category_id' => 'required|numeric|min:0',
+        'deal_id' => 'required|numeric|min:0',
+        'price' => 'required|numeric|min:0',
+        'old_price' => 'nullable|numeric|min:0',
+        'stock' => 'required|integer|min:0',
 
-        // =========================
-        // MAIN IMAGE (SUPABASE)
-        // =========================
-        $mainImagePath = null;
+        // arrays
+        'weights' => 'nullable|array',
+        'weights.*' => 'string',
 
-        if ($request->hasFile('main_image')) {
-            $mainImagePath = SupabaseStorageService::upload(
-                $request->file('main_image'),
-                'products/main'
+        'tags' => 'nullable|array',
+        'tags.*' => 'string',
+
+        'options' => 'nullable|array',
+
+        // text fields
+        'supplement_facts' => 'nullable|string',
+        'how_to_use' => 'nullable|string',
+        'shipping_info' => 'nullable|string',
+          'ingredients' => 'nullable|string',           
+        'halal_certification' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    // =========================
+    // MAIN IMAGE
+    // =========================
+    $mainImagePath = null;
+
+    if ($request->hasFile('main_image')) {
+        $mainImagePath = SupabaseStorageService::upload(
+            $request->file('main_image'),
+            'products/main'
+        );
+    }
+
+    // =========================
+    // GALLERY IMAGES
+    // =========================
+    $galleryPaths = [];
+
+    if ($request->hasFile('gallery_images')) {
+        foreach ($request->file('gallery_images') as $file) {
+            $galleryPaths[] = SupabaseStorageService::upload(
+                $file,
+                'products/gallery'
             );
         }
-
-        // =========================
-        // GALLERY IMAGES (SUPABASE)
-        // =========================
-        $galleryPaths = [];
-
-        if ($request->hasFile('gallery_images')) {
-            foreach ($request->file('gallery_images') as $file) {
-                $galleryPaths[] = SupabaseStorageService::upload(
-                    $file,
-                    'products/gallery'
-                );
-            }
-        }
-
-        // =========================
-        // SAVE PRODUCT
-        // =========================
-        $product = ProductsModel::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'sku' => $validated['sku'],
-            'price' => $validated['price'],
-            'category_id' => $validated['category_id'],
-            'deal_id' => $validated['deal_id'],
-            'old_price' => $validated['old_price'] ?? null,
-            'stock' => $validated['stock'],
-            'weights' => json_encode($validated['weights'] ?? []),
-             'tags' => json_encode($validated['tags'] ?? []),
-                'options' => json_encode($validated['options'] ?? []),
-            'main_image' => $mainImagePath,
-            'gallery_images' => json_encode($galleryPaths),
-        ]);
-
-        return response()->json([
-            'message' => 'Product created successfully',
-            'data' => $this->formatProduct(
-                $product,
-                CategoriesModel::pluck('name', 'id')
-            )
-        ], 201);
     }
+
+    // =========================
+    // HALAL CERTIFICATION IMAGE
+    // =========================
+    $halalCertPath = null;
+
+    if ($request->hasFile('halal_certification')) {
+        $halalCertPath = SupabaseStorageService::upload(
+            $request->file('halal_certification'),
+            'products/halal'
+        );
+    }
+
+    // =========================
+    // SAVE PRODUCT
+    // =========================
+    $product = ProductsModel::create([
+        'name' => $validated['name'],
+        'description' => $validated['description'] ?? null,
+        'sku' => $validated['sku'],
+        'price' => $validated['price'],
+        'category_id' => $validated['category_id'],
+        'deal_id' => $validated['deal_id'],
+        'old_price' => $validated['old_price'] ?? null,
+        'stock' => $validated['stock'],
+
+        'weights' => json_encode($validated['weights'] ?? []),
+        'tags' => json_encode($validated['tags'] ?? []),
+        'options' => json_encode($validated['options'] ?? []),
+
+        // NEW TEXT FIELD
+        'supplement_facts' => $validated['supplement_facts'] ?? null,
+        'how_to_use' => $validated['how_to_use'] ?? null,
+        'shipping_info' => $validated['shipping_info'] ?? null,
+         'ingredients' => $validated['ingredients'] ?? null,   // ✅ ADDED HERE
+
+        // IMAGES
+        'main_image' => $mainImagePath,
+        'gallery_images' => json_encode($galleryPaths),
+        'halal_certification' => $halalCertPath,
+    ]);
+
+    return response()->json([
+        'message' => 'Product created successfully',
+        'data' => $this->formatProduct(
+            $product,
+            CategoriesModel::pluck('name', 'id')
+        )
+    ], 201);
+}
+
+
+
+
+
 public function editPage($id)
 {
     $product = ProductsModel::findOrFail($id);
@@ -115,49 +155,92 @@ public function editPage($id)
     // =========================
     // FORMAT PRODUCT RESPONSE
     // =========================
-    private function formatProduct($product, $categories = null)
-    {
-        $categories = $categories ?? CategoriesModel::pluck('name', 'id');
+ private function formatProduct($product, $categories = null)
+{
+    $categories = $categories ?? CategoriesModel::pluck('name', 'id');
 
-        return [
-            'id' => $product->id,
-            'name' => $product->name,
-            'description' => $product->description,
-            'sku' => $product->sku,
-            'price' => $product->price,
-            'old_price' => $product->old_price,
-            'stock' => $product->stock,
-             'category_id' => $product->category_id,
-           'deal_id' => $product->deal_id,
-            'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
-            'weights' => json_decode($product->weights, true) ?? [],
-            'tags' => json_decode($product->tags, true) ?? [],
-             'options' => json_decode($product->options, true) ?? [],
+    // Decode options safely
+    $options = collect(
+        is_string($product->options)
+            ? json_decode($product->options, true)
+            : ($product->options ?? [])
+    )->filter()->values();
 
+    // Default price from DB
+    $finalPrice = (float) $product->price;
 
-            // =========================
-            // SUPABASE IMAGE URLS
-            // =========================
-            'main_image' => $product->main_image
-                ? SupabaseStorageService::getPublicUrl($product->main_image)
-                : null,
+    // If options exist → find lowest price
+    if ($options->count() > 0) {
 
-            'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
-                ->map(fn ($img) => $img ? SupabaseStorageService::getPublicUrl($img) : null)
-                ->values()
-                ->toArray(),
-        ];
+        $prices = $options
+            ->pluck('price')
+            ->filter()
+            ->map(fn ($p) => (float) $p)
+            ->values();
+
+        if ($prices->count() > 0) {
+            $finalPrice = $prices->min();
+        }
     }
 
+    return [
+        'id' => $product->id,
+        'name' => $product->name,
+        'description' => $product->description,
+        'sku' => $product->sku,
+        'ingredients' => $product->ingredients,
+
+        // ✅ FINAL PRICE LOGIC HERE
+        'price' => $finalPrice,
+        'old_price' => $product->old_price,
+
+        'stock' => $product->stock,
+        'category_id' => $product->category_id,
+        'deal_id' => $product->deal_id,
+
+        'category_name' => $categories[$product->category_id] ?? 'Uncategorized',
+
+        'weights' => json_decode($product->weights, true) ?? [],
+        'tags' => json_decode($product->tags, true) ?? [],
+
+        // keep original options
+        'options' => $options->toArray(),
+
+        // =========================
+        // NEW FIELDS
+        // =========================
+        'shipping_info' => $product->shipping_info,
+        'supplement_facts' => $product->supplement_facts,
+        'how_to_use' => $product->how_to_use,
+
+        'halal_certification' => $product->halal_certification
+            ? SupabaseStorageService::getPublicUrl($product->halal_certification)
+            : null,
+
+        // =========================
+        // SUPABASE IMAGE URLS
+        // =========================
+        'main_image' => $product->main_image
+            ? SupabaseStorageService::getPublicUrl($product->main_image)
+            : null,
+
+        'gallery_images' => collect(json_decode($product->gallery_images, true) ?? [])
+            ->filter()
+            ->map(fn ($img) => $img ? SupabaseStorageService::getPublicUrl($img) : null)
+            ->values()
+            ->toArray(),
+    ];
+}
     // =========================
     // CREATE CATEGORY
     // =========================
     public function createCategory(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories_models,name',
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+       $validated = $request->validate([
+    'name' => 'required|string|max:255|unique:categories_models,name',
+    'index_no' => 'required|integer|unique:categories_models,index_no',
+    'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+]);
 
         $imagePath = SupabaseStorageService::upload(
             $request->file('image'),
@@ -167,6 +250,7 @@ public function editPage($id)
         $category = CategoriesModel::create([
             'name' => $validated['name'],
             'image' => $imagePath,
+                'index_no' => $validated['index_no'],
         ]);
 
         return response()->json([
@@ -176,6 +260,8 @@ public function editPage($id)
                 'id' => $category->id,
                 'name' => $category->name,
                 'image' => SupabaseStorageService::getPublicUrl($category->image),
+                 'index_no' => $category->index_no,
+
             ]
         ], 201);
     }
@@ -253,7 +339,7 @@ public function editPage($id)
 
 
 
-   public function updateProduct(Request $request, $id)
+  public function updateProduct(Request $request, $id)
 {
     $product = ProductsModel::findOrFail($id);
 
@@ -271,7 +357,9 @@ public function editPage($id)
         'stock' => 'required|integer|min:0',
         'weights' => 'nullable|array',
         'tags' => 'nullable|array',
-         'options' => 'nullable|array',
+        'options' => 'nullable|array',
+          'ingredients' => 'nullable|string',
+
 
         'weights.*' => 'string',
         'tags.*' => 'string',
@@ -290,22 +378,43 @@ public function editPage($id)
     }
 
     // =========================
-    // GALLERY IMAGES (APPEND OR REPLACE)
+    // HALAL CERTIFICATION (NEW - SAFE ADDITION)
     // =========================
-    $galleryPaths = json_decode($product->gallery_images, true) ?? [];
+    $halalPath = $product->halal_certification;
 
-    if ($request->hasFile('gallery_images')) {
-
-        $galleryPaths = []; // reset if replacing (IMPORTANT)
-
-        foreach ($request->file('gallery_images') as $file) {
-            $galleryPaths[] = SupabaseStorageService::upload(
-                $file,
-                'products/gallery'
-            );
-        }
+    if ($request->hasFile('halal_certification')) {
+        $halalPath = SupabaseStorageService::upload(
+            $request->file('halal_certification'),
+            'products/halal'
+        );
     }
 
+    // =========================
+    // GALLERY IMAGES
+    // =========================
+$galleryPaths = [];
+
+if ($request->filled('existing_gallery_images')) {
+    $decoded = json_decode($request->existing_gallery_images, true);
+
+    if (is_array($decoded)) {
+        $galleryPaths = array_values(array_filter($decoded));
+    }
+}
+
+// ALWAYS ensure ONLY paths are stored
+$galleryPaths = array_map(function ($path) {
+    // remove full URL if accidentally sent
+    return str_replace(
+        'https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/',
+        '',
+        $path
+    );
+}, $galleryPaths);
+
+if (empty($galleryPaths)) {
+    $galleryPaths = json_decode($product->gallery_images, true) ?? [];
+}
     // =========================
     // UPDATE PRODUCT
     // =========================
@@ -319,12 +428,23 @@ public function editPage($id)
         'category_id' => $validated['category_id'],
         'deal_id' => $validated['deal_id'],
 
+
+     
         'weights' => json_encode($validated['weights'] ?? []),
         'tags' => json_encode($validated['tags'] ?? []),
-          'options' => json_encode($validated['options'] ?? []),
-
+        'options' => json_encode($validated['options'] ?? []),
         'main_image' => $mainImagePath,
         'gallery_images' => json_encode($galleryPaths),
+
+        // =========================
+        // NEW FIELDS ADDED (SAFE)
+        // =========================
+        'shipping_info' => $request->shipping_info,
+        'supplement_facts' => $request->supplement_facts,
+        'how_to_use' => $request->how_to_use,
+        'halal_certification' => $halalPath,
+          'ingredients' => $request->ingredients,
+          
     ]);
 
     return response()->json([
@@ -333,6 +453,92 @@ public function editPage($id)
             $product->fresh(),
             CategoriesModel::pluck('name', 'id')
         )
+    ]);
+}
+
+
+
+private function formatImage($path)
+{
+    if (!$path) return null;
+
+    // already full URL → return as-is
+    if (str_starts_with($path, 'http')) {
+        return $path;
+    }
+
+    return rtrim(env('SUPABASE_URL'), '/')
+        . '/storage/v1/object/public/slimza-images/'
+        . ltrim($path, '/');
+}
+
+
+
+
+
+
+
+
+
+    public function updateCategory(Request $request, $id)
+{
+    $category = CategoriesModel::findOrFail($id);
+
+    $validated = $request->validate([
+    'name' => [
+        'required',
+        'string',
+        'max:255',
+        Rule::unique('categories_models', 'name')->ignore($id),
+    ],
+
+  
+
+    'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+]);
+
+    if ($request->hasFile('image')) {
+        $imagePath = SupabaseStorageService::upload(
+            $request->file('image'),
+            'categories'
+        );
+
+        $category->image = $imagePath;
+    }
+
+    $category->name = $validated['name'];
+
+    $category->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Category updated successfully',
+        'data' => $category
+    ]);
+}
+
+
+
+
+
+
+public function getProductById($id)
+{
+    $product = ProductsModel::find($id);
+
+    if (!$product) {
+        return response()->json([
+            'message' => 'Product not found',
+            'status' => false
+        ], 404);
+    }
+
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    return response()->json([
+        'message' => 'Product fetched successfully',
+        'status' => true,
+        'data' => $this->formatProduct($product, $categories)
     ]);
 }
 }

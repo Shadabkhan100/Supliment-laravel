@@ -1,23 +1,10 @@
-<!doctype html>
-<html>
-<head>
+    
 
-    <title>Add Product</title>
-     <link rel="stylesheet"
-          href="{{ asset('css/bootstrap.min.css') }}">
 
-    <link rel="stylesheet"
-          href="{{ asset('css/product-management.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+
     <style>
 
-        body{
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f4f6f9;
-    padding: 40px;
-    color: #333;
-}
+
 
 /* FORM WRAPPER */
 form{
@@ -151,11 +138,8 @@ hr{
 
     </style>
 
-</head>
 
-<body>
-
-<h2>Create Product</h2>
+<h2 style="background-color:white;">Create Product</h2>
 
 <form id="productForm">
 
@@ -236,7 +220,7 @@ hr{
     <!-- MAIN IMAGE -->
     <h4>Main Image</h4>
 
-    <input type="file"
+    <input style="display:block"  type="file"
            id="main_image"
            accept="image/*">
 
@@ -251,7 +235,7 @@ hr{
     <!-- GALLERY -->
     <h4>Gallery Images</h4>
 
-    <input type="file"
+    <input style="display:block"  type="file"
            id="gallery_images"
            accept="image/*"
            multiple>
@@ -271,7 +255,7 @@ hr{
     <input type="number" id="priceInput" placeholder="Price" style="width:150px;">
     <input type="text" id="durationInput" placeholder="Duration (e.g. 15 days)" style="width:200px;">
 
-    <input type="file"
+    <input style="display:block"  type="file"
            id="optionImageInput"
            accept="image/*"
            style="width:200px;">
@@ -286,7 +270,38 @@ hr{
 
 <hr>
 
+<hr>
 
+<h4>Halal Certification</h4>
+
+<input style="display:block" type="file"
+       id="halal_certification"
+       accept="image/*">
+
+<br><br>
+
+<img id="halalPreview"
+     class="preview-image"
+     style="display:none;">
+
+
+<hr>
+
+<h4>Shipping Info</h4>
+
+<textarea name="shipping_info"
+          id="shipping_info"
+          placeholder="Enter shipping details..."></textarea>
+<h4>Supplement Facts</h4>
+<textarea id="supplement_facts" placeholder="Enter supplement facts..."></textarea>
+
+<hr>
+
+<h4>How to Use</h4>
+<textarea id="how_to_use" placeholder="Enter usage instructions..."></textarea>
+
+<h4>Ingredients</h4>
+<textarea id="ingredients" placeholder="Enter ingredients..."></textarea>
 
 
 
@@ -298,7 +313,9 @@ hr{
 
 
 
-
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
 <script>
 
 const SUPABASE_URL = "{{ $supabaseUrl }}";
@@ -311,6 +328,7 @@ let editorInstance;
 let tags = [];
 let packOptions = [];
 let optionImageFile = null;
+let halalCertFile = null; // ADD THIS
 
 async function uploadToSupabase(file)
 {
@@ -570,7 +588,19 @@ ClassicEditor
         }
 
     });
+$('#halal_certification').on('change', function (e) {
 
+    halalCertFile = e.target.files[0];
+
+    if (halalCertFile) {
+
+        $('#halalPreview')
+            .show()
+            .attr('src', URL.createObjectURL(halalCertFile));
+
+    }
+
+});
     /* =========================
        GALLERY IMAGES
     ========================== */
@@ -649,7 +679,28 @@ ClassicEditor
         formData.append('old_price', $('input[name="old_price"]').val());
         formData.append('stock', $('input[name="stock"]').val());
         formData.append('description', editorInstance.getData());
-        
+        formData.append(
+    'ingredients',
+    $('#ingredients').val()
+);
+formData.append(
+    'supplement_facts',
+    $('#supplement_facts').val()
+);
+formData.append(
+    'how_to_use',
+    $('#how_to_use').val()
+);
+formData.append(
+    'shipping_info',
+    $('#shipping_info').val()
+);
+if (halalCertFile) {
+    formData.append(
+        'halal_certification',
+        halalCertFile
+    );
+}
 
         packOptions.forEach((item, index) => {
 
@@ -657,6 +708,7 @@ ClassicEditor
     formData.append(`options[${index}][price]`, item.price);
     formData.append(`options[${index}][duration]`, item.duration);
     formData.append(`options[${index}][image]`, item.image);
+   
 
 
 });
@@ -733,5 +785,3 @@ ClassicEditor
 
 </script>
 
-</body>
-</html>

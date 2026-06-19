@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blogs Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+   
+@extends('admin.main')
 
-    <!-- All CSS files -->
-    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-theme.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-slider.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+@section('title', 'Blogs Management')
+
+@section('page-title', 'Blogs Management')
+@section('content')
+ 
     <style>
-        body{
-            background:#f8f8f8;
-        }
+  
 
         .blog-card-box{
             background:#fff;
@@ -98,8 +90,7 @@
         }
 
     </style>
-</head>
-<body>
+
 
 <div class="container py-5">
 
@@ -242,7 +233,7 @@
 
     <div class="custom-upload-wrapper">
 
-        <input
+        <input style="display:block"
             type="file"
             id="image"
             accept="image/*"
@@ -383,7 +374,7 @@ ClassicEditor
                         <div class="d-flex gap-2">
 
                             <a
-                                href="/blogs/view-blogs/name/${blog.id}"
+                                href="/blog-details/${blog.slug}/${blog.id}"
                                 target="_blank"
                                 class="action-btn view-btn"
                             >
@@ -545,5 +536,4 @@ ClassicEditor
 
 </script>
 
-</body>
-</html>
+@endsection

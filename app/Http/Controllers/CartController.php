@@ -14,32 +14,43 @@ class CartController extends Controller
 {
    
 
-
 public function cartView()
 {
-    // user must be logged in
-    if (!Auth::check()) {
-        return redirect('/login')->with('error', 'Please login first');
+    $userId = Auth::id();
+    $guestId = $_COOKIE['guest_id'] ?? null;
+
+    $query = CartModel::query();
+
+    if ($userId) {
+
+        // AUTH USER CART
+        $query->where('user_id', $userId);
+
+    } elseif ($guestId) {
+
+        // GUEST CART
+        $query->where('guest_id', $guestId);
+
+    } else {
+
+        // ONLY redirect if NO user AND NO guest
+        return redirect('/')->with('error', 'Cart is empty');
     }
 
-    $userId = Auth::id();
+    $cartItems = $query->get();
 
-    // get cart items of user
-    $cartItems = CartModel::where('user_id', $userId)->get();
+    $grandTotal = 0;
 
-    // attach product details manually
-    $cartItems->transform(function ($item) {
+    $cartItems->transform(function ($item) use (&$grandTotal) {
 
         $product = ProductsModel::find($item->product_id);
 
         if ($product) {
 
-            // Supabase main image URL
             $product->main_image_url = $product->main_image
                 ? SupabaseStorageService::getPublicUrl($product->main_image)
                 : null;
 
-            // Supabase gallery URLs
             $product->gallery_images_urls = collect(
                 json_decode($product->gallery_images, true) ?? []
             )->map(fn ($img) =>
@@ -49,39 +60,68 @@ public function cartView()
 
         $item->product = $product;
 
+        $unitPrice = (float) $item->price;
+        $qty = (int) $item->quantity;
+
+        $item->unit_price = $unitPrice;
+        $item->subtotal = $unitPrice * $qty;
+
+        $grandTotal += $item->subtotal;
+
         return $item;
     });
 
-    return view('profile.cart', compact('cartItems'));
+    return view('profile.cart', compact('cartItems', 'grandTotal'));
+}
 
-}  
+
+
+
 public function addToCart(Request $request)
 {
-    if (!Auth::check()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Please login first to add items to cart.'
-        ], 401);
+    $userId = Auth::id();
+    $guestId = null;
+
+    // =========================
+    // GET GUEST ID
+    // =========================
+    if (!$userId) {
+        $guestId = $request->input('guest_id') ?? $request->cookie('guest_id');
+
+        if (!$guestId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Guest session not found. Please refresh page.'
+            ], 401);
+        }
     }
 
+    // =========================
+    // VALIDATION
+    // =========================
     $request->validate([
         'product_id' => 'required',
         'quantity' => 'required|integer|min:1',
         'purchase_type' => 'required',
-        'option' => 'required'
+        'option' => 'nullable|array'
     ]);
 
-    $option = $request->option;
-
-    // calculate price safely
+    // =========================
+    // OPTION + PRICE
+    // =========================
+    $option = $request->option ?? [];
     $basePrice = $option['price'] ?? 0;
 
     if ($request->purchase_type === 'subscribe') {
-        $basePrice = $basePrice - ($basePrice * 20 / 100);
+        $basePrice -= ($basePrice * 20 / 100);
     }
 
+    // =========================
+    // CREATE CART
+    // =========================
     $cart = CartModel::create([
-        'user_id' => Auth::id(),
+        'user_id' => $userId,
+        'guest_id' => $guestId,
         'product_id' => $request->product_id,
         'option' => $option,
         'quantity' => $request->quantity,
@@ -89,13 +129,26 @@ public function addToCart(Request $request)
         'price' => $basePrice,
     ]);
 
+    // =========================
+    // CART COUNT QUERY (FIXED)
+    // =========================
+    $cartCountQuery = CartModel::query();
+
+    if ($userId) {
+        $cartCountQuery->where('user_id', $userId);
+    } else {
+        $cartCountQuery->where('guest_id', $guestId);
+    }
+
+    // =========================
+    // RESPONSE
+    // =========================
     return response()->json([
         'status' => true,
-        'message' => 'Product added to cart successfully!',
-        'cart_count' => CartModel::where('user_id', Auth::id())->count(),
+        'message' => 'Added to cart successfully!',
+        'cart_count' => $cartCountQuery->count()
     ]);
 }
-
 
 
 
@@ -108,7 +161,7 @@ public function getCartItemById($id)
     $deal = $product->deal ?? null;
 
     // =========================
-    // ONLY FORMAT IMAGES (PRODUCT)
+    // FORMAT PRODUCT IMAGES + DATA
     // =========================
     if ($product) {
 
@@ -127,18 +180,29 @@ public function getCartItemById($id)
     }
 
     // =========================
-    // ONLY FORMAT DEAL IMAGE (if exists)
+    // DEAL IMAGE
     // =========================
     if ($deal && !empty($deal->image)) {
         $deal->image = SupabaseStorageService::getPublicUrl($deal->image);
     }
 
+    // =========================
+    // OVERRIDE PRICE WITH OPTION PRICE
+    // =========================
+    $option = $item->option ?? null;
+
+    if ($product && $option && isset($option['price'])) {
+
+        // replace product price with option price
+        $product->price = $option['price'];
+    }
+
     return response()->json([
-         'option' => $item->option,
+        'option'  => $item->option,
         'cart_id' => $item->id,
-        'qty' => $item->quantity,
+        'qty'     => $item->quantity,
         'product' => $product,
-        'deal' => $deal,
+        'deal'    => $deal,
     ]);
 }
 

@@ -24,10 +24,13 @@ return new class extends Migration
 
     $table->string('purchase_type'); // one_time / subscribe
 
+ $table->string('guest_id')->nullable();
     $table->decimal('price', 10, 2)->nullable();
     $table->index('user_id');
             $table->timestamps();
         });
+
+
     }
 
     /**

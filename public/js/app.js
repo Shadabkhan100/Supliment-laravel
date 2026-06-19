@@ -240,7 +240,7 @@ var MyScroll = "";
           .slick({
             slidesToShow: 1,
             slidesToScroll: 1,
-            autoplay: false,
+            autoplay: true,
             speed: 800,
             lazyLoad: "progressive",
             arrows: false,
@@ -345,15 +345,7 @@ var MyScroll = "";
           }
         );
 
-        $slider.slick({
-          autoplay: false,
-          slidesToShow: slidesToShow,
-          slidesToScroll: 1,
-          speed: 400,
-          cssEase: "linear",
-          arrows: false,
-          responsive: responsiveSettings,
-        });
+     
       }
 
       if ($(".product-slider").length) {

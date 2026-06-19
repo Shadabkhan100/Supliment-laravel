@@ -23,6 +23,11 @@ class ProductsModel extends Model
         'main_image',
         'gallery_images',
         'deal_id',
+          'supplement_facts',
+    'how_to_use',
+    'halal_certification',
+    'shipping_info',
+   'ingredients'
     ];
 
     protected $casts = [

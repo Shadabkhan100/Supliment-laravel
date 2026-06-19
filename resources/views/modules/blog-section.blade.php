@@ -8,12 +8,12 @@
       <div>
         <h2 class="fw-600 mb-12" style="color:#9eef0b;">OUR LATEST JOURNAL</h2>
         <p style="color:white">
-         Explore refined insights, expert perspectives, and emerging trends through our latest articles and editorials. Thoughtfully curated to inspire, inform, and elevate your experience.
+         Explore refined insights, expert perspectives, and emerging trends through our latest articles and editorials. Thoughtfully curated to inspire, inform, and elevate your   experience.
 Discover More Articles
         </p>
       </div>
 
-      <a href="/blogs" class="cus-btn-arrow">
+      <a href="/all-blogs" class="cus-btn-arrow">
         See More Blogs
         <div class="icon">
           <i class="fa-light fa-chevron-right"></i>
@@ -101,7 +101,7 @@ Discover More Articles
     let mainBlogHtml = `
       <div class="blog-card main d-flex flex-column gap-16 bg-lightest-gray br-16">
 
-        <a href="/blogs/view-blogs/name/${mainBlog.id}" class="card-image">
+        <a href="/blog-details/${mainBlog.slug}/${mainBlog.id}" class="card-image">
 
           <img
             src="${mainBlog.image ?? 'images/1_1.png'}"
@@ -129,7 +129,7 @@ Discover More Articles
             </div>
 
             <a
-              href="/blogs/view-blogs/name/${mainBlog.id}"
+              href="/blog-details/${mainBlog.slug}/${mainBlog.id}"
               class="h4"
             >
               ${mainBlog.title ?? ''}
@@ -142,7 +142,7 @@ Discover More Articles
           </div>
 
           <a
-            href="/blogs/view-blogs/name/${mainBlog.id}"
+            href="/blog-details/${mainBlog.slug}/${mainBlog.id}"
             class="text-16 medium black card-btn"
           >
             Read More
@@ -166,7 +166,7 @@ Discover More Articles
           <div class="blog-card main d-flex flex-column gap-16 bg-lightest-gray br-16">
 
             <a
-              href="/blogs/view-blogs/name/${blog.id}"
+              href="/blog-details/${mainBlog.slug}/${mainBlog.id}"
               class="card-image"
             >
 
@@ -196,7 +196,7 @@ Discover More Articles
                 </div>
 
                 <a
-                  href="/blogs/view-blogs/name/${blog.id}"
+                  href="/blog-details/${mainBlog.slug}/${mainBlog.id}"
                   class="h6"
                 >
                   ${truncateText(blog.title ?? '', 60)}
@@ -205,7 +205,7 @@ Discover More Articles
               </div>
 
               <a
-                href="/blogs/view-blogs/name/${blog.id}"
+                href="/blog-details/${mainBlog.slug}/${mainBlog.id}"
                 class="text-16 medium black card-btn"
               >
                 Read More

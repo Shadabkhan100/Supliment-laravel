@@ -44,6 +44,13 @@ return new class extends Migration
         $table->string('main_image')->nullable();
         $table->json('gallery_images')->nullable();
         // Example: ["img1.jpg","img2.jpg"]
+        $table->text('supplement_facts')->nullable();
+            $table->text('how_to_use')->nullable();
+            $table->string('halal_certification')->nullable();
+            $table->text('shipping_info')->nullable();
+ $table->text('ingredients')->nullable();
+
+
 
         $table->timestamps();
     });

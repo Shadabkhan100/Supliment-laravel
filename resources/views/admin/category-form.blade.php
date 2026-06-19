@@ -1,450 +1,284 @@
-<!doctype html>
-<html lang="en">
+@extends('admin.main')
 
-<head>
+@section('title', 'Category Management')
+@section('page-title', 'Category Management')
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@section('content')
 
-    <title>Category Management</title>
+<style>
+.modal-content{
+    background:#fff !important;
+    border-radius:16px;
+    border:none;
+    box-shadow:0 10px 30px rgba(0,0,0,0.15);
+}
 
-    <!-- Bootstrap -->
-   <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
+.modal-header{
+    border-bottom:1px solid #eee;
+    padding:18px 22px;
+}
 
-    <!-- JQuery -->
-    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
-<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
-    <style>
+.modal-header h5{
+    font-weight:600;
+    margin:0;
+    color:#111827;
+}
 
-        body{
-            background:#f4f6f9;
-            font-family:Arial,sans-serif;
-        }
+.modal-body{
+    padding:22px;
+    background:#fff;
+}
 
-        .page-card{
-            background:#fff;
-            border-radius:20px;
-            padding:30px;
-            box-shadow:0 10px 30px rgba(0,0,0,0.06);
-        }
+.preview-image{
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-top:10px;
+    display:none;
+    border:1px solid #ddd;
+}
 
-        .table img{
-            width:60px;
-            height:60px;
-            object-fit:cover;
-            border-radius:12px;
-        }
+.page-card{
+    background:#fff;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+}
 
-        .form-box{
-            display:none;
-            background:#fafafa;
-            border:1px solid #eee;
-            border-radius:20px;
-            padding:25px;
-            margin-top:20px;
-        }
+.table img{
+    width:60px;
+    height:60px;
+    object-fit:cover;
+    border-radius:12px;
+}
 
-        .btn-action{
-            min-width:80px;
-        }
-
-        .preview-image{
-            width:120px;
-            height:120px;
-            object-fit:cover;
-            border-radius:16px;
-            border:1px solid #ddd;
-            margin-top:15px;
-            display:none;
-        }
-
-        .table thead{
-            background:#111;
-            color:#fff;
-        }
-
-        .pagination .page-link{
-            color:#111;
-        }
-
-        .pagination .active .page-link{
-            background:#111;
-            border-color:#111;
-        }
-
-    </style>
-
-</head>
-
-<body>
+.table thead{
+    background:#111;
+    color:#fff;
+}
+</style>
 
 <div class="container py-5">
 
     <div class="page-card">
 
         <!-- HEADER -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between mb-4">
 
             <div>
-                <h2 class="fw-bold mb-1">
-                    Category Management
-                </h2>
-
-                <p class="text-muted mb-0">
-                    Manage all categories and products
-                </p>
+                <h3>Category Management</h3>
+                <p class="text-muted">Manage categories</p>
             </div>
 
-            <button class="btn btn-dark px-4"
-                    id="toggleCategoryForm">
-
+            <button class="btn btn-dark" onclick="openAddModal()">
                 + Add Category
-
             </button>
 
         </div>
 
-        <!-- FORM -->
-        <div class="form-box" id="categoryFormBox">
-
-            <form id="categoryForm"
-                  enctype="multipart/form-data">
-
-                @csrf
-
-                <div class="row">
-
-                    <div class="col-md-6 mb-4">
-
-                        <label class="form-label fw-semibold">
-                            Category Name
-                        </label>
-
-                        <input type="text"
-                               name="name"
-                               class="form-control"
-                               placeholder="Enter category name">
-
-                    </div>
-
-                    <div class="col-md-6 mb-4">
-
-                        <label class="form-label fw-semibold">
-                            Category Image
-                        </label>
-
-                        <input type="file"
-                               name="image"
-                               id="categoryImage"
-                               class="form-control"
-                               accept="image/*">
-
-                        <img src=""
-                             id="imagePreview"
-                             class="preview-image">
-
-                    </div>
-
-                </div>
-
-                <button type="submit"
-                        class="btn btn-dark px-5">
-
-                    Save Category
-
-                </button>
-
-            </form>
-
-        </div>
-
         <!-- TABLE -->
-        <div class="table-responsive mt-5">
+        <table class="table table-bordered align-middle">
 
-            <table class="table align-middle table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Products</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
 
-                <thead>
+            <tbody id="categoryTableBody"></tbody>
 
-                    <tr>
-                        <th>#</th>
-                        <th>Image</th>
-                        <th>Category Name</th>
-                        <th>Total Products</th>
-                        <th width="280">Actions</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="categoryTableBody">
-
-                    <!-- DYNAMIC DATA -->
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <!-- PAGINATION -->
-        <div class="d-flex justify-content-center mt-4">
-
-            <nav>
-
-                <ul class="pagination" id="pagination">
-
-                    <!-- PAGINATION -->
-
-                </ul>
-
-            </nav>
-
-        </div>
+        </table>
 
     </div>
 
 </div>
 
-<!-- Bootstrap -->
-<script src="{{ asset('js/bootstrap.min.js') }}"></script>
+<!-- ================= MODAL ================= -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
 
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 id="modalTitle">Add Category</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <form id="categoryForm" enctype="multipart/form-data">
+
+                    @csrf
+
+                    <input type="hidden" id="category_id">
+
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" id="edit_name" name="name" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Image</label>
+                        <input style="display:block" type="file" id="edit_image" name="image" class="form-control">
+                        <img id="edit_preview" class="preview-image">
+                    </div>
+
+                    <button class="btn btn-dark w-100" id="submitBtn">
+                        Save
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
 <script>
+let modal;
 
-    let categories = [];
+$(document).ready(function () {
 
-    let currentPage = 1;
+    modal = new bootstrap.Modal(document.getElementById('categoryModal'));
 
-    let perPage = 10;
+    loadCategories();
+});
 
-    /* =========================
-       TOGGLE FORM
-    ========================== */
+/* ================= LOAD ================= */
+function loadCategories()
+{
+    $.get('/api/categories', function(res){
 
-    $('#toggleCategoryForm').click(function(){
-
-        $('#categoryFormBox').slideToggle();
-
-    });
-
-    /* =========================
-       IMAGE PREVIEW
-    ========================== */
-
-    $('#categoryImage').change(function(e){
-
-        let file = e.target.files[0];
-
-        if(file)
-        {
-            $('#imagePreview')
-                .show()
-                .attr('src', URL.createObjectURL(file));
-        }
-
-    });
-
-    /* =========================
-       FORM SUBMIT
-    ========================== */
-
-    $('#categoryForm').submit(function(e){
-
-        e.preventDefault();
-
-        let formData = new FormData(this);
-
-        $.ajax({
-
-            url:'/api/create-category',
-
-            type:'POST',
-
-            data:formData,
-
-            processData:false,
-
-            contentType:false,
-
-            success:function(res){
-
-                alert('Category Created Successfully');
-
-                $('#categoryForm')[0].reset();
-
-                $('#imagePreview').hide();
-
-                loadCategories();
-
-            },
-
-            error:function(err){
-
-                console.log(err.responseJSON);
-
-                alert('Error');
-
-            }
-
-        });
-
-    });
-
-    /* =========================
-       LOAD CATEGORIES
-    ========================== */
-
-    function loadCategories(page = 1)
-    {
-
-        $.ajax({
-
-            url:'/api/categories?page=' + page,
-
-            type:'GET',
-
-            success:function(res){
-
-                categories = res.data;
-                console.log(categories);
-                
-                renderTable(categories);
-
-                renderPagination(res.data);
-
-            }
-
-        });
-
-    }
-
-    /* =========================
-       RENDER TABLE
-    ========================== */
-
-    function renderTable(data)
-    {
+        let data = res.data;
 
         $('#categoryTableBody').html('');
 
-        data.forEach((category,index)=>{
+        data.forEach((c,i)=>{
 
             $('#categoryTableBody').append(`
-
                 <tr>
-
-                    <td>${index + 1}</td>
-
+                    <td>${i+1}</td>
+                    <td><img src="${c.image}"></td>
+                    <td>${c.name}</td>
+                    <td>${c.products_count}</td>
                     <td>
-                        <img src="${category.image}">
+                        <button class="btn btn-warning btn-sm" onclick='editCategory(${JSON.stringify(c)})'>Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button>
                     </td>
-
-                    <td>
-                        ${category.name}
-                    </td>
-
-                    <td>
-                        ${category.products_count}
-                    </td>
-
-                    <td>
-
-                        <button class="btn btn-info btn-sm btn-action">
-                            View
-                        </button>
-
-                        <button class="btn btn-warning btn-sm btn-action">
-                            Edit
-                        </button>
-
-                        <button class="btn btn-danger btn-sm btn-action"
-                                onclick="deleteCategory(${category.id})">
-
-                            Delete
-
-                        </button>
-
-                    </td>
-
                 </tr>
-
             `);
-
         });
 
+    });
+}
+
+/* ================= ADD MODAL ================= */
+function openAddModal()
+{
+    $('#categoryForm')[0].reset();
+    $('#category_id').val('');
+    $('#edit_preview').hide();
+    $('#modalTitle').text('Add Category');
+    $('#submitBtn').text('Save');
+
+    modal.show();
+}
+
+/* ================= EDIT ================= */
+function editCategory(c)
+{
+    $('#category_id').val(c.id);
+    $('#edit_name').val(c.name);
+
+    $('#modalTitle').text('Edit Category');
+    $('#submitBtn').text('Update');
+
+    if(c.image){
+        $('#edit_preview').show().attr('src', c.image);
     }
 
-    /* =========================
-       PAGINATION
-    ========================== */
+    modal.show();
+}
 
-    function renderPagination(data)
-    {
+/* ================= IMAGE PREVIEW ================= */
+$(document).on('change', '#edit_image', function(e){
 
-        $('#pagination').html('');
+    let file = e.target.files[0];
 
-        for(let i = 1; i <= data.last_page; i++)
-        {
+    if(file){
+        let reader = new FileReader();
 
-            $('#pagination').append(`
+        reader.onload = function(e){
+            $('#edit_preview')
+                .attr('src', e.target.result)
+                .show();
+        };
 
-                <li class="page-item ${i == data.current_page ? 'active' : ''}">
+        reader.readAsDataURL(file);
+    }
+});
 
-                    <a class="page-link"
-                       href="#"
-                       onclick="loadCategories(${i})">
+/* ================= SUBMIT ================= */
+$('#categoryForm').submit(function(e){
 
-                        ${i}
+    e.preventDefault();
 
-                    </a>
+    let formData = new FormData(this);
+    let id = $('#category_id').val();
 
-                </li>
+    let url = id
+        ? `/api/edit-category/${id}`
+        : `/api/create-category`;
 
-            `);
+    $.ajax({
+        url:url,
+        type:'POST',
+        data:formData,
+        processData:false,
+        contentType:false,
 
+        success:function(){
+            modal.hide();
+            loadCategories();
+        },
+
+        error:function(err){
+            console.log(err.responseJSON);
+            alert("Something went wrong");
         }
+    });
 
-    }
+});
 
-    /* =========================
-       DELETE CATEGORY
-    ========================== */
+/* ================= DELETE ================= */
+function deleteCategory(id)
+{
+    if(!confirm('Delete?')) return;
 
-    function deleteCategory(id)
-    {
-
-        if(!confirm('Delete this category?'))
-        {
-            return;
+    $.ajax({
+        url:'/api/delete-category/'+id,
+        type:'DELETE',
+        data:{_token:'{{ csrf_token() }}'},
+        success:function(){
+            loadCategories();
         }
-
-        $.ajax({
-
-            url:'/api/delete-category/' + id,
-
-            type:'DELETE',
-
-            data:{
-                _token:'{{ csrf_token() }}'
-            },
-
-            success:function(res){
-
-                alert('Deleted Successfully');
-
-                loadCategories();
-
-            }
-
-        });
-
-    }
-
-    /* =========================
-       INITIAL LOAD
-    ========================== */
-
-    loadCategories();
+    });
+}
 
 </script>
 
-</body>
-</html>
+
+
+
+@endsection

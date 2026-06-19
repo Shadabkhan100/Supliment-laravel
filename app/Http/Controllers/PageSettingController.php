@@ -57,4 +57,80 @@ public function save(Request $request)
         })
     ]);
 }
+
+
+
+
+    public function updatedBanner(Request $request, $id)
+{
+    $setting = PageSetting::find($id);
+
+    if (!$setting) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Record not found'
+        ], 404);
+    }
+
+    $validated = $request->validate([
+        'description' => 'nullable|string',
+        'home_banner' => 'nullable|image|max:2048',
+    ]);
+
+    // update description
+    $setting->description = $validated['description'] ?? $setting->description;
+
+    // if new image uploaded → replace old one
+    if ($request->hasFile('home_banner')) {
+
+        $path = SupabaseStorageService::upload(
+            $request->file('home_banner'),
+            'slimza-images'
+        );
+
+        $setting->home_banner = SupabaseStorageService::getPublicUrl($path);
+    }
+
+    $setting->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Banner updated successfully',
+        'data' => $setting
+    ]);
+}
+
+
+
+
+
+
+
+
+
+
+
+   public function deleteBanner($id)
+{
+    $setting = PageSetting::find($id);
+
+    if (!$setting) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Record not found'
+        ], 404);
+    }
+
+    // Optional: delete image from Supabase if needed
+    // if ($setting->home_banner) {
+    //     SupabaseStorageService::delete($setting->home_banner);
+    // }
+
+    $setting->delete();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Banner deleted successfully'
+    ]);
+}
 }

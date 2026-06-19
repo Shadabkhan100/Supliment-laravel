@@ -1,22 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+   
+@extends('admin.main')
 
-<head>
+@section('title', 'Page Settings')
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@section('page-title', 'Page Settings')
+@section('content')
 
-    <title>Future Products Management</title>
-
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('images/favicon.png') }}" />
-
-    <!-- All CSS files -->
-    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-theme.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-slider.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/slick-animation.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
+  
 
     <style>
 
@@ -79,7 +70,7 @@
 }
 
 .custom-upload-box:hover{
-    border-color: #9eef0b;
+    border-color: #111827;
     background: #f8ffea;
 }
 
@@ -112,9 +103,9 @@
         }
 
         .btn-main{
-            background: #9eef0b;
+            background: #111827;
             border: none;
-            color: #000;
+            color: white;
             font-weight: 600;
             padding: 10px 20px;
             border-radius: 10px;
@@ -181,7 +172,7 @@
             width: 60px;
             height: 60px;
             border: 5px solid #ddd;
-            border-top-color: #9eef0b;
+            border-top-color: #111827;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -208,9 +199,6 @@
 
     </style>
 
-</head>
-
-<body>
 
 <div class="loader-wrapper" id="globalLoader">
     <div class="loader"></div>
@@ -225,7 +213,7 @@
 
             <div class="col-md-6 mb-3 mb-md-0">
 
-                <button class="btn btn-main"
+                <button style=""color:white" class="btn btn-main"
                         data-bs-toggle="modal"
                         data-bs-target="#addProductModal">
 
@@ -352,7 +340,7 @@
 
     <div class="custom-upload-wrapper">
 
-        <input type="file"
+        <input style="display:block"  type="file"
                id="image"
                class="custom-file-input"
                name="image"
@@ -642,5 +630,4 @@ $("#image").on("change", function () {
     }
 </script>
 
-</body>
-</html>   
+@endsection
