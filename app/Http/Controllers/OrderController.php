@@ -10,11 +10,19 @@ use App\Services\SupabaseStorageService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cookie;
+use App\Services\UserEmailService;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderStatusMail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+ use Illuminate\Support\Facades\Http;
+
+
+
+
 
 class OrderController extends Controller
 {
-   
-
 public function createAuthOrder(Request $request)
 {
     // 🔐 Must be logged in (session-based auth)
@@ -26,7 +34,6 @@ public function createAuthOrder(Request $request)
             'message' => 'Unauthorized. Please login first.'
         ], 401);
     }
-
     // ✅ Validate request
     $validated = $request->validate([
         'product_id' => 'required|integer',
@@ -71,7 +78,31 @@ public function createAuthOrder(Request $request)
         'user_id' => $user->id,
         'guest_id' => null,
     ]);
+    $product = ProductsModel::find($validated['product_id']);
+try {
 
+    Mail::to($user->email)->send(
+        new OrderStatusMail(
+            $order,
+            $product
+        )
+    );
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Mail sent'
+    ]);
+
+} catch (\Throwable $e) {
+
+    return response()->json([
+        'status' => false,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ], 500);
+
+}
     return response()->json([
         'status' => true,
         'message' => 'Auth order created successfully',
@@ -79,10 +110,9 @@ public function createAuthOrder(Request $request)
     ]);
 }
 
-
-
 public function createGuestOrder(Request $request)
 {
+try {
     $validated = $request->validate([
         'product_id' => 'required|integer',
         'product_option' => 'nullable',
@@ -90,7 +120,7 @@ public function createGuestOrder(Request $request)
         'purchase_type' => 'required|string',
 
         'name' => 'required|string',
-        'email' => 'required|string',
+        'email' => 'required|email',
         'phone' => 'required|string',
 
         'address1' => 'nullable|string',
@@ -103,60 +133,125 @@ public function createGuestOrder(Request $request)
 
         'cart_payload' => 'nullable'
     ]);
-$user = auth()->user();
 
-if ($user) {
-    $userId = $user->id;
-    $guestId = null; // ❌ never use guest id for logged-in users
-} else {
-    $userId = null;
+    $user = auth()->user();
 
-    $guestId = $request->cookie('guest_id');
+    if ($user) {
 
-    if (!$guestId) {
-        $guestId = 'gst_' . Str::random(24);
-        Cookie::queue('guest_id', $guestId, 60 * 24 * 365);
+        $userId = $user->id;
+        $guestId = null;
+
+    } else {
+
+        $userId = null;
+
+        $guestId = $request->cookie('guest_id');
+
+        if (!$guestId) {
+
+            $guestId = 'gst_' . Str::random(24);
+
+            Cookie::queue(
+                'guest_id',
+                $guestId,
+                60 * 24 * 365
+            );
+        }
     }
-}
 
-    // ✅ STEP 3: CREATE ORDER
-$order = GuestOrder::create([
-    'product_id' => $validated['product_id'],
-    'product_option' => $validated['product_option'] ?? null,
-    'quantity' => $validated['quantity'],
-    'purchase_type' => $validated['purchase_type'],
+    $product = ProductsModel::find($validated['product_id']);
 
-    'name' => $validated['name'],
-    'email' => $validated['email'],
-    'phone' => $validated['phone'],
+    if (!$product) {
 
-    'address1' => $validated['address1'] ?? null,
-    'city' => $validated['city'] ?? null,
-    'postal' => $validated['postal'] ?? null,
-    'country' => $validated['country'] ?? null,
+        return response()->json([
+            'status' => false,
+            'message' => 'Product not found'
+        ], 404);
+    }
 
-    'lat' => $validated['lat'] ?? null,
-    'lng' => $validated['lng'] ?? null,
+    $order = GuestOrder::create([
+        'product_id' => $validated['product_id'],
+        'product_option' => $validated['product_option'] ?? null,
+        'quantity' => $validated['quantity'],
+        'purchase_type' => $validated['purchase_type'],
 
-    'payment_status' => false,
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'phone' => $validated['phone'],
 
-    'cart_payload' => $validated['cart_payload'] ?? null,
+        'address1' => $validated['address1'] ?? null,
+        'city' => $validated['city'] ?? null,
+        'postal' => $validated['postal'] ?? null,
+        'country' => $validated['country'] ?? null,
 
-    'user_id' => $userId,
-    'guest_id' => $guestId,
-]);
+        'lat' => $validated['lat'] ?? null,
+        'lng' => $validated['lng'] ?? null,
+
+        'payment_status' => false,
+
+        'cart_payload' => $validated['cart_payload'] ?? null,
+
+        'user_id' => $userId,
+        'guest_id' => $guestId,
+    ]);
+
+    $mailStatus = false;
+    $mailError = null;
+
+    try {
+
+        Mail::to($validated['email'])->send(
+            new OrderStatusMail(
+                $order,
+                $product
+            )
+        );
+
+        $mailStatus = true;
+
+    } catch (\Throwable $e) {
+
+        $mailStatus = false;
+
+        $mailError = [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ];
+    }
 
     return response()->json([
         'status' => true,
         'message' => 'Order created successfully',
-        'order_id' => $order->id
+        'order_id' => $order->id,
+        'mail_sent' => $mailStatus,
+        'mail_error' => $mailError
     ])->cookie(
         'guest_id',
         $guestId,
         60 * 24 * 365
     );
+
+} catch (\Illuminate\Validation\ValidationException $e) {
+
+    return response()->json([
+        'status' => false,
+        'message' => 'Validation failed',
+        'errors' => $e->errors()
+    ], 422);
+
+} catch (\Throwable $e) {
+
+    return response()->json([
+        'status' => false,
+        'message' => 'Order creation failed',
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ], 500);
 }
 
+}
 
 public function getGuestOrder()
 {
@@ -338,6 +433,9 @@ public function getGuestOrderbyId($id)
             ->toArray(),
     ];
 }
+
+
+
   public function updateOrderStatus(Request $request, $id)
 {
     $order = GuestOrder::findOrFail($id);
@@ -346,6 +444,7 @@ public function getGuestOrderbyId($id)
     $order->save();
 
     return response()->json([
+         'order' =>  $order,
         'success' => true
     ]);
 }
@@ -356,32 +455,27 @@ public function getGuestOrderbyId($id)
 
 public function ensureGuestId(Request $request)
 {
-     $guestId = $request->cookie('guest_id');
+    // 1. Try existing cookie
+    $guestId = $request->cookie('guest_id');
 
+    // 2. If not found, create new one
     if (!$guestId) {
         $guestId = (string) Str::uuid();
 
-        Cookie::queue(
-          Cookie::make(
-    'guest_id',
-    $guestId,
-    60 * 24 * 30,
-    '/',
-    null,
-    false,
-    false,
-    false,
-    'lax'
-)
-        );
+        return response()
+            ->json([
+                'status' => true,
+                'guest_id' => $guestId
+            ])
+            ->cookie('guest_id', $guestId, 60 * 24 * 30, '/');
     }
 
+    // 3. If already exists, just return it (NO new cookie set)
     return response()->json([
         'status' => true,
         'guest_id' => $guestId
     ]);
 }
-
 
 public function deleteOrder($id)
 {

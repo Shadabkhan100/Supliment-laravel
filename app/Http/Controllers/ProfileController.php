@@ -12,7 +12,7 @@ use App\Services\SupabaseStorageService;
  use App\Models\Subscribers;
 use Illuminate\Support\Facades\Validator;
 
-
+ use App\Models\SlimzaDeals;
 
 class ProfileController extends Controller
 {
@@ -28,49 +28,73 @@ class ProfileController extends Controller
         $cartItems = CartModel::where('user_id', $user->id)->get();
 
         // ✅ User orders (IMPORTANT FIX)
-        $orders = GuestOrder::where('user_id', $user->id)
-            ->latest()
-            ->get()
-            ->map(function ($order) {
+     $orders = GuestOrder::where('user_id', $user->id)
+    ->latest()
+    ->get()
+    ->map(function ($order) {
 
-                $product = ProductsModel::find($order->product_id);
+        $product = ProductsModel::find($order->product_id);
 
-                return [
-                    'order' => [
-                        'id' => $order->id,
-                        'quantity' => $order->quantity,
-                        'purchase_type' => $order->purchase_type,
-                        'payment_status' => $order->payment_status,
-                        'order_status' => $order->order_status,
+        $option = [];
 
-                        'user' => [
-                            'name' => $order->name,
-                            'email' => $order->email,
-                            'phone' => $order->phone,
-                            'address1' => $order->address1,
-                            'city' => $order->city,
-                            'postal' => $order->postal,
-                            'country' => $order->country,
-                            'lat' => $order->lat,
-                            'lng' => $order->lng,
-                        ],
+        if (!empty($order->product_option)) {
+            $option = is_string($order->product_option)
+                ? json_decode($order->product_option, true)
+                : (array) $order->product_option;
+        }
 
-                        'option' => $order->product_option,
-                    ],
+        return [
+            'id'             => $order->id,
+            'order_id'       => $order->id,
 
-                    'product' => $product
-                        ? $this->formatProduct($product)
-                        : null,
-                ];
-            });
+            'product_id'     => $order->product_id,
+
+            'quantity'       => $order->quantity,
+            'purchase_type'  => $order->purchase_type,
+
+            'name'           => $order->name,
+            'email'          => $order->email,
+            'phone'          => $order->phone,
+
+            'address1'       => $order->address1,
+            'city'           => $order->city,
+            'postal'         => $order->postal,
+            'country'        => $order->country,
+            'lat'            => $order->lat,
+            'lng'            => $order->lng,
+
+            'order_status'   => $order->order_status ?? 'Pending',
+            'payment_status' => (int) $order->payment_status,
+
+            'product' => [
+                'name'  => $product->name ?? 'Product',
+                'image' => $product?->main_image
+                    ? \App\Services\SupabaseStorageService::getPublicUrl($product->main_image)
+                    : '/images/placeholder.png',
+                'price' => $product->price ?? 0,
+            ],
+
+            'product_option' => $option,
+
+            'created_at' => $order->created_at,
+            'updated_at' => $order->updated_at,
+        ];
+    });
 
         // ✅ Avatar fix
         if ($user->avatar && $user->avatar !== '') {
             $user->avatar = SupabaseStorageService::getPublicUrl($user->avatar);
         }
+      $deal = SlimzaDeals::findOrFail(6);
 
-        return view('profile.user-profile', compact('user', 'cartItems', 'orders'));
+        return view('profile.user-profile', compact('user', 'cartItems', 'orders','deal'));
     }
+
+
+
+
+
+
 
     // ✅ CLEAN PRODUCT FORMATTER
     private function formatProduct($product, $categories = null)

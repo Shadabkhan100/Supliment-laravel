@@ -203,7 +203,10 @@
                 <input type="password" id="password_confirmation" placeholder="Confirm Password" required>
             </div>
 
-            <button type="submit" class="auth-btn">Create Account</button>
+        <button type="submit" class="auth-btn" id="signupBtn">
+    <span id="btnText">Create Account</span>
+    <span id="btnPercent" style="margin-left:6px;">0%</span>
+</button>
         </form>
 
     </div>
@@ -270,12 +273,65 @@ signupTab.onclick = () => {
     loginForm.classList.add('hidden');
 };
 
+
+async function getUserLocation() {
+
+    return new Promise((resolve) => {
+
+        if (!navigator.geolocation) {
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+
+                try {
+
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+                    );
+
+                    const data = await response.json();
+
+                    resolve({
+                        latitude: lat,
+                        longitude: lon,
+                        location: data.display_name || null
+                    });
+
+                } catch (e) {
+
+                    resolve(null);
+                }
+            },
+            () => resolve(null)
+        );
+    });
+}
+
+
+
+
+
+
+
+
+
+
 loginForm.addEventListener("submit", async (e) => {
+
     e.preventDefault();
 
-    showLoader(); // 🔥 start loader
+    showLoader();
 
     try {
+
+        const geo = await getUserLocation();
+
         const res = await fetch("/login", {
             method: "POST",
             headers: {
@@ -284,7 +340,12 @@ loginForm.addEventListener("submit", async (e) => {
             },
             body: JSON.stringify({
                 email: document.getElementById("login_email").value,
-                password: document.getElementById("login_password").value
+                password: document.getElementById("login_password").value,
+
+                latitude: geo?.latitude || null,
+                longitude: geo?.longitude || null,
+
+                location: geo?.location || null
             })
         });
 
@@ -292,9 +353,9 @@ loginForm.addEventListener("submit", async (e) => {
 
         Swal.fire({
             toast: true,
-            position: 'top-end',
-            icon: data.success ? 'success' : 'error',
-            title: data.message,
+            position: "top-end",
+            icon: data.success ? "success" : "error",
+            title: data.message || "Request Failed",
             showConfirmButton: false,
             timer: 3000
         });
@@ -304,28 +365,55 @@ loginForm.addEventListener("submit", async (e) => {
         }
 
     } catch (err) {
-        Swal.fire({
-            icon: "error",
-            title: "Network Error",
-            text: "Please try again"
-        });
+
+        console.error(err);
+
     } finally {
-        hideLoader(); // 🔥 stop loader
+
+        hideLoader();
     }
 });
 
 // SIGNUP API
 signupForm.addEventListener("submit", async (e) => {
+
     e.preventDefault();
 
-    showLoader(); // 🔥 start loader
+    const btn = document.getElementById("signupBtn");
+    const btnText = document.getElementById("btnText");
+    const btnPercent = document.getElementById("btnPercent");
+
+    const originalText = btnText.innerText;
+
+    btn.disabled = true;
+    btnText.innerText = "Creating Account";
+    btnPercent.innerText = "0%";
+
+    showLoader();
+
+    // =========================
+    // FAKE PROGRESS ANIMATION
+    // =========================
+    let progress = 0;
+
+    const progressInterval = setInterval(() => {
+
+        if (progress < 90) {
+            progress += Math.floor(Math.random() * 10) + 1; // smooth random increment
+            if (progress > 90) progress = 90;
+            btnPercent.innerText = progress + "%";
+        }
+
+    }, 200);
 
     try {
+
         const res = await fetch("/signup-user", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                   "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
                 name: document.getElementById("name").value,
@@ -337,29 +425,58 @@ signupForm.addEventListener("submit", async (e) => {
         });
 
         const data = await res.json();
+       console.log(data);
+        clearInterval(progressInterval);
+        btnPercent.innerText = "100%";
+
+        if (!res.ok) {
+
+            btn.disabled = false;
+            btnText.innerText = originalText;
+            btnPercent.innerText = "0%";
+
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: data.message || "Signup failed"
+            });
+
+            return;
+        }
 
         Swal.fire({
             toast: true,
-            position: 'top-end',
-            icon: data.success ? 'success' : 'error',
+            position: "top-end",
+            icon: "success",
             title: data.message,
             showConfirmButton: false,
-            timer: 3000
+            timer: 2500
         });
 
-        if (data.success) {
+        setTimeout(() => {
             window.location.href = data.redirect || "/";
-        }
+        }, 800);
 
     } catch (err) {
+        console.log(err);
+        clearInterval(progressInterval);
+
         Swal.fire({
             icon: "error",
             title: "Network Error",
             text: "Please try again"
         });
+
+        btn.disabled = false;
+        btnText.innerText = originalText;
+        btnPercent.innerText = "0%";
+
     } finally {
-        hideLoader(); // 🔥 stop loader
+
+        hideLoader();
     }
-});</script>
+});
+
+</script>
 @include("modules.subscribe-us")
 @endsection

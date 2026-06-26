@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
         } else {
 
             // GUEST CART
-            $guestId = $_COOKIE['guest_id'] ?? null;
+           $guestId = app('request')->cookie('guest_id');
 
             if ($guestId) {
                 $cartItems = CartModel::where('guest_id', $guestId)->get();

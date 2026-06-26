@@ -7,6 +7,51 @@
 </div>
 
 <script>
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
+
+function formatCurrency(value) {
+
+    const currency = window.currentCurrency || "GBP";
+    const config = window.currencyConfig?.currencies?.[currency];
+
+    const raw = parseFloat(value);
+
+    if (isNaN(raw)) return '';
+
+    if (!config) return raw.toFixed(2);
+
+    const converted = raw * parseFloat(config.rate);
+
+    return `${config.symbol}${converted.toFixed(2)}`;
+}
+
+function updateAllPrices() {
+
+    document.querySelectorAll('.currency-price').forEach(el => {
+
+        const raw = parseFloat(el.dataset.value || 0);
+
+        if (isNaN(raw)) return;
+
+        let formatted = formatCurrency(raw);
+
+        if (el.classList.contains('cartPriceSubX1')) {
+            formatted += ' each';
+        }
+
+        el.innerText = formatted;
+    });
+
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    updateAllPrices();
+});
+
+
+
+
 const modalEl = document.getElementById('productModal');
 
 modalEl.addEventListener('shown.bs.modal', async function () {
@@ -100,9 +145,9 @@ document.getElementById('cartProductView').innerHTML = `
 
             <div class="mb-3">
 
-                <span class="fs-3 fw-bold text-warning">
-                    £${product.price}
-                </span>
+              <span class="fs-3 fw-bold text-warning">
+    ${formatCurrency(product.price)}
+</span>
 
                 ${
                     product.old_price
@@ -136,7 +181,7 @@ document.getElementById('cartProductView').innerHTML = `
 
     </div>
 ${
-    data.option
+    (data.option && !Array.isArray(data.option) && Object.keys(data.option).length > 0)
     ? `
     <div class="mt-4">
 
@@ -163,7 +208,7 @@ ${
             </h5>
 
             <div class="text-warning fw-bold fs-4">
-                £${data.option.price}
+               ${formatCurrency(data.option.price)}
             </div>
 
             <div class="text-secondary">

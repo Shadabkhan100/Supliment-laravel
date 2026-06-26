@@ -368,7 +368,7 @@ document.addEventListener("click", function (e) {
   // =========================
   // GUEST FLOW (FIXED)
   // =========================
-  fetch('/api/ensure-guest-id', {
+  fetch('/ensure-guest-id', {
     method: 'GET',
     credentials: "include",
     headers: { 'Accept': 'application/json' }

@@ -33,7 +33,7 @@ return new class extends Migration {
             $table->decimal('lng', 10, 7)->nullable();
 
             // PAYMENT STATUS
-            $table->boolean('payment_status')->default(false);
+           $table->tinyInteger('payment_status')->default(0);
 
             // RAW CART SNAPSHOT (IMPORTANT FOR AUDIT)
             $table->json('cart_payload')->nullable();

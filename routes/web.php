@@ -10,13 +10,49 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
+use Stripe\Stripe;
+use Stripe\Checkout\Session;
 
+
+Route::get('/test-auth-mail', function () {
+
+    $user = \App\Models\User::first();
+
+    Mail::to('shakdabkhan@gmail.com')->send(
+        new \App\Mail\AuthAttemptEmail(
+            $user,
+            '192.168.1.100',
+            'Riyadh, Saudi Arabia'
+        )
+    );
+
+    dd('MAIL SENT');
+});
 
 
 Route::get('/', [WebRoutController::class, 'getHome']);
 Route::get('/railway-test', function () {
     return 'LATEST VERSION 999';
 });
+
+
+Route::get('/stripe/checkout', [PaymentController::class, 'checkout'])
+    ->name('stripe.checkout');
+Route::get('/stripe/success', [PaymentController::class, 'success'])
+    ->name('stripe.success');
+
+Route::get('/stripe/cancel', [PaymentController::class, 'cancel'])
+    ->name('stripe.cancel');
+Route::post('/create-cart-order', [PaymentController::class, 'createCartOrders']);
+Route::get('/cookie-check', function () {
+    dd(
+        $_COOKIE,
+        request()->cookie('guest_id')
+    );
+});
+
+Route::get('/ensure-guest-id', [OrderController::class, 'ensureGuestId']);
 
 Route::get('/about-us', [WebRoutController::class, 'aboutUsView']);
 Route::get('/faq', [WebRoutController::class, 'faqView']);

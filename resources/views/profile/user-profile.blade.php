@@ -106,7 +106,7 @@
     color:#fff;
     font-size:26px;
     font-weight:800;
-    margin-bottom:25px;
+    margin-bottom:25px; text-align:center;margin-top:-10px;
 }
 
 /* ================= CARDS ================= */
@@ -427,6 +427,12 @@
     color:#fff;
 }
 
+
+@media (max-width: 450px) {
+    .userSideX9 {
+        margin: 13px;
+    }
+}
 </style>
 
 <main class="main-wrapper">
@@ -791,6 +797,18 @@
     <div class="orderModalBodyX9" id="orderModalBodyX9"></div>
 
 </div>
+
+
+
+
+
+@include("modules.you-may-like")
+
+
+
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 
@@ -1009,94 +1027,92 @@ document.addEventListener('DOMContentLoaded', function () {
     renderOrders(orders);
 buildAnalytics(orders);
     // ================= STATS =================
-    function updateStats(data){
+function updateStats(data){
 
-        document.getElementById('totalOrders').innerText = data.length;
+    document.getElementById('totalOrders').innerText = data.length;
 
-        document.getElementById('shippedOrders').innerText =
-            data.filter(item => item.order.order_status === 'Shipped').length;
+    document.getElementById('shippedOrders').innerText =
+        data.filter(item => item.order_status === 'Shipped').length;
 
-        document.getElementById('deliveredOrders').innerText =
-            data.filter(item => item.order.order_status === 'Delivered').length;
-    }
+    document.getElementById('deliveredOrders').innerText =
+        data.filter(item => item.order_status === 'Delivered').length;
+}
 
     // ================= ORDERS =================
-    function renderOrders(data){
+  function renderOrders(data){
 
-        const grid = document.getElementById('ordersGrid');
-        grid.innerHTML = '';
+    const grid = document.getElementById('ordersGrid');
+    grid.innerHTML = '';
 
-        if(!data.length){
-            grid.innerHTML = `<div class="userEmptyX9">No orders found</div>`;
-            return;
-        }
-
-        data.forEach(item => {
-
-            const order = item.order;
-            const product = item.product;
-            const option = order.option;
-
-            grid.innerHTML += `
-            <div class="orderCardX9" style="position:relative;">
-
-                <div style="
-                    position:absolute;
-                    top:10px;
-                    right:10px;
-                    width:30px;
-                    height:30px;
-                    border-radius:8px;
-                    background:rgba(0,0,0,0.4);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    cursor:pointer;
-                    color:#9eef0b;
-                    z-index:2;
-                "
-                class="orderViewBtnX9"
-                data-order='${btoa(JSON.stringify(item))}'>
-
-                    <i class="fas fa-eye"></i>
-                </div>
-
-                <img src="${option?.image || product?.main_image || ''}" class="orderImgX9">
-
-                <div class="orderInfoX9">
-
-                    <div class="orderTitleX9">
-                        ${product?.name || 'Product'}
-                    </div>
-
-                    <div class="orderMetaX9">
-                        Order #${order.id}
-                    </div>
-
-                    <div class="orderMetaX9">
-                        ${order.user?.city || ''}
-                    </div>
-
-                    <div class="orderPriceX9">
-                        ₹ ${option?.price || product?.price || '-'}
-                    </div>
-
-                    <span class="orderBadgeX9 ${
-                        order.order_status === 'Shipped' ? 'badge-shipped' :
-                        order.order_status === 'Delivered' ? 'badge-delivered' :
-                        'badge-processing'
-                    }"
-                    style="position:absolute;bottom:10px;right:10px;font-size:10px;">
-                        ${order.order_status || 'Pending'}
-                    </span>
-
-                </div>
-
-            </div>`;
-        });
+    if (!data || !data.length) {
+        grid.innerHTML = `<div class="userEmptyX9">No orders found</div>`;
+        return;
     }
 
+    data.forEach(o => {
+
+        const opt = typeof o.product_option === 'string'
+    ? JSON.parse(o.product_option)
+    : (o.product_option || {});
+        const product = o.product || {};
+
+        const image = opt.image || product.image || '/images/placeholder.jpg';
+        const price = opt.price || product.price || 0;
+        const name  = product.name || 'Product';
+
+      const isPaid = o.payment_status == 1;
+
+        grid.innerHTML += `
+        <div class="orderCardX9">
+
+            <img src="${image}" class="orderImgX9">
+
+            <div class="orderInfoX9">
+
+                <div class="orderTitleX9">${name}</div>
+
+                <div class="orderMetaX9">Order #${o.order_id}</div>
+
+                <div class="orderMetaX9">
+                    ${o.city || ''} - ${o.address1 || ''}
+                </div>
+
+                <!-- PAYMENT BADGE -->
+                <span class="orderBadgeX9"
+                      style="
+                        background:${isPaid ? '#22c55e' : '#ef4444'};
+                        color:#fff;
+                        font-size:10px;
+                        padding:4px 8px;
+                        border-radius:6px;
+                      ">
+                    ${isPaid ? 'Paid' : 'Pending'} • ₹ ${price}
+                </span>
+
+                <!-- ORDER STATUS -->
+                <span class="orderBadgeX9"
+                      style="
+                font-size:11px;
+                padding:4px 8px;
+                border-radius:8px;
+                background:${
+                    o.order_status === 'Shipped' ? '#3b82f6' :
+                    o.order_status === 'Delivered' ? '#22c55e' :
+                    '#ffb020'
+                };
+                color:#000;
+                font-weight:700;
+                white-space:nowrap;"
+>
+                    ${o.order_status || 'Pending'}
+                </span>
+
+            </div>
+        </div>`;
+    });
+}
 });
+
 
 
 document.addEventListener("click", function(e){
@@ -1109,7 +1125,7 @@ document.addEventListener("click", function(e){
     const order = item.order;
     const product = item.product;
     const option = order.option;
-
+   
     document.getElementById("orderModalBodyX9").innerHTML = `
     
         <div style="
@@ -1182,10 +1198,10 @@ document.getElementById("closeOrderModalX9").addEventListener("click", function(
 
 function buildAnalytics(data){
 
-    const shipped = data.filter(o => o.order.order_status === 'Shipped').length;
-    const delivered = data.filter(o => o.order.order_status === 'Delivered').length;
-    const pending = data.filter(o => o.order.order_status === 'Pending').length;
-    const processing = data.filter(o => o.order.order_status === 'Processing').length;
+       const shipped = data.filter(o => o.order_status === 'Shipped').length;
+    const delivered = data.filter(o => o.order_status === 'Delivered').length;
+    const pending = data.filter(o => o.order_status === 'Pending').length;
+    const processing = data.filter(o => o.order_status === 'Processing').length;
 
     // ================= PIE / DOUGHNUT =================
     new Chart(document.getElementById('orderStatusChartX9'), {

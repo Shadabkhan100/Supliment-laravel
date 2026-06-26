@@ -346,68 +346,93 @@ public function shopDetails($slug, $id)
     ]);
 }
 
-
-
 public function getGuestProfileView(Request $request)
 {
-    $guestId = $_COOKIE['guest_id'] ?? null;
+    $guestId = $request->cookie('guest_id');
 
     if (!$guestId) {
         return redirect('/login');
     }
 
-    $orders = GuestOrder::where('guest_id', trim($guestId))
+    $orders = GuestOrder::with('product')
+        ->where('guest_id', trim($guestId))
         ->latest()
         ->get()
         ->map(function ($o) {
 
-          return [
-    'id'             => $o->id,
-    'order_id'       => $o->id,
-    'product_id'     => $o->product_id,
+            $product = $o->product;
 
-    'quantity'       => $o->quantity,
-    'purchase_type'  => $o->purchase_type,
+            // =========================
+            // SAFE PRODUCT OPTION PARSE
+            // =========================
+            $option = [];
 
-    'name'           => $o->name,
-    'email'          => $o->email,
-    'phone'          => $o->phone,
+            if (!empty($o->product_option)) {
+                $option = is_string($o->product_option)
+                    ? json_decode($o->product_option, true)
+                    : (array) $o->product_option;
+            }
 
-    'address1'       => $o->address1,
-    'city'           => $o->city,
-    'postal'         => $o->postal,
-    'country'        => $o->country,
-    'lat'            => $o->lat,
-    'lng'            => $o->lng,
+            // =========================
+            // SAFE PRODUCT FALLBACK
+            // =========================
+            $productName = $product->name ?? 'Product';
 
-    'order_status'   => $o->order_status ?? 'pending',
-    'payment_status' => $o->payment_status ?? 'unpaid',
+            $productImage = $product->main_image
+                ? \App\Services\SupabaseStorageService::getPublicUrl($product->main_image)
+                : null;
 
-   'product_option' => !empty($o->product_option)
-    ? (is_string($o->product_option)
-        ? json_decode($o->product_option, true)
-        : $o->product_option)
-    : [
-        'image' => $o->product->main_image
-            ? \App\Services\SupabaseStorageService::getPublicUrl($o->product->main_image)
-            : null,
+            $productPrice = $product->price ?? 0;
 
-        'price' => $o->product->price ?? null,
-        'pack' => null,
-        'duration' => null,
-    ],
+            // =========================
+            // OPTION OVERRIDES
+            // =========================
+            $image = $option['image']
+                ?? $productImage
+                ?? '/images/placeholder.png';
 
-    'cart_payload' => is_string($o->cart_payload)
-        ? json_decode($o->cart_payload, true)
-        : $o->cart_payload,
+            $price = $option['price']
+                ?? $productPrice;
 
-    'product_name'   => $o->product->name ?? 'Product',
-    'product_image'  => $o->product->image ?? null,
-    'product_price'  => $o->product->price ?? null,
+            $name = $option['name']
+                ?? $productName;
 
-    'created_at'     => $o->created_at,
-    'updated_at'     => $o->updated_at,
-];
+            return [
+                'id'            => $o->id,
+                'order_id'      => $o->id,
+                'product_id'    => $o->product_id,
+
+                'quantity'      => $o->quantity,
+                'purchase_type' => $o->purchase_type,
+                'payment_status' => (bool) $o->payment_status,
+                'name'          => $o->name,
+                'email'         => $o->email,
+                'phone'         => $o->phone,
+
+                'address1'      => $o->address1,
+                'city'          => $o->city,
+                'postal'        => $o->postal,
+                'country'       => $o->country,
+                'lat'           => $o->lat,
+                'lng'           => $o->lng,
+
+                'order_status'  => $o->order_status ?? 'Pending',
+                'payment_status'=> (bool) $o->payment_status,
+
+                // =========================
+                // FRONTEND SAFE STRUCTURE
+                // =========================
+                'product' => [
+                    'name'  => $name,
+                    'image' => $image,
+                    'price' => (float) $price,
+                ],
+
+                'product_option' => $option,
+
+                'created_at' => $o->created_at,
+                'updated_at' => $o->updated_at,
+            ];
         });
 
     if ($orders->isEmpty()) {
@@ -424,6 +449,11 @@ public function getGuestProfileView(Request $request)
 
     return view('profile.guest', compact('user', 'orders', 'guestId'));
 }
+
+
+
+
+
 
 
 

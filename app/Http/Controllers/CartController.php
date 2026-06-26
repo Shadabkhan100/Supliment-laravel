@@ -17,7 +17,7 @@ class CartController extends Controller
 public function cartView()
 {
     $userId = Auth::id();
-    $guestId = $_COOKIE['guest_id'] ?? null;
+   $guestId = app('request')->cookie('guest_id');
 
     $query = CartModel::query();
 
@@ -77,78 +77,106 @@ public function cartView()
 
 
 
+
+
 public function addToCart(Request $request)
 {
-    $userId = Auth::id();
-    $guestId = null;
+    try {
 
-    // =========================
-    // GET GUEST ID
-    // =========================
-    if (!$userId) {
-        $guestId = $request->input('guest_id') ?? $request->cookie('guest_id');
+        $userId = Auth::id();
+        $guestId = null;
 
-        if (!$guestId) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Guest session not found. Please refresh page.'
-            ], 401);
+        // =========================
+        // GET GUEST ID
+        // =========================
+        if (!$userId) {
+            $guestId = $request->input('guest_id') ?? $request->cookie('guest_id');
+
+            if (!$guestId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Guest session not found. Please refresh page.'
+                ], 401);
+            }
         }
+
+        // =========================
+        // VALIDATION
+        // =========================
+        $request->validate([
+            'product_id' => 'required',
+            'quantity' => 'required|integer|min:1',
+            'purchase_type' => 'required',
+            'option' => 'nullable|array'
+        ]);
+
+        // =========================
+        // GET PRODUCT
+        // =========================
+        $product = ProductsModel::findOrFail($request->product_id);
+
+        // =========================
+        // OPTION PRICE
+        // =========================
+        $option = $request->option ?? [];
+
+        $basePrice = $option['price'] ?? null;
+
+        if (!$basePrice) {
+            $basePrice = $product->price;
+        }
+
+        if ($request->purchase_type === 'subscribe') {
+            $basePrice -= ($basePrice * 20 / 100);
+        }
+
+        // =========================
+        // CREATE CART
+        // =========================
+        $cart = CartModel::create([
+            'user_id' => $userId,
+            'guest_id' => $guestId,
+            'product_id' => $product->id,
+            'option' => $option,
+            'quantity' => $request->quantity,
+            'purchase_type' => $request->purchase_type,
+            'price' => $basePrice,
+        ]);
+
+        $cartCountQuery = CartModel::query();
+
+        if ($userId) {
+            $cartCountQuery->where('user_id', $userId);
+        } else {
+            $cartCountQuery->where('guest_id', $guestId);
+        }
+
+        return response()->json([
+            'status' => true,
+            'guest_id_debug' => $guestId,
+            'request_cookie_guest_id' => $request->cookie('guest_id'),
+            'request_input_guest_id' => $request->input('guest_id'),
+            'cart_id' => $cart->id,
+            'price_used' => $basePrice,
+            'message' => 'Added to cart successfully!',
+            'cart_count' => $cartCountQuery->count()
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'status' => false,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 500);
     }
-
-    // =========================
-    // VALIDATION
-    // =========================
-    $request->validate([
-        'product_id' => 'required',
-        'quantity' => 'required|integer|min:1',
-        'purchase_type' => 'required',
-        'option' => 'nullable|array'
-    ]);
-
-    // =========================
-    // OPTION + PRICE
-    // =========================
-    $option = $request->option ?? [];
-    $basePrice = $option['price'] ?? 0;
-
-    if ($request->purchase_type === 'subscribe') {
-        $basePrice -= ($basePrice * 20 / 100);
-    }
-
-    // =========================
-    // CREATE CART
-    // =========================
-    $cart = CartModel::create([
-        'user_id' => $userId,
-        'guest_id' => $guestId,
-        'product_id' => $request->product_id,
-        'option' => $option,
-        'quantity' => $request->quantity,
-        'purchase_type' => $request->purchase_type,
-        'price' => $basePrice,
-    ]);
-
-    // =========================
-    // CART COUNT QUERY (FIXED)
-    // =========================
-    $cartCountQuery = CartModel::query();
-
-    if ($userId) {
-        $cartCountQuery->where('user_id', $userId);
-    } else {
-        $cartCountQuery->where('guest_id', $guestId);
-    }
-
-    // =========================
-    // RESPONSE
-    // =========================
-    return response()->json([
-        'status' => true,
-        'message' => 'Added to cart successfully!',
-        'cart_count' => $cartCountQuery->count()
-    ]);
 }
+
+
+
+
+
 
 
 
@@ -178,7 +206,6 @@ public function getCartItemById($id)
         $product->tags = json_decode($product->tags, true) ?? [];
         $product->options = json_decode($product->options, true) ?? [];
     }
-
     // =========================
     // DEAL IMAGE
     // =========================
@@ -205,6 +232,13 @@ public function getCartItemById($id)
         'deal'    => $deal,
     ]);
 }
+
+
+
+
+
+
+
 
 public function deleteCartItem($id)
 {

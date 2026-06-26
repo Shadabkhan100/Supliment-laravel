@@ -311,62 +311,78 @@ renderOrders(orders);
 
 // ================= STATS =================
 function updateStats(data){
+    
+    document.getElementById('totalOrders').innerText = data.length;
 
-document.getElementById('totalOrders').innerText=data.length;
+    document.getElementById('shippedOrders').innerText =
+        data.filter(o => o.order_status === 'Shipped').length;
 
-document.getElementById('shippedOrders').innerText=
-data.filter(o=>o.order_status==='Shipped').length;
-
-document.getElementById('deliveredOrders').innerText=
-data.filter(o=>o.order_status==='Delivered').length;
+    document.getElementById('deliveredOrders').innerText =
+        data.filter(o => o.order_status === 'Delivered').length;
 }
 
 // ================= ORDERS =================
 function renderOrders(data){
+    console.log(data);
 
-const grid=document.getElementById('ordersGrid');
-grid.innerHTML='';
+    const grid = document.getElementById('ordersGrid');
+    grid.innerHTML = '';
 
-if(!data.length){
-grid.innerHTML=`<div class="userEmptyX9">No orders found</div>`;
-return;
-}
+    if (!data || !data.length) {
+        grid.innerHTML = `<div class="userEmptyX9">No orders found</div>`;
+        return;
+    }
 
-data.forEach(o=>{
+    data.forEach(o => {
 
-const opt=o.product_option||{};
+        const opt = (o.product_option && !Array.isArray(o.product_option))
+            ? o.product_option
+            : {};
 
-grid.innerHTML += `
+        // ✅ FINAL SOURCE OF TRUTH = backend product object
+        const product = o.product || {};
+
+        const image = opt.image || product.image || '/images/placeholder.jpg';
+        const price = opt.price || product.price || '-';
+        const name  = product.name || 'Product';
+
+        const encodedOrder = encodeURIComponent(JSON.stringify(o));
+
+        grid.innerHTML += `
 <div class="orderCardX9" style="position:relative;">
 
-    <!-- VIEW ICON (TOP RIGHT - SAME) -->
+    <div
+        style="
+            position:absolute;
+            top:10px;
+            right:10px;
+            width:30px;
+            height:30px;
+            border-radius:8px;
+            background:rgba(0,0,0,0.4);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            color:#9eef0b;
+            z-index:2;
+        "
+        class="orderViewBtnX9"
+        data-order="${encodedOrder}"
+    >
+        <i class="fas fa-eye"></i>
+    </div>
 
- 
-<div style="
-        position:absolute;
-        top:10px;
-        right:10px;
-        width:30px;
-        height:30px;
-        border-radius:8px;
-        background:rgba(0,0,0,0.4);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        cursor:pointer;
-        color:#9eef0b;
-        z-index:2;
-    " class="orderViewBtnX9" data-order='${btoa(JSON.stringify(o))}'>
-    <i class="fas fa-eye"></i>
-</div>
-    <!-- IMAGE -->
-    <img src="${opt.image || o.product_image || ''}" class="orderImgX9">
+    <img
+        src="${image}"
+        class="orderImgX9"
+        onerror="this.src='/images/placeholder.jpg'"
+    >
 
-    <!-- CONTENT -->
     <div class="orderInfoX9">
 
         <div class="orderTitleX9">
-            ${o.product_name || 'Product'}
+            ${name}
         </div>
 
         <div class="orderMetaX9">
@@ -374,15 +390,22 @@ grid.innerHTML += `
         </div>
 
         <div class="orderMetaX9">
-            ${o.city || ''} -  ${o.address1 || ''}
-
+            ${o.city || ''} - ${o.address1 || ''}
         </div>
 
         <div class="orderPriceX9">
-            ₹ ${opt.price || o.product_price || '-'}
+         <span class="orderBadgeX9 ${
+        o.payment_status ? 'badge-delivered' : 'badge-processing'
+    }"
+    style="
+        font-size:10px;
+        background:${o.payment_status ? '#22c55e' : '#ef4444'};
+        color:#fff;
+    ">
+        ${o.payment_status ? 'Paid' : 'Pending'}  ₹ ${price}
+    </span>
         </div>
 
-        <!-- STATUS BADGE (BOTTOM RIGHT ONLY) -->
         <span class="orderBadgeX9 ${
             o.order_status === 'Shipped' ? 'badge-shipped' :
             o.order_status === 'Delivered' ? 'badge-delivered' :
@@ -400,10 +423,9 @@ grid.innerHTML += `
     </div>
 
 </div>
-`;
-});
+        `;
+    });
 }
-
 });
 
 document.addEventListener("click", function(e){
@@ -411,15 +433,23 @@ document.addEventListener("click", function(e){
     const btn = e.target.closest(".orderViewBtnX9");
     if(!btn) return;
 
-    const order = JSON.parse(atob(btn.dataset.order));
+    const order = JSON.parse(decodeURIComponent(btn.dataset.order));
 
     openOrderModal(order);
 });
 
 function openOrderModal(o){
 
-    const opt = o.product_option || {};
-
+    const opt = (o.product_option && !Array.isArray(o.product_option))
+    ? o.product_option
+    : {};
+  const image = (opt.image)
+    ? opt.image
+    : o.product?.image || o.product_image || '/images/placeholder.png';
+const price = (opt.price)
+    ? opt.price
+    : o.product?.price || o.product_price || '-';
+  const name  = o.product.name || 'Product';
     document.getElementById("orderModalBodyX9").innerHTML = `
         
         <!-- TOP PRODUCT ROW -->
@@ -434,7 +464,7 @@ function openOrderModal(o){
         ">
 
             <!-- SMALL IMAGE -->
-            <img src="${opt.image || o.product_image || ''}"
+            <img src="${image}"
                 style="
                     width:70px;
                     height:70px;
@@ -447,7 +477,7 @@ function openOrderModal(o){
             <div style="flex:1;">
 
                 <div style="font-size:14px;font-weight:700;color:#fff;">
-                    ${o.product_name || 'Product'}
+                    ${name}
                 </div>
 
                 <div style="font-size:12px;color:#aaa;margin-top:3px;">
@@ -455,7 +485,7 @@ function openOrderModal(o){
                 </div>
 
                 <div style="margin-top:6px;font-size:14px;color:#9eef0b;font-weight:700;">
-                    ₹ ${opt.price || o.product_price || '-'}
+                     ${opt.price || o.product_price || '-'}
                 </div>
 
             </div>

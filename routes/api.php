@@ -13,6 +13,14 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TestimonialsController;
 
+
+
+
+Route::post('/update/{id}', [ProductController::class, 'updateOrderStatus']);
+
+
+
+Route::post('/test-email', [AuthController::class, 'sendTestEmail']);
 // Simple test route
 Route::get('/test', function () {
     return response()->json([
@@ -42,7 +50,7 @@ Route::get('/get-guest-order', [OrderController::class, 'getGuestOrder']);
 Route::delete('/order/delete/{id}', [OrderController::class, 'deleteOrder']);
 
 
-Route::get('/ensure-guest-id', [OrderController::class, 'ensureGuestId']);
+
 
 Route::get('/cart-item/{id}', [CartController::class, 'getCartItemById']);
 Route::delete('/cart/delete/{id}', [CartController::class, 'deleteCartItem']);
@@ -56,12 +64,7 @@ Route::delete('/testimonials/{id}', [TestimonialsController::class, 'destroy']);
 Route::delete('/page-settings/delete-banner/{id}', [PageSettingController::class, 'deleteBanner']);
 
 
-Route::get('/cookie-check', function () {
-    dd(
-        $_COOKIE,
-        request()->cookie('guest_id')
-    );
-});
+
 
 Route::prefix('deals')->group(function () {
 

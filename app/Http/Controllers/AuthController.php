@@ -5,49 +5,142 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeUserMail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Services\SupabaseStorageService;
+use App\Models\CartModel;
+use App\Models\ProductsModel;
+use App\Models\GuestOrder;
+use Illuminate\Support\Facades\DB;
+use App\Services\UserEmailService;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthAttemptEmail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+ use Illuminate\Support\Facades\Http;
+
+
 
 
 class AuthController extends Controller
 {
-    public function registerUser(Request $request)
+    
+
+
+public function sendTestEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'type'  => 'nullable|string'
+        ]);
+
+        // fake user object (no DB required)
+        $user = new User();
+        $user->email = $request->email;
+        $user->name = 'Test User';
+
+        $type = $request->type ?? 'register';
+
+        app(UserEmailService::class)
+            ->sendUserEmail($user, $type);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Test email sent using type: {$type}"
+        ]);
+    }
+
+
+
+public function registerUser(Request $request)
 {
-    $request->validate([
-        'name' => 'required|string',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:6',
-        'phone' => 'nullable',
-        'country' => 'nullable',
-        'address' => 'nullable',
-        'dob' => 'nullable|date',
-    ]);
+    try {
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'phone' => $request->phone,
-        'country' => $request->country,
-        'address' => $request->address,
-        'dob' => $request->dob,
-        'status' => 'user'
-    ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
+            'phone' => 'nullable|string',
+            'country' => 'nullable|string',
+            'address' => 'nullable|string',
+            'dob' => 'nullable|date',
+        ]);
 
-    // OPTIONAL: auto login after registration (IMPORTANT PART)
-    Auth::login($user);
-    $request->session()->regenerate();
+        DB::beginTransaction();
 
-    Mail::to($user->email)->send(new WelcomeUserMail($user));
+        $guestId = trim($request->cookie('guest_id', ''));
 
-    return response()->json([
-        'success' => true,
-        'message' => 'User registered successfully and logged in',
-        'redirect' => '/profile'
-    ]);
+        $user = User::create([
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone'    => $validated['phone'] ?? null,
+            'country'  => $validated['country'] ?? null,
+            'address'  => $validated['address'] ?? null,
+            'dob'      => $validated['dob'] ?? null,
+            'status'   => 'user',
+        ]);
+
+        // Login
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        // =========================
+        // MIGRATE GUEST DATA
+        // =========================
+        if (!empty($guestId)) {
+
+            CartModel::where('guest_id', $guestId)
+                ->update([
+                    'user_id'  => $user->id,
+                    'guest_id' => null,
+                ]);
+
+            GuestOrder::where('guest_id', $guestId)
+                ->update([
+                    'user_id'  => $user->id,
+                    'guest_id' => null,
+                ]);
+        }
+
+        DB::commit();
+
+            app(UserEmailService::class)
+            ->sendUserEmail($user, 'register');
+
+        return response()
+            ->json([
+                'success' => true,
+                'message' => 'Account created successfully.',
+                'redirect' => '/profile'
+            ])
+            ->withoutCookie('guest_id');
+
+    } catch (ValidationException $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed.',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        Log::error('Registration Error', [
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Registration failed.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }
 
 
@@ -56,20 +149,83 @@ class AuthController extends Controller
 public function LoginUser(Request $request)
 {
     $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
+        'email'     => 'required|email',
+        'password'  => 'required',
+        'latitude'  => 'nullable',
+        'longitude' => 'nullable',
+        'location' => 'nullable|string',
+         
     ]);
 
     if (Auth::attempt([
-        'email' => $request->email,
+        'email'    => $request->email,
         'password' => $request->password
     ])) {
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+
+        $ipAddress = $request->ip();
+        $location = 'Unknown';
+
+        // GPS from frontend
+      if (
+    !empty($request->latitude) &&
+    !empty($request->longitude)
+) {
+
+    try {
+
+        $response = Http::withHeaders([
+            'User-Agent' => 'Slimza/1.0'
+        ])->get(
+            'https://nominatim.openstreetmap.org/reverse',
+            [
+                'lat' => $request->latitude,
+                'lon' => $request->longitude,
+                'format' => 'jsonv2'
+            ]
+        );
+
+        if ($response->successful()) {
+
+            $geo = $response->json();
+
+            $location = $geo['display_name']
+                ?? 'Location unavailable';
+
+        }
+
+    } catch (\Exception $e) {
+
+        $location =
+            $request->latitude .
+            ', ' .
+            $request->longitude;
+    }
+
+}
+
+        // Send login notification email
+        try {
+         $location = $request->location ?? $location;
+            Mail::to($user->email)->send(
+                new AuthAttemptEmail(
+                    $user,
+                    $ipAddress,
+                    $location
+                )
+            );
+
+        } catch (\Exception $e) {
+            // Optional:
+            // Log::error($e->getMessage());
+        }
+
         return response()->json([
-            'success' => true,
-            'message' => 'User logged in successfully.',
+            'success'  => true,
+            'message'  => 'User logged in successfully.',
             'redirect' => '/profile'
         ]);
     }
@@ -79,6 +235,8 @@ public function LoginUser(Request $request)
         'message' => 'Invalid email or password.'
     ], 401);
 }
+
+
 
 public function loginAdmin(Request $request)
 {

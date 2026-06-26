@@ -159,6 +159,7 @@ body.checkout-open {
     <div class="checkout-header">
       <div>
         <h4 id="stepTitle" style="margin:0;">Contact Details</h4>
+
         <p id="stepDesc" style="font-size:13px; opacity:0.7; margin:0;">
           Enter your basic contact information
         </p>
@@ -230,6 +231,7 @@ body.checkout-open {
 <script>
 
 window.authUser = @json($authUser);
+
 localStorage.removeItem("checkout_cart");
 document.getElementById("productQuickView")?.classList.add("checkout-hidden");
 document.getElementById("productQuickView")?.classList.remove("checkout-hidden");
@@ -290,8 +292,8 @@ document.addEventListener("click", function (e) {
 
 });
 function goNextStep() {
- fillAuthUserData();
-
+ window.fillAuthUserData();
+   console.log(@json($authUser))
   if (currentStep === 1) {
     document.querySelector(".step-1").style.display = "none";
     document.querySelector(".step-2").style.display = "block";
@@ -686,6 +688,7 @@ console.log("PRODUCT ID", cart?.product?.id);
 
 window.fillAuthUserData = function () {
     const user = window.authUser;
+    console.log(user)
     if (!user) return;
 
     const setValue = (id, value) => {
