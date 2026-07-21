@@ -53,7 +53,7 @@
 
 
 
-@includes("modules.you-may-like")
+@include("modules.you-may-like")
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 

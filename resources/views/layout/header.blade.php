@@ -166,20 +166,22 @@
 
         <i class="fa-light fa-cart-shopping"></i>
 
-        <span style="
-            position:absolute;
-            top:-6px;
-            right:-8px;
-            background:#9eef0b;
-            color:#000;
-            font-size:10px;
-            padding:2px 6px;
-            border-radius:50px;
-            font-weight:bold;
-            line-height:1;
-        ">
-            {{ $cartCount }}
-        </span>
+<span
+    class="cart-count"
+    style="
+    position:absolute;
+    top:-6px;
+    right:-8px;
+    background:#9eef0b;
+    color:#000;
+    font-size:10px;
+    padding:2px 6px;
+    border-radius:50px;
+    font-weight:bold;
+    line-height:1;
+">
+    {{ $cartCount }}
+</span>
 
     </span>
 
@@ -266,6 +268,7 @@
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
 
 <script>
+
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
 document.addEventListener('DOMContentLoaded', async function() {
 
@@ -302,22 +305,36 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     console.log('Categories:', categories);
 
-    categoryMenus.forEach(menu => {
+categoryMenus.forEach(menu => {
 
-      if (!categories.length) {
-        menu.innerHTML = `<li><a href="#">No Categories Found</a></li>`;
+    if (!categories.length) {
+        menu.innerHTML = `
+            <li>
+                <a href="/shop/all">Shop All</a>
+            </li>
+            <li>
+                <a href="#">No Categories Found</a>
+            </li>
+        `;
         return;
-      }
+    }
 
-      menu.innerHTML = categories.map(cat => `
-                <li>
-                    <a href="/shop/${cat.name}/${cat.id}">
-                        ${cat.name}
-                    </a>
-                </li>
-            `).join('');
+    menu.innerHTML = `
+        <li>
+            <a href="/shop/all">
+                Shop All
+            </a>
+        </li>
+        ${categories.map(cat => `
+            <li>
+                <a href="/shop/${cat.name}/${cat.id}">
+                    ${cat.name}
+                </a>
+            </li>
+        `).join('')}
+    `;
 
-    });
+});
 
     console.log('✅ Desktop + Mobile menus updated');
 

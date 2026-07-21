@@ -9,15 +9,14 @@
                       <div class="col-xl-6">
     <div class="schedule-container">
         <h4 class="fw-600 white mb-12">Open Hours</h4>
-        <p class="mb-24">We're Here for You During These Hours.</p>
-
+      
         <!-- Monday -->
         <div class="time-block mb-24">
             <div class="time-icon">
                 <!-- SVG unchanged -->
             </div>
             <h6 class="fw-600 white">
-                Monday <span class="text-16 dark-gray">10:00 AM - 3:00 PM</span>
+                Monday <span class="text-16 white">10:00 AM - 3:00 PM</span>
             </h6>
         </div>
 
@@ -25,7 +24,7 @@
         <div class="time-block mb-24">
             <div class="time-icon"></div>
             <h6 class="fw-600 white">
-                Tuesday <span class="text-16 dark-gray">10:00 AM - 3:00 PM</span>
+                Tuesday <span class="text-16 white">10:00 AM - 3:00 PM</span>
             </h6>
         </div>
 
@@ -33,7 +32,7 @@
         <div class="time-block mb-24">
             <div class="time-icon"></div>
             <h6 class="fw-600 white">
-                Wednesday <span class="text-16 dark-gray">10:00 AM - 3:00 PM</span>
+                Wednesday <span class="text-16 white">10:00 AM - 3:00 PM</span>
             </h6>
         </div>
 
@@ -41,7 +40,7 @@
         <div class="time-block mb-24">
             <div class="time-icon"></div>
             <h6 class="fw-600 white">
-                Thursday <span class="text-16 dark-gray">10:00 AM - 3:00 PM</span>
+                Thursday <span class="text-16 white">10:00 AM - 3:00 PM</span>
             </h6>
         </div>
 
@@ -49,7 +48,7 @@
         <div class="time-block mb-24">
             <div class="time-icon"></div>
             <h6 class="fw-600 white">
-                Friday <span class="text-16 dark-gray">10:00 AM - 3:00 PM</span>
+                Friday <span class="text-16 white">10:00 AM - 3:00 PM</span>
             </h6>
         </div>
 
@@ -74,14 +73,13 @@
                         <div class="col-xl-6">
                             <div class="schedule-container">
                                 <h4 class="fw-600 white mb-12">Contact Us</h4>
-                                <p class="mb-24">We're Here for You During These Hours.</p>
-                                <div class="time-block mb-24">
+                                                               <div class="time-block mb-24">
                                     <div class="time-icon">
                                         <svg class="svg-20" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                                             <path d="M16.2489 15.5304L15.8318 14.8339C15.0817 13.5971 14.0464 12.1776 12.6885 12.1776C12.4369 12.1776 12.1878 12.2282 11.9411 12.3307L11.2123 12.6432C11.1457 12.6708 11.081 12.7022 11.0126 12.7355C10.826 12.8262 10.6145 12.929 10.3969 12.929C9.86021 12.929 9.23834 12.2305 8.64615 10.9623C8.06497 9.71762 8.10204 9.06508 8.23545 8.73673C8.38267 8.37447 8.72499 8.21959 9.09276 8.08041C9.1439 8.06101 9.19009 8.04342 9.23501 8.02493L9.97306 7.71418C11.8959 6.9101 11.1805 4.10014 10.946 3.17889L10.7471 2.3868C10.5771 1.734 10.1262 0 8.63082 0C8.35398 0 8.05865 0.064496 7.75331 0.191774C7.55297 0.271334 4.79597 1.39672 3.79713 3.37382C2.60337 5.72716 2.8241 8.88296 4.45256 12.7515C6.06884 16.625 8.16473 18.9942 10.6821 19.7933C11.1139 19.9305 11.6019 19.9999 12.1326 19.9999H12.1329C13.8702 19.9999 15.585 19.2608 15.7242 19.1994C16.3232 18.9457 16.7103 18.5601 16.8749 18.0532C17.1538 17.1937 16.6859 16.2519 16.2489 15.5304ZM15.5877 17.6356C15.5495 17.7534 15.4165 17.8609 15.1928 17.9551C15.1891 17.9567 15.1846 17.9586 15.1808 17.9603C15.1653 17.9672 13.6131 18.647 12.1325 18.6469C11.7409 18.6469 11.3906 18.5988 11.0915 18.5037C8.97071 17.8305 7.15724 15.72 5.70035 12.2286C4.23264 8.7416 3.99811 5.96837 5.00425 3.98495C5.78551 2.43858 8.23139 1.45761 8.25539 1.44823C8.26026 1.44625 8.26504 1.44435 8.26982 1.44237C8.4091 1.38391 8.53394 1.35306 8.63082 1.35306C8.92894 1.35306 9.20028 1.81545 9.43607 2.72173L9.63407 3.51048C10.0613 5.18828 9.99624 6.23772 9.44933 6.46647L8.7148 6.77587C8.68557 6.78796 8.65139 6.80068 8.61368 6.81502C8.20794 6.96864 7.36363 7.28814 6.98179 8.22735C6.63532 9.0796 6.77874 10.1615 7.41983 11.535C8.28326 13.3835 9.25702 14.2821 10.3967 14.2821C10.9257 14.2821 11.3503 14.0757 11.604 13.9525C11.6507 13.9298 11.6924 13.909 11.7374 13.8904L12.4673 13.5774C12.5426 13.546 12.615 13.5307 12.6884 13.5307C13.0397 13.5307 13.6697 13.8786 14.673 15.5325L15.0898 16.2285C15.6035 17.0767 15.6441 17.4618 15.5877 17.6356Z" fill="#141516"></path>
                                         </svg>
                                     </div>
-                                    <h6 class="fw-600 white">Phone Number:   <span class="text-16 dark-gray">Chat With Us</span></h6>
+                                    <h6 class="fw-600 white">Phone Number:   <span class="text-16 white">Chat With Us</span></h6>
                                 </div>
                                 <div class="time-block mb-24">
                                     <div class="time-icon">
@@ -89,7 +87,7 @@
                                             <path d="M18.2422 2.96875H1.75781C0.786602 2.96875 0 3.76023 0 4.72656V15.2734C0 16.2455 0.792383 17.0312 1.75781 17.0312H18.2422C19.2053 17.0312 20 16.2488 20 15.2734V4.72656C20 3.76195 19.2165 2.96875 18.2422 2.96875ZM17.996 4.14062C17.6369 4.49785 11.4564 10.6458 11.243 10.8581C10.9109 11.1901 10.4695 11.3729 10 11.3729C9.53047 11.3729 9.08906 11.1901 8.75594 10.857C8.61242 10.7142 2.50012 4.63414 2.00398 4.14062H17.996ZM1.17188 15.0349V4.96582L6.23586 10.0031L1.17188 15.0349ZM2.00473 15.8594L7.06672 10.8296L7.9284 11.6867C8.48176 12.2401 9.21746 12.5448 10 12.5448C10.7825 12.5448 11.5182 12.2401 12.0705 11.6878L12.9333 10.8296L17.9953 15.8594H2.00473ZM18.8281 15.0349L13.7641 10.0031L18.8281 4.96582V15.0349Z" fill="#141516"></path>
                                         </svg>
                                     </div>
-                                    <h6 class="fw-600 white">Email Address   <a href="mailto:example@sample.com" class="text-16 dark-gray">info@slimza.com</a></h6>
+                                    <h6 class="fw-600 white">Email Address   <a href="mailto:example@sample.com" class="text-16 white">info@slimza.com</a></h6>
                                 </div>
                               
                                    
@@ -100,8 +98,7 @@
                     <div class="row justify-content-center mb-80">
                         <div class="col-xl-6 col-lg-7 col-md-9 col-sm-10">
                             <h4 class="fw-600 white mb-12">Get in Touch</h4>
-                            <p class="mb-24">Your email address is safe with us. Required fields are noted with *</p>
-                            <form method="post" class="contact-form">
+                                                     <form method="post" class="contact-form">
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="input-block mb-16">
@@ -141,7 +138,15 @@
                         </div>
                     </div>
                     <div class="map">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d85460.5255747011!2d0.1133010301192345!3d47.98198999197024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e288d214f3aa31%3A0x69025d4c6a7de07f!2sLe%20Mans%2C%20France!5e0!3m2!1sen!2s!4v1733489233091!5m2!1sen!2s" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                      <iframe
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d19800.07398248311!2d-0.1277583!3d51.5073509!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761b3333d2f1b7%3A0x8b5b6f7f8e4d7c9a!2sLondon%2C%20United%20Kingdom!5e0!3m2!1sen!2s!4v1733489233091!5m2!1sen!2s"
+    width="100%"
+    height="450"
+    style="border:0;"
+    allowfullscreen=""
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade">
+</iframe>
                     </div>
                 </div>
             </section>

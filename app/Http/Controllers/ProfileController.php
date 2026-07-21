@@ -11,11 +11,12 @@ use App\Models\CategoriesModel;
 use App\Services\SupabaseStorageService;
  use App\Models\Subscribers;
 use Illuminate\Support\Facades\Validator;
-
- use App\Models\SlimzaDeals;
+use App\Models\SlimzaDeals;
 
 class ProfileController extends Controller
 {
+
+
     public function getProfileView()
     {
         $user = Auth::user();
@@ -86,8 +87,15 @@ class ProfileController extends Controller
             $user->avatar = SupabaseStorageService::getPublicUrl($user->avatar);
         }
       $deal = SlimzaDeals::findOrFail(6);
+      $subscriptions = $this->getSubscribers();
 
-        return view('profile.user-profile', compact('user', 'cartItems', 'orders','deal'));
+return view('profile.user-profile', compact(
+    'user',
+    'cartItems',
+    'orders',
+    'deal',
+    'subscriptions'
+));
     }
 
 
@@ -194,4 +202,132 @@ public function subscribe(Request $request)
     }
 }
 
+
+
+
+
+
+
+
+
+
+public function getSubscription(Request $request)
+{
+    $request->validate([
+        'product_id' => 'required|integer',
+        'frequency'  => 'required|string',
+        'discount'   => 'required|numeric'
+    ]);
+
+    $userId = Auth::id();
+
+    if (!$userId) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Please login first.'
+        ], 401);
+    }
+
+    // Prevent duplicate subscriptions for the same product
+    $exists = Subscribers::where('user_id', $userId)
+        ->where('product_id', $request->product_id)
+        ->where('status', 'active')
+        ->first();
+
+    if ($exists) {
+        return response()->json([
+            'status' => false,
+            'message' => 'You have already subscribed to this product.'
+        ]);
+    }
+
+    $subscription = Subscribers::create([
+        'user_id'      => $userId,
+        'product_id'   => $request->product_id,
+        'frequency'    => $request->frequency,
+        'discount'     => $request->discount,
+        'status'       => 'active'
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Subscription added successfully.',
+        'data' => $subscription
+    ]);
+}
+
+
+
+public function cancelSubscription(Request $request)
+{
+    try {
+
+        $request->validate([
+            'product_id' => 'required|integer',
+            'user_id'    => 'required|integer',
+        ]);
+
+        $subscription = Subscribers::where('user_id', $request->user_id)
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        if (!$subscription) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Subscription not found.'
+            ], 404);
+        }
+
+        // Delete the record
+        $subscription->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Subscription cancelled successfully.'
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+private function getSubscribers()
+{
+    $userId = Auth::id();
+
+    if (!$userId) {
+        return collect();
+    }
+
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    return Subscribers::where('user_id', $userId)
+        ->latest()
+        ->get()
+        ->map(function ($subscription) use ($categories) {
+
+            $product = ProductsModel::find($subscription->product_id);
+
+            return [
+                'id'          => $subscription->id,
+                'product_id'  => $subscription->product_id,
+                'frequency'   => $subscription->frequency,
+                'discount'    => $subscription->discount,
+                'status'      => $subscription->status,
+                'created_at'  => $subscription->created_at,
+                'updated_at'  => $subscription->updated_at,
+
+                'product' => $product
+                    ? $this->formatProduct($product, $categories)
+                    : null,
+            ];
+        });
+}
 }

@@ -10,6 +10,8 @@ use App\Services\SupabaseStorageService;
 use App\Models\ProductsModel;
 use Illuminate\Support\Str;
 use App\Models\Blogs;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Subscribers;
 
 use App\Models\GuestOrder;
 
@@ -181,7 +183,6 @@ private function formatProduct($product, $categories = null)
         : $product->options;
 
     $options = is_array($options) ? array_values(array_filter($options)) : [];
-
     // =========================
     // DEFAULT PRICE (DB PRICE)
     // =========================
@@ -191,7 +192,6 @@ private function formatProduct($product, $categories = null)
     // OVERRIDE WITH LOWEST OPTION PRICE
     // =========================
     if (count($options) > 0) {
-
         $prices = array_values(array_filter(array_map(function ($opt) {
             return (isset($opt['price']) && is_numeric($opt['price']))
                 ? (float) $opt['price']
@@ -202,13 +202,20 @@ private function formatProduct($product, $categories = null)
             $finalPrice = min($prices);
         }
     }
+    $userId = Auth::id();
+$subscription = null;
+if ($userId) {
+    $subscription = Subscribers::where('user_id', $userId)
+        ->where('product_id', $product->id)
+        ->where('status', 'active')
+        ->first();
+}
 
     return [
         'id' => $product->id,
         'name' => $product->name,
         'description' => $product->description,
         'sku' => $product->sku,
-
         // FINAL PRICE
         'price' => $finalPrice,
         'old_price' => $product->old_price,
@@ -244,6 +251,9 @@ private function formatProduct($product, $categories = null)
             ->map(fn ($img) => SupabaseStorageService::getPublicUrl($img))
             ->values()
             ->toArray(),
+
+        'subscribed' => $subscription ? true : false,
+        'subscription' => $subscription,
     ];
 }
 

@@ -16,7 +16,57 @@
     100% { transform: rotate(360deg); }
 }
 </style>
+<!-- Footer Disclaimer Section -->
+<div style="background:#111; border:2px solid #9eef0b; border-radius:12px; padding:30px; margin-top:40px; color:#fff; font-size:14px; line-height:1.8;">
 
+    <h3 style="color:#9eef0b; margin:0 0 15px; font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+        DISCLAIMER
+    </h3>
+
+    <p style="margin:0 0 20px; color:#fff;">
+        Slimza is designed to support a healthy lifestyle and should be used in conjunction with a balanced diet and regular exercise.
+        We recommend consulting a qualified healthcare professional before beginning any new dietary, fitness, or supplement programme.
+        Individual results may vary and are not guaranteed. Slimza products are not intended to diagnose, treat, cure, or prevent any disease.
+    </p>
+
+    <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
+        Important Notice
+    </h4>
+
+    <p style="margin:0 0 20px; color:#fff;">
+        If you are currently taking medication or have an existing medical condition, please consult your doctor prior to using Slimza products.
+        These products are not recommended for individuals who are pregnant, breastfeeding, or under the age of 18.
+    </p>
+
+    <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
+        Product Information
+    </h4>
+
+    <p style="margin:0 0 20px; color:#fff;">
+        Please note that our products contain <strong style="color:#9eef0b;">caffeine</strong>.
+        If you have any known <strong style="color:#9eef0b;">allergies</strong>, we strongly advise contacting us before placing an order.
+    </p>
+
+    <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
+        Money-Back Guarantee
+    </h4>
+
+    <p style="margin:0 0 20px; color:#fff;">
+        We offer a money-back guarantee on all purchases, subject to our Terms and Conditions.
+        Please review these for full details.
+    </p>
+
+    <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
+        Website Imagery Disclaimer
+    </h4>
+
+    <p style="margin:0; color:#fff;">
+        All images displayed on this website are for illustrative purposes only.
+        Actual product colours, finishes, and details may vary slightly due to screen settings,
+        lighting conditions, or manufacturing updates.
+    </p>
+
+</div>
  <!-- FOOTER Start -->
         <footer>
           <div class="container-fluid" style="background-color:black">
@@ -73,8 +123,7 @@ and wellbeing products......
                     <h5 class="white mb-24">Quick Links</h5>
                     <ul class="list-unstyled m-0">
                       <li class="white mb-8"><a href="/about-us">About us</a></li>
-                      <li class="white mb-8"><a href="/faq">FAQ</a></li>
-                      <li class="white mb-8"><a href="/return-policy">Return & Refund Policy</a></li>
+                                           <li class="white mb-8"><a href="/return-policy">Return & Refund Policy</a></li>
                     
                       <li class="white"><a href="/privacy-policy">Privacy Policy</a></li>
                     </ul>

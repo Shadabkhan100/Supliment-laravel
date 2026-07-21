@@ -55,7 +55,7 @@ function formatPrice(price) {
 
       container.innerHTML = '';
 
-     const currentDealId = @json(optional($deal)->id ?? 6);
+     const currentDealId = @json(isset($deal) ? $deal->id : 6);
       
 
 

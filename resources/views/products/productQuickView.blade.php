@@ -228,8 +228,8 @@
 
                                     <div class="d-flex align-items-center flex-wrap gap-16 mb-16">
                                         <h6 class="color-quant">
-                                            ★★★★<span class="light-gray">★</span>
-                                            <span class="text-16 fw-400 dark-black">(02 Reviews)</span>
+                                            ★★★★★
+                                         <span class="text-16 fw-400 dark-black">(42+ Reviews)</span>
                                         </h6>
                                     </div>
   
@@ -245,15 +245,15 @@
                                     <div class="hr-line bg-sept mb-24"></div>
 
                                     <p class="subtitle fw-500 mb-8">Quantity:</p>
-
-                                    <div class="quantity mb-24">
-                                        <div class="input-area">
-                                            <input class="decrement" type="button" value="-">
-                                            <input type="text" name="quantity" value="1" maxlength="2" size="1" class="number">
-                                            <input class="increment" type="button" value="+">
-                                        </div>
-                                    </div>
-
+  
+              <div class="quantity quantity-wrap mb-16" style="color:black;border-color:black">
+                <div class="input-area quantity-wrap">
+                   <input class="decrement" type="button" value="-" style="color:black" onclick="quickViewDecreaseQty()">
+<input type="text" name="quantity" value="1" class="number" style="color:black;border-color:white">
+<input class="increment" type="button" value="+" style="color:black" onclick="quickViewIncreaseQty()">
+               
+                </div>
+              </div>
                                     <p class="black fw-500 mb-24">
                                         SKU:
                                         <span class="dark-gray" id="qv-sku"></span>
@@ -286,9 +286,6 @@
 
 <script>
 
-
-
-
 function renderQuickViewOptions(product) {
 
     const container = document.getElementById("qv-buying-options");
@@ -301,52 +298,63 @@ function renderQuickViewOptions(product) {
         container.innerHTML = "<p>No options available</p>";
         return;
     }
+  let options = product.options;
 
-    product.options.forEach((opt) => {
+if (typeof options === "string") {
+    try {
+        options = JSON.parse(options);
+    } catch (e) {
+        options = [];
+    }
+}
 
-    container.insertAdjacentHTML("beforeend", `
-        <div class="col-md-12">
-            <div class="d-flex border rounded p-3 align-items-center gap-3 option-box"
-                 data-option='${JSON.stringify(opt)}'
-                 data-base-price="${opt.price}"
-                 style="cursor:pointer;">
+if (!Array.isArray(options)) {
+    options = [];
+}
 
-                <!-- IMAGE -->
-                <div style="width:80px;height:80px;flex-shrink:0;overflow:hidden;border-radius:10px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;">
-                    <img src="${opt.image || '/placeholder.png'}"
-                         style="width:100%;height:100%;object-fit:cover;">
+console.log(options);
+    options.forEach((opt) => {
+
+        container.insertAdjacentHTML("beforeend", `
+            <div class="col-md-12">
+                <div class="d-flex border rounded p-3 align-items-center gap-3 option-box"
+                     data-option='${JSON.stringify(opt)}'
+                     style="cursor:pointer;">
+
+                    <div style="width:80px;height:80px;flex-shrink:0;overflow:hidden;border-radius:10px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;">
+                        <img src="${opt.image || '/placeholder.png'}"
+                             style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${opt.pack} x Pack</div>
+
+                        <div class="mt-1">
+                            <span class="badge bg-light text-dark border">
+                                per pouch
+                            </span>
+                        </div>
+
+                        <div class="small mt-2">
+                            ${opt.duration || ''} Days
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column" style="margin-top:44px">
+                        <div class="fw-bold">
+                            £${parseFloat(opt.price).toFixed(2)}
+                        </div>
+
+                        <div class="option-badge">
+                            🎁 Get Free ${opt.pack} Pack
+                        </div>
+                    </div>
+
                 </div>
-
-                <!-- CONTENT -->
-                <div class="flex-grow-1">
-                    <div class="fw-bold">${opt.pack} x Pack</div>
-
-                    <div class="mt-1">
-                        <span class="badge bg-light text-dark border per-pouch">
-                            per pouch
-                        </span>
-                    </div>
-
-                    <div class="small mt-2" style="color:white;">
-                        ${opt.duration || ''} Days
-                    </div>
-                </div>
-
-                <!-- PRICE -->
-                <div class="d-flex flex-column" style="margin-top: 44px">
-                    <div class="fw-bold price-box">
-                        £${parseFloat(opt.price).toFixed(2)}
-                    </div>
-
-                    <div class="option-badge">
-                        🎁 Get Free ${opt.pack} Pack
-                    </div>
-                </div>
-
             </div>
-        </div>
-    `);
-});
+        `);
+
+    });
 
     bindQuickViewOptions();
 }
@@ -359,64 +367,113 @@ function bindQuickViewOptions() {
 
         box.addEventListener("click", function () {
 
-            boxes.forEach(x =>
-                x.classList.remove("option-selected")
-            );
+            boxes.forEach(x => x.classList.remove("option-selected"));
 
             this.classList.add("option-selected");
 
-            const opt = JSON.parse(this.dataset.option || '{}');
+            window.selectedOption = JSON.parse(this.dataset.option);
 
-            window.selectedOption = opt;
+            // Reset quantity
+            document.querySelector("#productQuickView .number").value = 1;
 
-            // ✅ UPDATE MAIN PRICE
-            const priceEl = document.getElementById("qv-price");
+            updateQuickViewPrice();
 
-            if (priceEl && opt.price) {
-                priceEl.innerText = `£${parseFloat(opt.price).toFixed(2)}`;
-            }
-
-            console.log("Selected option:", opt);
         });
 
     });
 
     if (boxes.length) {
-        boxes[0].click(); // default select first option
+        boxes[0].click();
     }
+
 }
+
 function scrollQvGallery(direction) {
+
     const container = document.getElementById("qv-gallery");
-    const scrollAmount = 120;
 
     container.scrollBy({
-        left: direction * scrollAmount,
+        left: direction * 120,
         behavior: "smooth"
     });
+
 }
-
-
-
-document.addEventListener("click", function (e) {
-
-    const btn = e.target.closest(".open-quick-view");
-    if (!btn) return;
-
-    const encoded = btn.dataset.product;
-    const product = JSON.parse(decodeURIComponent(encoded));
-
-    window.currentQuickViewProduct = product;
-    window.selectedProductId = product.id;
-
-    renderQuickViewOptions(product);
-});
 
 
 
 const quickViewEl = document.getElementById("productQuickView");
 
 if (quickViewEl) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(quickViewEl);
-    modalInstance.hide();
+    bootstrap.Modal.getOrCreateInstance(quickViewEl).hide();
+}
+
+
+/*==========================================
+PRICE UPDATE
+==========================================*/
+
+function updateQuickViewPrice() {
+
+    const qty = parseInt(document.querySelector("#productQuickView .number").value) || 1;
+
+    // PRODUCT WITH OPTIONS
+    if (window.selectedOption) {
+
+        const currency = window.selectedOption.currency || "£";
+
+        const total = parseFloat(window.selectedOption.price || 0) * qty;
+        const oldTotal = parseFloat(window.selectedOption.old_price || 0) * qty;
+
+        document.getElementById("qv-price").innerHTML =
+            currency + total.toFixed(2);
+
+        document.getElementById("qv-old-price").innerHTML =
+            oldTotal > 0 ? currency + oldTotal.toFixed(2) : "";
+
+        return;
+    }
+
+    // PRODUCT WITHOUT OPTIONS
+    if (window.currentQuickViewProduct) {
+
+        const currency = window.currentQuickViewProduct.currency || "£";
+
+        const total =
+            parseFloat(window.currentQuickViewProduct.price || 0) * qty;
+
+        const oldTotal =
+            parseFloat(window.currentQuickViewProduct.old_price || 0) * qty;
+
+        document.getElementById("qv-price").innerHTML =
+            currency + total.toFixed(2);
+
+        document.getElementById("qv-old-price").innerHTML =
+            oldTotal > 0 ? currency + oldTotal.toFixed(2) : "";
+    }
+}
+
+
+function quickViewIncreaseQty() {
+
+    const input = document.querySelector("#productQuickView .number");
+
+    input.value = (parseInt(input.value) || 1) + 1;
+
+    updateQuickViewPrice();
+}
+
+function quickViewDecreaseQty() {
+
+    const input = document.querySelector("#productQuickView .number");
+
+    let qty = parseInt(input.value) || 1;
+
+    if (qty > 1) {
+        qty--;
+    }
+
+    input.value = qty;
+
+    updateQuickViewPrice();
 }
 </script>

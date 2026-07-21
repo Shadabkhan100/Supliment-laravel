@@ -9,13 +9,12 @@ return new class extends Migration {
     {
         Schema::create('guest_orders', function (Blueprint $table) {
             $table->id();
-
             // PRODUCT INFO
             $table->unsignedBigInteger('product_id');
             $table->json('product_option')->nullable();
             $table->integer('quantity')->default(1);
             $table->string('purchase_type')->default('one_time');
-           $table->string('order_status')->default('Pending');
+            $table->string('order_status')->default('Pending');
               
             // USER INFO (GUEST)
             $table->string('name');
@@ -26,18 +25,20 @@ return new class extends Migration {
             $table->string('city')->nullable();
             $table->string('postal')->nullable();
             $table->string('country')->nullable();
-           $table->unsignedBigInteger('user_id')->nullable()->index();
-           $table->string('guest_id')->nullable()->index();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->string('guest_id')->nullable()->index();
             // LOCATION FROM MAP
             $table->decimal('lat', 10, 7)->nullable();
             $table->decimal('lng', 10, 7)->nullable();
 
-            // PAYMENT STATUS
-           $table->tinyInteger('payment_status')->default(0);
+             // PAYMENT STATUS
+            $table->tinyInteger('payment_status')->default(0);
 
             // RAW CART SNAPSHOT (IMPORTANT FOR AUDIT)
             $table->json('cart_payload')->nullable();
-
+            $table->string('currency')->nullable();
+            $table->decimal('paid_amount', 10, 2)->nullable();
+            $table->string('payment_intent')->nullable();
             $table->timestamps();
         });
     }

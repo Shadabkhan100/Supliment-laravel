@@ -1,4 +1,4 @@
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
 
 
@@ -139,16 +139,7 @@ body.checkout-open {
 </style>
 
 
-@php
-    $authUser = auth()->check() ? [
-        'name' => auth()->user()->name,
-        'email' => auth()->user()->email,
-        'phone' => auth()->user()->phone,
-        'country' => auth()->user()->country,
-        'address1' => auth()->user()->address,
-        'city' => auth()->user()->city,
-    ] : null;
-@endphp
+
 
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <div id="checkoutModal">
@@ -220,7 +211,7 @@ body.checkout-open {
     <!-- BUTTONS -->
     <div class="actions">
       <button id="prevBtn" style="display:none;">Back</button>
-      <button id="nextBtn">Pay Now</button>
+      <button id="nextBtn">Next</button>
     </div>
 
   </div>
@@ -231,6 +222,8 @@ body.checkout-open {
 <script>
 
 window.authUser = @json($authUser);
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
 
 localStorage.removeItem("checkout_cart");
 document.getElementById("productQuickView")?.classList.add("checkout-hidden");
@@ -284,6 +277,25 @@ function initMap() {
 }
 
 
+window.fillAuthUserData = function () {
+    const user = window.authUser;
+    console.log(user)
+    if (!user) return;
+
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value ?? '';
+    };
+
+    setValue("name", user.name);
+    setValue("email", user.email);
+    setValue("phone", user.phone);
+    setValue("address1", user.address1);
+    setValue("city", user.city);
+    setValue("country", user.country);
+}
+
 
 document.addEventListener("click", function (e) {
 
@@ -291,9 +303,10 @@ document.addEventListener("click", function (e) {
   if (e.target.id === "prevBtn") goPrevStep();
 
 });
-function goNextStep() {
- window.fillAuthUserData();
-   console.log(@json($authUser))
+async function goNextStep() {
+  console.log("chusssssssssss");
+  window.fillAuthUserData();
+ 
   if (currentStep === 1) {
     document.querySelector(".step-1").style.display = "none";
     document.querySelector(".step-2").style.display = "block";
@@ -347,106 +360,124 @@ function goNextStep() {
     loadFinalReview();
 
     currentStep = 4;
+    const nextBtn = document.getElementById("nextBtn");
+
+nextBtn.innerHTML = `
+    <i class="fas fa-lock"></i>
+    Secure Pay
+`;
     return;
   }
 
 if (currentStep === 4) {
+    
+    const nextBtn = document.getElementById("nextBtn");
+   const cart = JSON.parse(localStorage.getItem("checkout_cart"));
+     const payload = {
 
-  const cart = JSON.parse(localStorage.getItem("checkout_cart"));
+        name: document.getElementById("name")?.value || "",
+        email: document.getElementById("email")?.value || "",
+        phone: document.getElementById("phone")?.value || "",
+        currency: window.currentCurrency,
+        address1: document.getElementById("address1")?.value || "",
+        city: document.getElementById("city")?.value || "",
+        postal: document.getElementById("postal")?.value || "",
+        country: document.getElementById("country")?.value || "",
+        product_id: cart.product.id,
+            quantity: cart.product.quantity,
+            purchase_type: cart.product.purchase_type,
+            option: cart.product.option,
+        lat: selectedLat,
+        lng: selectedLng,
 
-  const payload = {
-    product_id: cart.product.id,
-    product_option: cart.product.option,
-    quantity: cart.product.quantity,
-    purchase_type: cart.product.purchase_type,
+        product: {
+            product_id: cart.product.id,
+            quantity: cart.product.quantity,
+            purchase_type: cart.product.purchase_type,
+            option: cart.product.option
+        }
+    };
+     console.log(payload);
+    nextBtn.disabled = true;
+    nextBtn.classList.add("loading");
 
-    name: cart.user.name,
-    email: cart.user.email,
-    phone: cart.user.phone,
+    nextBtn.innerHTML = `
+        <span class="btn-spinner"></span>
+        Creating Order...
+    `;
 
-    address1: cart.user.address1,
-    city: cart.user.city,
-    postal: cart.user.postal,
-    country: cart.user.country,
+    
 
-    lat: cart.location?.lat || null,
-    lng: cart.location?.lng || null,
+   
 
-    cart_payload: cart
-  };
+    try {
 
-  const url = window.authUser
-    ? "/auth-order/create"
-    : "/api/guest-order/create";
+        const res = await fetch("/create-product-order", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-CSRF-TOKEN": document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content")
+            },
+            body: JSON.stringify(payload)
+        });
 
-  // CSRF only for auth (web.php route)
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+        const data = await res.json().catch(() => null);
 
-  const headers = {
-    "Content-Type": "application/json"
-  };
+        console.log("HTTP STATUS:", res.status);
+        console.log("RESPONSE DATA:", data);
 
-  if (window.authUser) {
-    headers["X-CSRF-TOKEN"] = csrfToken;
-  }
+        if (!res.ok) {
+            throw data;
+        }
 
-  fetch(url, {
-    method: "POST",
-    credentials: "include",
-    headers: headers,
-    body: JSON.stringify(payload)
-  })
-  .then(async (res) => {
-    const data = await res.json();
+if (data?.status) {
 
-    if (!res.ok) {
-      throw data;
+    const orderId = data.order_id;
+    const total = data.total_price || 0;
+
+    if (!orderId) {
+
+        Swal.fire({
+            icon: "error",
+            title: "Order Error",
+            text: "No order was created."
+        });
+
+        return;
     }
 
-    return data;
-  })
-  .then(data => {
+    window.location.href =
+        `/stripe/checkout?order_ids=${orderId}&total=${total}`;
 
-    // ✅ SAFE LOCAL STORAGE HANDLING
-    let localOrders = JSON.parse(localStorage.getItem("guest_orders") || "[]");
-
-    localOrders.push({
-      order_id: data.order_id,
-      is_auth: !!window.authUser,
-      ...payload,
-      created_at: new Date().toISOString()
-    });
-
-    localStorage.setItem("guest_orders", JSON.stringify(localOrders));
-
-    if (data.status) {
-      Swal.fire({
-        icon: "success",
-        title: "Order Placed!",
-        text: data.message || "Your order has been created successfully"
-      });
-
-      localStorage.removeItem("checkout_cart");
-
-      closeCheckoutModal();
-      resetCheckout();
-      window.location.reload();
-    }
-
-  })
-  .catch(err => {
-    console.error("Order failed:", err);
-
-    Swal.fire({
-      icon: "error",
-      title: "Order Failed",
-      text: err.message || "Something went wrong"
-    });
-  });
-
-  return;
+    return;
 }
 
+        throw data;
+
+    } catch (err) {
+
+        console.error(err);
+
+        nextBtn.disabled = false;
+        nextBtn.classList.remove("loading");
+
+        nextBtn.innerHTML = `
+            <i class="fas fa-lock"></i>
+            Secure Pay
+        `;
+
+        Swal.fire({
+            icon: "error",
+            title: "Order Failed",
+            text: err?.message || "Something went wrong"
+        });
+    }
+
+    return;
+}
 
 
 }
@@ -463,7 +494,11 @@ if (currentStep === 4) {
 
 function resetCheckout() {
   currentStep = 1;
+  const nextBtn = document.getElementById("nextBtn");
 
+nextBtn.disabled = false;
+nextBtn.classList.remove("loading");
+nextBtn.innerHTML = "Next";
   // reset inputs
   document.querySelectorAll("#checkoutModal input").forEach(input => {
     input.value = "";
@@ -535,6 +570,7 @@ function goPrevStep() {
     document.querySelector(".step-3").style.display = "block";
 
     currentStep = 3;
+    
     return;
   }
 }
@@ -686,26 +722,7 @@ console.log("PRODUCT ID", cart?.product?.id);
 
 
 
-window.fillAuthUserData = function () {
-    const user = window.authUser;
-    console.log(user)
-    if (!user) return;
-
-    const setValue = (id, value) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.value = value ?? '';
-    };
-
-    setValue("name", user.name);
-    setValue("email", user.email);
-    setValue("phone", user.phone);
-    setValue("address1", user.address1);
-    setValue("city", user.city);
-    setValue("country", user.country);
-}
 
 
 
-
-</script>
+</script>    

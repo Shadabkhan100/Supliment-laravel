@@ -21,7 +21,9 @@
 
       <div class="image-box mb-16">
 
-        <img src="{{ $product['main_image'] }}" alt="{{ $product['name'] }}" />
+       <a href="{{ url('product-details/' . \Illuminate\Support\Str::slug($product['name']) . '/' . $product['id']) }}">
+    <img src="{{ $product['image'] ?? $product['main_image'] }}" alt="{{ $product['name'] }}">
+</a>
 
         @if(!empty($product['old_price']) && $product['old_price'] > $product['price'])
           <div class="sale-label subtitle">
@@ -79,9 +81,11 @@
     <span class="main-price">{{ $product['price'] }}</span>
 </h5>
 
-          <a href="javascript:;"
-             class="sm-btn light open-quick-view"
-             data-product="{{ urlencode(json_encode($product)) }}">
+      <a href="#"
+   class="open-quick-view sm-btn light"
+   data-bs-toggle="modal"
+   data-bs-target="#productQuickView"
+   data-product='@json($product)'>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                  viewBox="0 0 20 20" fill="none">
                <path
@@ -139,7 +143,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 });
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".open-quick-view");
 
+    if (!btn) return;
+
+    const product = JSON.parse(btn.dataset.product);
+
+    console.log(product);
+});
 
 </script>
 

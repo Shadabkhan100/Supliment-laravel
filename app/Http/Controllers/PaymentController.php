@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\CartOrderMail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Http;
+use Stripe\PaymentIntent;
+use Stripe\Refund;
 
 
 
@@ -90,16 +92,23 @@ public function success(Request $request)
             ]);
         }
 
-        // ✅ UPDATE PAYMENT STATUS (THIS IS THE KEY FIX)
-        $updated = GuestOrder::whereIn('id', $orderIds)
+        // Actual Stripe values
+        $currency = strtoupper($session->currency);          // GBP, USD, SAR...
+        $amountPaid = $session->amount_total / 100;          // Stripe returns cents
+
+        GuestOrder::whereIn('id', $orderIds)
             ->update([
-                'payment_status' => 1
+                'payment_status' => 1,
+                'currency'       => $currency,
+                'paid_amount'    => $amountPaid,
+                'stripe_session_id' => $session->id,
+                'payment_intent' => $session->payment_intent,
             ]);
 
         return view('payment-gateway.success', [
             'message' => 'Payment successful',
             'orders' => $orderIds,
-            'updated_rows' => $updated
+            'updated_rows' => count($orderIds)
         ]);
 
     } catch (\Throwable $e) {
@@ -111,8 +120,6 @@ public function success(Request $request)
         ], 500);
     }
 }
-
-
 
 
 private function createOrdersFromAuthCart(array $cartIds, Request $request)
@@ -445,5 +452,56 @@ public function createCartOrders(Request $request)
 public function cancel()
 {
     return view('payment-gateway.cancel');
+}
+
+
+
+
+
+
+
+
+public function refund($id)
+{
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    DB::beginTransaction();
+
+    try {
+
+        $order = GuestOrder::findOrFail($id);
+
+        if (!$order->payment_intent) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Stripe Payment Intent not found.'
+            ], 404);
+        }
+
+        $paymentIntent = PaymentIntent::retrieve($order->payment_intent);
+
+        Refund::create([
+            'charge' => $paymentIntent->latest_charge,
+        ]);
+
+        // Delete order only after successful refund
+        $order->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order refunded successfully and removed permanently.'
+        ]);
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
 }
 }

@@ -8,35 +8,49 @@
 
             <div class="brand-slider">
               <div class="brand-block">
-                <img src="images/brands/brand-1.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-2.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-3.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-4.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-5.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-1.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-2.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-3.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-4.jpg" alt="" />
-              </div>
-              <div class="brand-block">
-                <img src="images/brands/brand-5.jpg" alt="" />
-              </div>
+  <img src="images/brands/brand-1.jpg" alt="Slimza trusted partner logo 1" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-2.jpg" alt="Slimza trusted partner logo 2" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-3.jpg" alt="Slimza trusted partner logo 3" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-4.jpg" alt="Slimza trusted partner logo 4" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-5.jpg" alt="Slimza trusted partner logo 5" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-1.jpg" alt="Slimza trusted partner logo 1" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-2.jpg" alt="Slimza trusted partner logo 2" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-3.jpg" alt="Slimza trusted partner logo 3" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-4.jpg" alt="Slimza trusted partner logo 4" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/brand-5.jpg" alt="Slimza trusted partner logo 5" />
+</div>
+
+<div class="brand-block">
+  <img src="images/brands/halal.png" alt="Halal certified products logo" />
+</div>
+
             </div>
           </div>
         </div>

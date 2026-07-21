@@ -195,10 +195,12 @@ function loadProducts() {
 
             </h5>
 
-           <a href="#"
-                 class="sm-btn light"
+                   <a href="#"
+                 class="open-quick-view sm-btn light"
                  data-bs-toggle="modal"
-                 data-bs-target="#productQuickView">
+                 data-bs-target="#productQuickView"
+ data-product='${encodeURIComponent(JSON.stringify(product))}'
+>
 
                 <svg xmlns="http://www.w3.org/2000/svg"
                      width="20"

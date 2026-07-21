@@ -278,9 +278,23 @@ public function loginAdmin(Request $request)
 }
 
 
+public function deleteUser(Request $request)
+{
+    $user = Auth::user();
 
+    Auth::logout();
 
+    if ($user) {
+        $user->delete();
+    }
 
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/')
+        ->with('success', 'Your account has been deleted successfully.');
+
+}
    public function login(Request $request)
 {
     $credentials = $request->only('email', 'password');

@@ -5,7 +5,9 @@
     <div class="d-flex align-content-end justify-content-between flex-sm-row flex-column gap-sm-0 gap-24 mb-48">
       <div>
         <h2 class="fw-600 mb-12" style="color:#9eef0b;">Why Choose Us</h2>
-        <p style="color:white;">Reliable services designed to give you confidence, comfort, and complete satisfaction.</p>
+        <p style="color:white;">
+We are dedicated to delivering premium quality, purity, and performance in every product we create. From detox teas to shilajit resin, shilajit coffee, and collagen electrolytes, each formula is crafted using carefully sourced ingredients and strict quality standards. Designed for real results, our products elevate your daily wellness routine—helping you feel energised, balanced, and at your best.
+       </p>
       </div>
     </div>
 

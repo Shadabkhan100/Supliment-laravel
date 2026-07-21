@@ -10,11 +10,12 @@ class OrderStatusMail extends Mailable
 {
     public $order;
     public $product;
-
-    public function __construct($order, $product)
+    public $currentStatus;
+    public function __construct($order, $product,$currentStatus)
     {
         $this->order = $order;
         $this->product = $product;
+        $this->currentStatus=$currentStatus;
     }
 
     public function envelope(): Envelope
@@ -31,6 +32,7 @@ class OrderStatusMail extends Mailable
         with: [
             'order' => $this->order,
             'product' => $this->product,
+            'currentStatus' => $this->currentStatus
         ]
     );
 }

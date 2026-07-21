@@ -23,6 +23,9 @@ use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+
+
+
 public function createAuthOrder(Request $request)
 {
     // 🔐 Must be logged in (session-based auth)
@@ -40,6 +43,7 @@ public function createAuthOrder(Request $request)
         'product_option' => 'nullable',
         'quantity' => 'required|integer',
         'purchase_type' => 'required|string',
+         'currency' => 'required|string',
 
         'address1' => 'nullable|string',
         'city' => 'nullable|string',
@@ -58,7 +62,7 @@ public function createAuthOrder(Request $request)
         'product_option' => $validated['product_option'] ?? null,
         'quantity' => $validated['quantity'],
         'purchase_type' => $validated['purchase_type'],
-
+        'currency' => $validated['currency'],
         'name' => $user->name,
         'email' => $user->email,
         'phone' => $user->phone,
@@ -80,11 +84,12 @@ public function createAuthOrder(Request $request)
     ]);
     $product = ProductsModel::find($validated['product_id']);
 try {
-
+   $currentStatus="Pending";
     Mail::to($user->email)->send(
         new OrderStatusMail(
             $order,
-            $product
+            $product,
+            $currentStatus
         )
     );
 
@@ -112,13 +117,14 @@ try {
 
 public function createGuestOrder(Request $request)
 {
+   
 try {
     $validated = $request->validate([
         'product_id' => 'required|integer',
         'product_option' => 'nullable',
         'quantity' => 'required|integer',
         'purchase_type' => 'required|string',
-
+        'currency'=> 'required|string',
         'name' => 'required|string',
         'email' => 'required|email',
         'phone' => 'required|string',
@@ -174,7 +180,7 @@ try {
         'product_option' => $validated['product_option'] ?? null,
         'quantity' => $validated['quantity'],
         'purchase_type' => $validated['purchase_type'],
-
+         'currency' => $validated['currency'],
         'name' => $validated['name'],
         'email' => $validated['email'],
         'phone' => $validated['phone'],
@@ -199,11 +205,12 @@ try {
     $mailError = null;
 
     try {
-
+         $currentStatus="Pending";
         Mail::to($validated['email'])->send(
             new OrderStatusMail(
                 $order,
-                $product
+                $product,
+                $currentStatus
             )
         );
 
@@ -225,7 +232,9 @@ try {
         'message' => 'Order created successfully',
         'order_id' => $order->id,
         'mail_sent' => $mailStatus,
-        'mail_error' => $mailError
+        'mail_error' => $mailError,
+          'order_ids' => [$order->id],
+    'total_price' => $product->price * $validated['quantity'],
     ])->cookie(
         'guest_id',
         $guestId,
@@ -275,7 +284,7 @@ public function getGuestOrder()
                 'purchase_type' => $order->purchase_type,
                 'payment_status' => $order->payment_status,
                 'order_status' => $order->order_status,
-
+                
                 'user' => [
                     'name' => $order->name,
                     'email' => $order->email,
@@ -436,22 +445,61 @@ public function getGuestOrderbyId($id)
 
 
 
-  public function updateOrderStatus(Request $request, $id)
+public function updateOrderStatus(Request $request, $id)
 {
-    $order = GuestOrder::findOrFail($id);
+    try {
 
-    $order->order_status = $request->status;
-    $order->save();
+        if (!$request->status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status is required.'
+            ], 422);
+        }
 
-    return response()->json([
-         'order' =>  $order,
-        'success' => true
-    ]);
+        $currentStatus = $request->status;
+
+        $order = GuestOrder::findOrFail($id);
+        $product = ProductsModel::find($order->product_id);
+
+        // Update status in memory
+        $order->order_status = $currentStatus;
+
+        // Send email only for required statuses
+        if (
+            ($currentStatus === 'Shipped') ||
+            ($currentStatus === 'Delivered') ||
+            ($currentStatus === 'Suspended')
+        ) {
+
+            Mail::to($order->email)->send(
+                new OrderStatusMail(
+                    $order,
+                    $product,
+                    $currentStatus
+                )
+            );
+        }
+
+        // Save after successful email (or immediately if no email required)
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(), // Remove in production
+        ], 500);
+    }
 }
-
-
-
-
 
 public function ensureGuestId(Request $request)
 {
@@ -476,6 +524,10 @@ public function ensureGuestId(Request $request)
         'guest_id' => $guestId
     ]);
 }
+
+
+
+
 
 public function deleteOrder($id)
 {

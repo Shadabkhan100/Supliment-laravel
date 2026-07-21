@@ -13,7 +13,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
-
+use App\Http\Controllers\OneSignalController;
 
 Route::get('/test-auth-mail', function () {
 
@@ -37,6 +37,59 @@ Route::get('/railway-test', function () {
 });
 
 
+
+
+
+Route::get('/cookie-check', function () {
+    dd(
+        $_COOKIE,
+        request()->cookie('guest_id')
+    );
+});
+
+
+
+
+
+
+
+Route::get('/login', [WebRoutController::class, 'authPage']);
+Route::get('/profile', [ProfileController::class, 'getProfileView']);
+Route::get('/profile/guest-profile', [WebRoutController::class, 'getGuestProfileView']);
+
+
+Route::get('/delete-user', [AuthController::class,'deleteUser']);
+Route::post('/signup-user', [AuthController::class,'registerUser']);
+Route::post('/login', [AuthController::class, 'LoginUser']);
+Route::get('/logout', [AuthController::class, 'logoutUser']);
+Route::get('/ensure-guest-id', [OrderController::class, 'ensureGuestId']);
+
+
+
+
+Route::get('/shipping-cost', [WebRoutController::class, 'shippingCost'])->name('shipping.cost');
+Route::get('/30-days-guarantee', [WebRoutController::class, 'thirtyDaysGuarantee'])->name('guarantee.30days');
+Route::get('/privacy-policy', [WebRoutController::class, 'privacyPolicy'])->name('privacy.policy');
+Route::get('/search-product/{tag}', [WebRoutController::class, 'searchByTag']);
+Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
+Route::get('/all-blogs', [WebRoutController::class, 'getAllBlogs']);
+Route::get('/blog-details/{slug}/{id}', [BlogsController::class, 'blogsDetailsView']);
+Route::get('/product-details/{slug}/{id}', [WebRoutController::class, 'getProductDetails']);
+Route::get('/about-us', [WebRoutController::class, 'aboutUsView']);
+Route::get('/faq', [WebRoutController::class, 'faqView']);
+Route::get('/return-policy', [WebRoutController::class, 'returnView']);
+Route::get('/shop/{slug}/{id}', [WebRoutController::class, 'shopDetails']);
+Route::get('/shop/all', [WebRoutController::class, 'shopAll']);
+Route::get('/contact', [WebRoutController::class, 'contactView']);
+
+
+
+
+Route::post('/cart/add', [CartController::class, 'addToCart']);
+Route::get('/cart', [CartController::class, 'cartView']);
+Route::get('/cart/count', [CartController::class, 'count']);
+
+
 Route::get('/stripe/checkout', [PaymentController::class, 'checkout'])
     ->name('stripe.checkout');
 Route::get('/stripe/success', [PaymentController::class, 'success'])
@@ -45,47 +98,17 @@ Route::get('/stripe/success', [PaymentController::class, 'success'])
 Route::get('/stripe/cancel', [PaymentController::class, 'cancel'])
     ->name('stripe.cancel');
 Route::post('/create-cart-order', [PaymentController::class, 'createCartOrders']);
-Route::get('/cookie-check', function () {
-    dd(
-        $_COOKIE,
-        request()->cookie('guest_id')
-    );
-});
+Route::post('/auth-order/create', [OrderController::class, 'createAuthOrder']);
 
-Route::get('/ensure-guest-id', [OrderController::class, 'ensureGuestId']);
-
-Route::get('/about-us', [WebRoutController::class, 'aboutUsView']);
-Route::get('/faq', [WebRoutController::class, 'faqView']);
-Route::get('/return-policy', [WebRoutController::class, 'returnView']);
-Route::get('/shop/{slug}/{id}', [WebRoutController::class, 'shopDetails']);
-Route::get('/shop/all', [WebRoutController::class, 'shopAll']);
-Route::get('/contact', [WebRoutController::class, 'contactView']);
-
-Route::get('/login', [WebRoutController::class, 'authPage']);
-
-Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
-Route::get('/all-blogs', [WebRoutController::class, 'getAllBlogs']);
-Route::get('/blog-details/{slug}/{id}', [BlogsController::class, 'blogsDetailsView']);
-Route::get('/product-details/{slug}/{id}', [WebRoutController::class, 'getProductDetails']);
+Route::post('/create-product-order', [OrderController::class, 'createGuestOrder']);
 
 
-Route::get('/profile', [ProfileController::class, 'getProfileView']);
 
-
-Route::get('/profile/guest-profile', [WebRoutController::class, 'getGuestProfileView']);
 Route::post('/subscribe', [ProfileController::class, 'subscribe']);
-
-
-Route::post('/signup-user', [AuthController::class,'registerUser']);
-Route::post('/login', [AuthController::class, 'LoginUser']);
-Route::get('/logout', [AuthController::class, 'logoutUser']);
-
-Route::get('/shipping-cost', [WebRoutController::class, 'shippingCost'])->name('shipping.cost');
-Route::get('/30-days-guarantee', [WebRoutController::class, 'thirtyDaysGuarantee'])->name('guarantee.30days');
-Route::get('/privacy-policy', [WebRoutController::class, 'privacyPolicy'])->name('privacy.policy');
-Route::get('/search-product/{tag}', [WebRoutController::class, 'searchByTag']);
-Route::post('/cart/add', [CartController::class, 'addToCart']);
-Route::get('/cart', [CartController::class, 'cartView']);
+Route::post('/subscription/create', [ProfileController::class, 'getSubscription']);
+Route::post('/subscription/cancel', [ProfileController::class, 'cancelSubscription']);
+Route::post('/onesignal/save', [OneSignalController::class, 'save'])
+    ->middleware('auth');
 
 
 Route::get('/admin/login', [AdminWebController::class, 'showLogin'])->name('admin.login');
@@ -94,8 +117,8 @@ Route::post('/admin/login/form', [AuthController::class, 'loginAdmin'])->name('a
 
 
 Route::middleware(['admin'])->group(function () {
-   
-
+Route::post('/admin/order/{id}/refund', [PaymentController::class, 'refund'])
+    ->name('admin.order.refund');
 Route::post('/update-status/{id}', [OrderController::class, 'updateOrderStatus']);
 Route::get('/admin/orders', [AdminWebController::class, 'getOrdersView']);
 Route::get('/admin/settings', [AdminWebController::class, 'getSettingsView']);
@@ -149,4 +172,3 @@ Route::fallback(function () {
 });
 
 
-Route::post('/auth-order/create', [OrderController::class, 'createAuthOrder']);

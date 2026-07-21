@@ -1,13 +1,13 @@
-@if($order->status === 'pending')
+@if($currentStatus === 'Pending')
     @include('emails.order-emails.pending-order')
 
-@elseif($order->status === 'shipped')
+@elseif($currentStatus === 'Shipped')
     @include('emails.order-emails.shipped-order')
 
-@elseif($order->status === 'delivered')
+@elseif($currentStatus === 'Delivered')
     @include('emails.order-emails.delivered-order')
 
-@elseif($order->status === 'suspended')
+@elseif($currentStatus === 'Suspended')
     @include('emails.order-emails.suspended-order')
 
 @else

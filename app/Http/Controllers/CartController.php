@@ -13,6 +13,21 @@ use App\Services\SupabaseStorageService;
 class CartController extends Controller
 {
    
+public function count()
+{
+    if (auth()->check()) {
+        $count = CartModel::where('user_id', auth()->id())->count();
+    } else {
+        $guestId = request()->cookie('guest_id');
+
+        $count = CartModel::where('guest_id', $guestId)->count();
+    }
+
+    return response()->json([
+        'count' => $count
+    ]);
+}
+
 
 public function cartView()
 {

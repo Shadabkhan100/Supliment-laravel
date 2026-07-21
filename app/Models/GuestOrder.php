@@ -15,24 +15,22 @@ class GuestOrder extends Model
         'product_option',
         'quantity',
         'purchase_type',
-
         'name',
         'email',
         'phone',
-
         'address1',
         'city',
         'postal',
         'country',
-
         'lat',
         'lng',
-
         'payment_status',
         'cart_payload', 
         'order_status',
         'user_id',
-        'guest_id'
+        'currency',
+        'guest_id',
+        'paid_amount'
         
     ];
 

@@ -2914,7 +2914,6 @@ header .header-buttons a:hover {
 }
 .mobile-nav__wrapper .mobile-nav__content .main-menu__list li a {
     display: flex;
-    justify-content: space-between;
     line-height: 30px;
     color: #1e1f20;
     font-size: 18px;

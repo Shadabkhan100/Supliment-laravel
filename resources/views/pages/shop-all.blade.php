@@ -76,8 +76,10 @@
       <div class="product-block">
 
         <div class="image-box mb-16">
-
-          <img src="{{ $product['main_image'] }}" alt="{{ $product['name'] }}" />
+<a href="{{ url('product-details/' . \Illuminate\Support\Str::slug($product['name']) . '/' . $product['id']) }}">
+    <img src="{{ $product['image'] ?? $product['main_image'] }}" alt="{{ $product['name'] }}">
+</a>
+          
 
           @if(!empty($product['old_price']) && $product['old_price'] > $product['price'])
           <div class="sale-label subtitle">

@@ -5,6 +5,8 @@
 
 @section('content')
 
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
 .page-card{
     background:#fff;
@@ -169,13 +171,38 @@
         {{ \Carbon\Carbon::parse($order['created_at'])->format('d M Y') }}
     </td>
 
-    <td>
-        <a href="/admin/order/{{ $order['id'] }}" class="btn btn-primary btn-sm">View</a>
-       <button class="btn btn-danger btn-sm"
-        onclick="deleteOrder({{ $order['id'] }})">
-    Delete
-</button>
-    </td>
+  <td>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+
+        <!-- View -->
+        <a href="/admin/order/{{ $order['id'] }}"
+           class="btn btn-primary btn-sm d-flex align-items-center">
+            <i class="fas fa-eye me-1"></i>
+            View
+        </a>
+
+        <!-- Refund -->
+        @if($order['payment_status'])
+        <button
+            class="btn btn-warning btn-sm refundBtn d-flex align-items-center"
+            onclick="refundOrder(this, {{ $order['id'] }})">
+            <i class="fas fa-undo-alt me-1"></i>
+            Refund
+        </button>
+        @endif
+
+        <!-- Delete -->
+        <button
+            class="btn btn-danger btn-sm d-flex align-items-center"
+            onclick="deleteOrder({{ $order['id'] }})">
+            <i class="fas fa-trash-alt me-1"></i>
+            Delete
+        </button>
+
+    </div>
+</td>
+
+
 
 </tr>
 
@@ -233,34 +260,63 @@ async function deleteOrder(id)
     }
 }
 
-$(document).ready(function(){
+$(document).ready(function () {
 
     /* STATUS UPDATE */
-    $('.status-dropdown').change(function(){
+    $('.status-dropdown').change(function () {
 
         let orderId = $(this).data('id');
         let status = $(this).val();
 
         $.ajax({
-            url:'/update-status/' + orderId,
-            method:'POST',
-            data:{
-                _token:'{{ csrf_token() }}',
-                status:status
+            url: '/update-status/' + orderId,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                status: status
             },
-            success:function(){
-                console.log('updated');
+
+            success: function (response) {
+                console.log("Success:");
+                console.log(response);
+            },
+
+            error: function (xhr, status, error) {
+
+                console.log("========== AJAX ERROR ==========");
+                console.log("HTTP Status:", xhr.status);
+                console.log("Status Text:", status);
+                console.log("Error:", error);
+
+                console.log("Raw Response:");
+                console.log(xhr.responseText);
+
+                try {
+                    let json = JSON.parse(xhr.responseText);
+
+                    console.log("JSON Response:");
+                    console.log(json);
+
+                    console.log("Message:", json.message);
+                    console.log("Exception:", json.exception);
+                    console.log("File:", json.file);
+                    console.log("Line:", json.line);
+                    console.log("Trace:", json.trace);
+
+                } catch (e) {
+                    console.log("Response is not valid JSON.");
+                }
             }
         });
 
     });
 
     /* SEARCH */
-    $('#searchInput').on('keyup', function(){
+    $('#searchInput').on('keyup', function () {
 
         let value = $(this).val().toLowerCase();
 
-        $('#ordersTable tbody tr').filter(function(){
+        $('#ordersTable tbody tr').filter(function () {
 
             $(this).toggle(
                 $(this).text().toLowerCase().indexOf(value) > -1
@@ -271,17 +327,17 @@ $(document).ready(function(){
     });
 
     /* STATUS FILTER */
-    $('#statusFilter').change(function(){
+    $('#statusFilter').change(function () {
 
         let status = $(this).val();
 
-        $('#ordersTable tbody tr').each(function(){
+        $('#ordersTable tbody tr').each(function () {
 
             let rowStatus = $(this).data('status');
 
-            if(status === '' || rowStatus === status){
+            if (status === '' || rowStatus === status) {
                 $(this).show();
-            }else{
+            } else {
                 $(this).hide();
             }
 
@@ -290,17 +346,17 @@ $(document).ready(function(){
     });
 
     /* PAYMENT FILTER */
-    $('#paymentFilter').change(function(){
+    $('#paymentFilter').change(function () {
 
         let payment = $(this).val();
 
-        $('#ordersTable tbody tr').each(function(){
+        $('#ordersTable tbody tr').each(function () {
 
             let rowPayment = $(this).data('payment');
 
-            if(payment === '' || rowPayment === payment){
+            if (payment === '' || rowPayment === payment) {
                 $(this).show();
-            }else{
+            } else {
                 $(this).hide();
             }
 
@@ -309,6 +365,92 @@ $(document).ready(function(){
     });
 
 });
+
+
+
+
+
+function refundOrder(button, id) {
+
+    Swal.fire({
+        title: "Refund this order?",
+        html: `
+            <div style="text-align:left">
+                <p><strong>This action cannot be undone.</strong></p>
+
+                <ul>
+                    <li>The customer will receive a full refund.</li>
+                    <li>The refunded amount will be deducted from your Stripe account.</li>
+                    <li>The order will be permanently deleted from your system.</li>
+                </ul>
+
+                <p style="color:#dc3545;font-weight:bold;">
+                    Are you sure you want to continue?
+                </p>
+            </div>
+        `,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, Refund Order",
+        confirmButtonColor: "#dc3545",
+        cancelButtonText: "Cancel"
+
+    }).then(async (result) => {
+
+        if (!result.isConfirmed) return;
+
+        const originalText = button.innerHTML;
+
+        button.disabled = true;
+        button.innerHTML = `
+            <span class="spinner-border spinner-border-sm"></span>
+            Refunding...
+        `;
+
+        try {
+
+            const response = await fetch(`/admin/order/${id}/refund`, {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                    "Accept": "application/json"
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || "Refund failed.");
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Refund Successful",
+                html: `
+                    <b>The customer has been refunded successfully.</b><br><br>
+                    The payment has been refunded through Stripe and the order has been permanently removed from your database.
+                `,
+                confirmButtonColor: "#28a745"
+            }).then(() => {
+                location.reload();
+            });
+
+        } catch (error) {
+             console.log(error)
+            button.disabled = false;
+            button.innerHTML = originalText;
+
+            Swal.fire({
+                icon: "error",
+                title: "Refund Failed",
+                text: error.message || "Unable to process the refund."
+            });
+
+        }
+
+    });
+
+}
 
 </script>
 

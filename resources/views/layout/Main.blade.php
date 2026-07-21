@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
 <style>
 
@@ -150,10 +150,8 @@
 
 
 @if(session('success'))
+
 <script>
-
-
-
 
 document.addEventListener('DOMContentLoaded', function () {
     Swal.fire({
@@ -170,6 +168,8 @@ document.addEventListener('DOMContentLoaded', function () {
 @endif
 
 @if(session('error'))
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     Swal.fire({
@@ -182,9 +182,11 @@ document.addEventListener('DOMContentLoaded', function () {
         timerProgressBar: true
     });
 });
+
+
+
 </script>
 @endif
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
 <script src="{{ asset('js/bootstrap.min.js') }}"></script>
@@ -212,6 +214,147 @@ s0.parentNode.insertBefore(s1,s0);
 
 
 <script>
+
+console.log("Loading OneSignal...");
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+OneSignalDeferred.push(async function (OneSignal) {
+
+    console.log("✅ OneSignal SDK Loaded");
+
+    try {
+
+        await OneSignal.init({
+            appId: "a41850fa-8b13-4ac9-badf-68cd0fd6b646",
+        });
+console.log("Can Request Permission:",
+    OneSignal.Notifications.permissionNative);
+
+console.log("Is Push Supported:",
+    OneSignal.Notifications.isPushSupported());
+
+console.log("Current Permission:",
+    Notification.permission);
+        console.log("✅ OneSignal Initialized");
+
+        console.log("Browser Permission:", Notification.permission);
+
+        // Ask for permission only if not already decided
+        if (Notification.permission === "default") {
+
+            console.log("Requesting notification permission...");
+
+            await OneSignal.Notifications.requestPermission();
+
+            console.log("Permission after request:", Notification.permission);
+
+        }
+
+        console.log("Opted In:", OneSignal.User.PushSubscription.optedIn);
+        console.log("Subscription ID:", OneSignal.User.PushSubscription.id);
+
+        // Save immediately if already subscribed
+        if (OneSignal.User.PushSubscription.id) {
+
+            console.log("Saving existing subscription...");
+
+            await saveSubscription(OneSignal.User.PushSubscription.id);
+
+        }
+
+        // Listen for future changes
+        OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
+
+            console.log("Subscription Changed:", event);
+
+            if (!event.current?.id) {
+                console.warn("No Subscription ID");
+                return;
+            }
+
+            await saveSubscription(event.current.id);
+
+        });
+
+    } catch (err) {
+
+        console.error("OneSignal Init Error:", err);
+
+    }
+
+});
+
+async function saveSubscription(subscriptionId) {
+
+    console.log("Saving Subscription ID:", subscriptionId);
+
+    try {
+
+        const response = await fetch('/onesignal/save', {
+
+            method: 'POST',
+
+            headers: {
+
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+
+            },
+
+            body: JSON.stringify({
+
+                subscription_id: subscriptionId
+
+            })
+
+        });
+
+        console.log("HTTP Status:", response.status);
+
+        const data = await response.json();
+
+        console.log("Laravel Response:", data);
+
+    } catch (err) {
+
+        console.error("Fetch Error:", err);
+
+    }
+
+}
+
+function refreshCartCount() {
+
+    fetch('/cart/count')
+        .then(res => res.json())
+        .then(data => {
+
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = data.count;
+            });
+
+        });
+
+}
+
+
+
+window.fillAuthUserData = function () {
+
+    const user = @json($authUser);
+
+    if (!user) return;
+
+    document.getElementById("name").value = user.name ?? "";
+    document.getElementById("email").value = user.email ?? "";
+    document.getElementById("phone").value = user.phone ?? "";
+    document.getElementById("address1").value = user.address1 ?? "";
+    document.getElementById("city").value = user.city ?? "";
+    document.getElementById("country").value = user.country ?? "";
+};
+
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const bar = document.getElementById("policyBarX9");
@@ -253,13 +396,32 @@ document.addEventListener("click", function (e) {
   const btn = e.target.closest(".open-quick-view");
   if (!btn) return;
 
-  const encoded = btn.dataset.product;
-  const product = JSON.parse(decodeURIComponent(encoded));
+ const data = btn.dataset.product;
+
+let product = null;
+
+try {
+    product = JSON.parse(decodeURIComponent(data));
+       console.log(product);
+} catch {
+    try {
+        product = JSON.parse(data);
+       console.log(product);
+    } catch (err) {
+        console.error("Invalid product data:", err);
+        return;
+    }
+}
     
-   window.currentQuickViewProduct = product;
+  window.currentQuickViewProduct = product;
+  
   window.selectedProductId = product.id; 
+  console.log("Product:", product);
+console.log("Options:", product.options);
+
+renderQuickViewOptions(product);
   // MAIN IMAGE
-  document.getElementById("qv-main-image").src = product.main_image || '';
+  document.getElementById("qv-main-image").src = product.main_image  || product.main_image || '{{ asset("images.placeholder.png")}}';
 
   document.getElementById("qv-add-to-cart").dataset.id = product.id;
 
@@ -286,29 +448,54 @@ document.getElementById("qv-old-price").innerText =
   document.getElementById("qv-sku").innerText = product.sku || '';
 
   // MAIN IMAGE UPDATE
-  document.getElementById("qv-main-image").src = product.main_image || '';
+// MAIN IMAGE
+document.getElementById("qv-main-image").src =
+    product.image ||
+    product.main_image ||
+    '{{ asset("images/placeholder.png") }}';
 
-  // GALLERY
-  const gallery = document.getElementById("qv-gallery");
-  gallery.innerHTML = '';
+// GALLERY
+const gallery = document.getElementById("qv-gallery");
+gallery.innerHTML = "";
 
-  if (product.gallery_images && product.gallery_images.length) {
-    product.gallery_images.forEach(img => {
-      const el = document.createElement("img");
-      el.src = img;
-      el.style.width = "60px";
-      el.style.height = "60px";
-      el.style.objectFit = "cover";
-      el.style.borderRadius = "6px";
-      el.style.cursor = "pointer";
+let galleryImages = product.gallery_images;
 
-      el.onclick = () => {
-        document.getElementById("qv-main-image").src = img;
-      };
+// Convert JSON string to array if necessary
+if (typeof galleryImages === "string") {
+    try {
+        galleryImages = JSON.parse(galleryImages);
+    } catch (e) {
+        galleryImages = [];
+    }
+}
 
-      gallery.appendChild(el);
-    });
-  }
+if (!Array.isArray(galleryImages)) {
+    galleryImages = [];
+}
+
+const SUPABASE_BASE =
+    "https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/";
+
+galleryImages.forEach(img => {
+
+    const imageUrl = img.startsWith("http")
+        ? img
+        : SUPABASE_BASE + img;
+
+    const el = document.createElement("img");
+    el.src = imageUrl;
+    el.style.width = "60px";
+    el.style.height = "60px";
+    el.style.objectFit = "cover";
+    el.style.borderRadius = "6px";
+    el.style.cursor = "pointer";
+
+    el.onclick = () => {
+        document.getElementById("qv-main-image").src = imageUrl;
+    };
+
+    gallery.appendChild(el);
+});
 
 });
 
@@ -437,7 +624,7 @@ function sendCart(payload) {
       title: data.message || "Added to cart",
       timer: 2500
     });
-
+    refreshCartCount();
   })
   .catch(err => {
     console.error("Cart error:", err);
@@ -484,7 +671,7 @@ document.addEventListener("click", function(e){
 
 
 window.openCheckoutModal = function () {
-
+     
     const quickViewEl = document.getElementById("productQuickView");
   
     if (quickViewEl) {

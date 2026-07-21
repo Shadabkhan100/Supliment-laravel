@@ -10,6 +10,15 @@ use App\Models\SlimzaDeals;
 use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\GuestOrder;
+use App\Models\Blogs;
+use App\Models\CartModel;
+use App\Models\FutureProduct;
+use App\Models\PageSetting;
+use App\Models\Testimonials;
+use App\Models\User;
+use App\Models\Subscribers;
+use Stripe\Stripe;
+use Stripe\Balance;
 
 
 class AdminWebController extends Controller
@@ -80,11 +89,116 @@ public function getTestimonialmanagement()
         return view('admin.testimonials');
     }
 
+
+
+
+
+
+
+
+
+
 public function getDashboardView()
 {
-  
-   
-    return view('admin.dashboard');
+    $blogs = Blogs::all();
+    $carts = CartModel::all();
+    $categories = CategoriesModel::all();
+    $futureProducts = FutureProduct::all();
+    $guestOrders = GuestOrder::all();
+    $products = ProductsModel::all();
+    $slimzaDeals = SlimzaDeals::all();
+    $subscribers = Subscribers::all();
+    $testimonials = Testimonials::all();
+    $users = User::all();
+    $recentOrders = GuestOrder::latest('updated_at')->take(5)->get();
+
+    // Currency rates
+    $currencies = config('currency.currencies');
+
+    $totalPaid = 0;
+    $totalFailed = 0;
+
+    foreach ($guestOrders as $order) {
+
+        $price = 0;
+
+        // Try getting price from product option
+        $option = $order->product_option;
+
+        if (is_string($option)) {
+            $option = json_decode($option, true);
+        }
+
+        if (!empty($option) && isset($option['price'])) {
+
+            $price = (float) $option['price'];
+
+        } else {
+
+            $product = $products->firstWhere('id', $order->product_id);
+
+            if ($product) {
+                $price = (float) $product->price;
+            }
+        }
+
+        // Convert to GBP
+        $currency = strtoupper($order->currency ?? 'GBP');
+
+        if (isset($currencies[$currency])) {
+
+            $rate = (float) $currencies[$currency]['rate'];
+
+            if ($rate > 0) {
+                $price /= $rate;
+            }
+        }
+
+        if ($order->payment_status) {
+            $totalPaid += $price;
+        } else {
+            $totalFailed += $price;
+        }
+    }
+
+    // ==========================
+    // LIVE STRIPE BALANCE
+    // ==========================
+    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+    $stripeBalance = \Stripe\Balance::retrieve();
+
+    $availableBalance = collect($stripeBalance->available)->map(function ($balance) {
+        return [
+            'currency' => strtoupper($balance->currency),
+            'amount'   => $balance->amount / 100,
+        ];
+    });
+
+    $pendingBalance = collect($stripeBalance->pending)->map(function ($balance) {
+        return [
+            'currency' => strtoupper($balance->currency),
+            'amount'   => $balance->amount / 100,
+        ];
+    });
+
+    return view('admin.dashboard', compact(
+        'blogs',
+        'carts',
+        'categories',
+        'futureProducts',
+        'guestOrders',
+        'products',
+        'slimzaDeals',
+        'subscribers',
+        'testimonials',
+        'users',
+        'recentOrders',
+        'totalPaid',
+        'totalFailed',
+        'availableBalance',
+        'pendingBalance'
+    ));
 }
 
 public function showLogin()

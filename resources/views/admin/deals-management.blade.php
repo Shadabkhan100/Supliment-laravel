@@ -556,7 +556,7 @@
                                     </button>
 
                                     <button
-                                        class="action-btn text-primary"
+                                        class="action-btn text-primary my-3"
                                         onclick='editDeal(${JSON.stringify(deal)})'>
 
                                         <i class="fa fa-edit"></i>

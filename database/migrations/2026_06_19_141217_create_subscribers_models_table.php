@@ -12,21 +12,43 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('subscribers', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    $table->string('email')->unique();
+            $table->string('email')->unique();
 
-    $table->string('ip_address')->nullable();
-    $table->text('location')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->text('location')->nullable();
 
-    $table->decimal('latitude', 10, 7)->nullable();
-    $table->decimal('longitude', 10, 7)->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
 
-    $table->string('device_model')->nullable();
-    $table->string('plan')->nullable();
+            $table->string('device_model')->nullable();
+            $table->string('plan')->nullable();
 
-    $table->timestamps();
-});
+            // ==========================
+            // Subscription Fields
+            // ==========================
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('product_id')->nullable();
+
+            $table->enum('frequency', [
+                'weekly',
+                '2weeks',
+                'monthly'
+            ])->nullable();
+
+            $table->decimal('discount', 8, 2)->default(0);
+
+            $table->enum('status', [
+                'active',
+                'paused',
+                'cancelled'
+            ])->default('active');
+
+            $table->timestamp('next_billing_date')->nullable();
+
+            $table->timestamps();
+        });
     }
 
     /**

@@ -4,7 +4,30 @@
 <link rel="stylesheet" href="/css/slick.css">
 <link rel="stylesheet" href="/css/slick-theme.css">
 <style>
+.subscription-offer-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
 
+    background:linear-gradient(135deg,#9eef0b,#7fd800);
+    color:#000;
+
+    padding:4px 10px;
+    border-radius:20px;
+
+    font-size:12px;
+    font-weight:700;
+
+    box-shadow:0 3px 10px rgba(158,239,11,.35);
+    white-space:nowrap;
+}
+
+@media(max-width:576px){
+    .subscription-offer-badge{
+        font-size:10px;
+        padding:3px 8px;
+    }
+}
 /* remove slick default icon */
 .slick-dots li button:before {
   content: '' !important;
@@ -115,11 +138,15 @@
 }
 
 /* responsive */
-@media (max-width: 350px) {
+@media (max-width: 380px) {
   .shipping-features {
     flex-direction: column;
     gap: 15px;
   }
+ .product-text-container .product-text-page{
+   padding:0px;
+
+}
 }
 
 .product-slider-asnav {
@@ -222,7 +249,13 @@
         }
     }
 @endphp
+ 
 
+@php
+    $defaultDiscount = 20; 
+    $isSubscribed = $product->subscribed;
+    $isActive = $isSubscribed && $product->subscription->status === 'active';
+@endphp
 <div class="product-detail-slider">
 
     @foreach($images as $img)
@@ -239,38 +272,52 @@
           <!-- RIGHT TEXT SECTION -->
           <div class="col-xl-6">
 
-            <div class="product-text-container product-text-page">
+            <div class="product-text-container product-text-page" style="padding: 0px;">
 
               <p class="eyebrow mb-12">
                 {{ $product->category_name }}
               </p>
 
-              <h3 class="text-white fw-700 mb-16">
-                {{ $product->name }}
-              </h3>
+            <h3 class="text-white fw-700 mb-16 d-flex align-items-center justify-content-between">
+
+    <span>{{ $product->name }}</span>
+
+    @if($isActive)
+     @if($isActive)
+ 
+        <img src="{{ asset('images/icons/discount.png') }}"
+             alt="Discount"
+             style="width:54px;height:54px;object-fit:contain;">
+             @endif
+    @endif
+
+</h3>
 
               <!-- RATING (static for now) -->
               <div class="d-flex align-items-center flex-wrap gap-16 mb-16">
                 <h6 class="color-quant">
-                  ★★★★<span class="light-gray">★</span>
-                  <span class="text-16 fw-400 dark-text-white">
-                    ({{ $product->reviews_count ?? 0 }} Reviews)
+                  ★★★★★                  <span class="text-16 fw-400 dark-text-white"> 28+ Reviews
+                
                   </span>
-                </h6>
+                      </h6>
               </div>
 
               <!-- PRICE -->
               <div class="d-flex align-items-center gap-16 mb-16">
 
-                @if($product->old_price)
-                <h6 class="dark-gray text-decoration-line-through old-price">
-                  {{ number_format($product->old_price, 2) }}
-                </h6>
-                @endif
+@if($product->old_price)
+<h6
+    class="dark-gray text-decoration-line-through old-price"
+    data-price="{{ $product->old_price }}">
+    {{ number_format($product->old_price, 2) }}
+</h6>
+@endif
 
-                <h4 class="text-white main-price">
-                  {{ number_format($product->price, 2) }}
-                </h4>
+<h4
+    class="text-white main-price"
+    data-price="{{ $product->price }}">
+    {{ number_format($product->price, 2) }}
+</h4>
 
               </div>
               @include("products.buying-options")
@@ -336,12 +383,26 @@
                  </a>
                 </div>
 
-                <div class="col-sm-6">
-                  <a href="javascript:;" class="cus-btn text-center w-100" id="qv-order-now">
-                    Buy It Now
-                  </a>
-                </div>
-
+              <div class="col-sm-6">
+    <a href="javascript:;"
+       class="text-center w-100"
+       id="qv-order-now"
+       style="
+            display:block;
+               padding: 9px 24px;
+              border-radius: 34px;
+            background:linear-gradient(135deg,#FFD700,#F4C430,#D4AF37);
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:16px;
+            text-decoration:none;
+            border:1px solid #E6C200;
+            box-shadow:0 4px 12px rgba(212,175,55,.35);
+            transition:all .3s ease;
+       ">
+        Buy It Now
+    </a>
+</div>
               </div>
 
               <div class="shipping-features">
@@ -555,6 +616,107 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+
+document.addEventListener("click", function (e) {
+
+    if (e.target.closest(".increment")) {
+
+        const quantityBox = e.target.closest(".input-area");
+        const input = quantityBox.querySelector(".number");
+
+        input.value = (parseInt(input.value) || 1) + 1;
+
+        updateTotalPrice();
+    }
+
+    if (e.target.closest(".decrement")) {
+
+        const quantityBox = e.target.closest(".input-area");
+        const input = quantityBox.querySelector(".number");
+
+        let qty = parseInt(input.value) || 1;
+
+        if (qty > 1) {
+            input.value = qty - 1;
+        }
+
+        updateTotalPrice();
+    }
+
+});
+
+function updateTotalPrice() {
+
+    const qty = parseInt(document.querySelector(".number").value) || 1;
+
+    // Main price
+    const mainPriceEl = document.querySelector(".main-price");
+    const unitPrice = Number(mainPriceEl.dataset.price);
+
+    mainPriceEl.innerText = formatPrice(unitPrice * qty);
+
+    // Old price
+    const oldPriceEl = document.querySelector(".old-price");
+
+    if (oldPriceEl) {
+        const oldUnitPrice = Number(oldPriceEl.dataset.price);
+        oldPriceEl.innerText = formatPrice(oldUnitPrice * qty);
+    }
+}
+
+
+
+
+function refreshMainProductPrice() {
+
+    const qty = parseInt(document.querySelector(".number")?.value || 1);
+
+    let price = 0;
+
+    // Product has pack options
+    if (window.selectedOption) {
+
+        price = window.selectedOption.finalPrice;
+
+        if (window.purchaseMode === "one_time") {
+
+            const selectedBox = document.querySelector(".option-box.option-selected");
+
+            if (selectedBox) {
+                price = parseFloat(selectedBox.dataset.basePrice);
+            }
+
+        }
+
+    }
+    // Product has NO options
+    else {
+
+        price = parseFloat(document.querySelector(".main-price").dataset.price);
+
+        if (
+            window.purchaseMode === "subscribe" &&
+            typeof discount !== "undefined"
+        ) {
+            price = price - (price * discount / 100);
+        }
+
+    }
+
+    $(".main-price")
+        .attr("data-price", price)
+        .text(formatPrice(price * qty));
+
+    const oldPrice = $(".old-price");
+
+    if (oldPrice.length) {
+
+        const oldPriceValue = parseFloat(oldPrice.attr("data-price"));
+
+        oldPrice.text(formatPrice(oldPriceValue * qty));
+    }
+
+}
 
 </script>
 @include("modules.you-may-like")
