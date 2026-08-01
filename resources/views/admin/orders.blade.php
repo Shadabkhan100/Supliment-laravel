@@ -6,8 +6,116 @@
 @section('content')
 
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+
 <style>
+
+
+.live-green-marker{
+    width:18px;
+    height:18px;
+    background:#16c60c;
+    border-radius:50%;
+    position:relative;
+    box-shadow:0 0 8px rgba(22,198,12,.5);
+}
+
+.live-green-marker::before,
+.live-green-marker::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:rgba(22,198,12,.35);
+    animation:livePulse 2s infinite;
+}
+
+.live-green-marker::after{
+    animation-delay:1s;
+}
+
+@keyframes livePulse{
+
+    from{
+        transform:scale(1);
+        opacity:1;
+    }
+
+    to{
+        transform:scale(3.5);
+        opacity:0;
+    }
+
+}
+#drawerOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    opacity:0;
+    visibility:hidden;
+    transition:.3s;
+    z-index:1040;
+}
+
+#drawerOverlay.show{
+    opacity:1;
+    visibility:visible;
+}
+
+#orderDrawer{
+    position:fixed;
+    top:0;
+    right:-50%;
+    width:50%;
+    max-width:700px;
+    height:100vh;
+    background:#fff;
+    box-shadow:-5px 0 20px rgba(0,0,0,.15);
+    transition:.35s ease;
+    z-index:1050;
+    display:flex;
+    flex-direction:column;
+}
+
+#orderDrawer.show{
+    right:0;
+}
+
+.drawer-header{
+    padding:18px 20px;
+    border-bottom:1px solid #eee;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.drawer-body{
+    padding:20px;
+    overflow-y:auto;
+    flex:1;
+}
+
+.drawer-close{
+    border:none;
+    background:none;
+    font-size:22px;
+    cursor:pointer;
+    color:#666;
+}
+
+.drawer-close:hover{
+    color:#dc3545;
+}
+
+@media(max-width:768px){
+
+    #orderDrawer{
+        width:100%;
+        right:-100%;
+    }
+
+}
 .page-card{
     background:#fff;
     border-radius:20px;
@@ -74,7 +182,11 @@
     color:#842029;
 }
 </style>
-
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+</script>
 <div class="page-card">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -174,12 +286,12 @@
   <td>
     <div class="d-flex flex-wrap gap-2 justify-content-center">
 
-        <!-- View -->
-        <a href="/admin/order/{{ $order['id'] }}"
-           class="btn btn-primary btn-sm d-flex align-items-center">
-            <i class="fas fa-eye me-1"></i>
-            View
-        </a>
+        <a href="javascript:void(0)"
+   onclick='openOrderDrawer(@json($order))'
+   class="btn btn-primary btn-sm d-flex align-items-center">
+    <i class="fas fa-eye me-1"></i>
+    View
+</a>
 
         <!-- Refund -->
         @if($order['payment_status'])
@@ -215,12 +327,36 @@
     </div>
 
 </div>
+<!-- Overlay -->
+<div id="drawerOverlay"></div>
 
+<!-- Drawer -->
+<div id="orderDrawer">
+
+    <div class="drawer-header">
+        <h5 class="mb-0">Order Details</h5>
+
+        <button type="button" class="drawer-close" onclick="closeOrderDrawer()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="drawer-body">
+        Hello World
+    </div>
+
+</div>
 @endsection
 
 
 @section('scripts')
 
+
+
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
 <script>
 
 async function deleteOrder(id)
@@ -452,6 +588,416 @@ function refundOrder(button, id) {
 
 }
 
+function openOrderDrawer(order) {
+const adminLat = 17.319183989317914;
+const adminLng = 42.33244612525538;
+
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+
+    const R = 6371; // Earth's radius in km
+
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(2);
+}
+
+const distanceKm =
+    order.lat && order.lng
+        ? getDistanceKm(
+            adminLat,
+            adminLng,
+            parseFloat(order.lat),
+            parseFloat(order.lng)
+        )
+        : '-';
+
+
+
+
+
+    $('#drawerOverlay').addClass('show');
+    $('#orderDrawer').addClass('show');
+
+    const statusBadge = `
+        <span class="badge bg-${
+            order.status == 'Delivered' ? 'success' :
+            order.status == 'Cancelled' ? 'danger' :
+            order.status == 'Out for Delivery' ? 'primary' :
+            order.status == 'Preparing' ? 'info' :
+            'warning'
+        } px-3 py-2">
+            ${order.status ?? 'Pending'}
+        </span>
+    `;
+const productPrice = parseFloat(order.product?.price || 0);
+const quantity = parseInt(order.quantity || 0);
+const totalPrice = (productPrice * quantity).toFixed(2);
+
+const shipmentStatus = (order.shipment_status || 'Pending').toLowerCase();
+
+const shipmentBadge = `
+<span class="badge bg-${
+    shipmentStatus === 'delivered' ? 'success' :
+    shipmentStatus === 'out for delivery' ? 'primary' :
+    shipmentStatus === 'shipped' ? 'info' :
+    shipmentStatus === 'cancelled' ? 'danger' :
+    shipmentStatus === 'processing' ? 'warning' :
+    'secondary'
+} px-3 py-2">
+${order.shipment_status ?? 'Pending'}
+</span>`;
+
+
+const isPaid =
+    order.payment_status === true ||
+    order.payment_status === 1 ||
+    order.payment_status === '1' ||
+    order.payment_status === 'true';
+
+const paymentBadge = `
+<span class="badge bg-${isPaid ? 'success' : 'warning'} px-3 py-2">
+    ${isPaid ? 'Paid' : 'Pending'}
+</span>`;
+
+  $('.drawer-body').html(`
+
+<div class="container-fluid">
+
+    <!-- ORDER SUMMARY -->
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <h5 class="mb-0">
+                <i class="fas fa-shopping-bag me-2"></i>
+                Order #${order.id}
+            </h5>
+
+            ${statusBadge}
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <strong>Shipment Status</strong><br>
+                    ${shipmentBadge}
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Payment Status</strong><br>
+                    ${paymentBadge}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CUSTOMER -->
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">
+            <i class="fas fa-user me-2"></i>
+            Customer Information
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <strong>Name</strong><br>
+                    ${order.name ?? '-'}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Phone</strong><br>
+                    ${order.phone ?? '-'}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Email</strong><br>
+                    ${order.email ?? '-'}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Payment Method</strong><br>
+                    ${order.payment_method ?? '-'}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PRODUCT -->
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">
+            <i class="fas fa-box-open me-2"></i>
+            Product Details
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <strong>Product</strong><br>
+                    ${order.product?.name ?? '-'}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Category</strong><br>
+                    ${order.product?.category_name ?? '-'}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Unit Price</strong><br>
+                    ${productPrice.toFixed(2)}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Quantity</strong><br>
+                    ${quantity}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Total Price</strong><br>
+                    <span class="fw-bold text-primary">
+                        ${totalPrice}
+                    </span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Paid Amount</strong><br>
+                    <span class="fw-bold text-success">
+                        ${order.paid_amount ?? '0.00'}
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DELIVERY -->
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            Delivery Information
+        </div>
+
+        <div class="card-body">
+
+            <p>${order.address ?? '-'}</p>
+
+            <div class="row">
+
+               <div class="col-md-6 mb-3">
+    <strong>Distance from Warehouse</strong><br>
+
+    <span id="distanceBadge" class="badge bg-primary px-3 py-2">
+        Calculating...
+    </span>
+</div>
+
+<div class="col-md-6 mb-3">
+    <strong>Estimated Route</strong><br>
+
+    <span id="timeBadge" class="badge bg-info px-3 py-2">
+        Calculating...
+    </span>
+</div>
+
+            </div>
+
+            <div id="orderMap"
+                 style="
+                    height:320px;
+                    border-radius:10px;
+                    overflow:hidden;
+                 ">
+            </div>
+
+            <a target="_blank"
+               href="https://www.google.com/maps?q=${order.lat},${order.lng}"
+               class="btn btn-success mt-3">
+
+                <i class="fas fa-location-arrow me-2"></i>
+
+                Open in Google Maps
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- NOTES -->
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <i class="fas fa-sticky-note me-2"></i>
+            Customer Notes
+        </div>
+
+        <div class="card-body">
+
+            ${order.notes ?? 'No notes available.'}
+
+        </div>
+
+    </div>
+
+</div>
+
+`);
+
+   if (order.lat && order.lng) {
+
+console.log(L);
+console.log(L.Routing);
+    setTimeout(function () {
+
+        const adminLat = 17.319183989317914;
+        const adminLng = 42.33244612525538;
+
+        const customerLat = parseFloat(order.lat);
+        const customerLng = parseFloat(order.lng);
+
+        const map = L.map('orderMap');
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        const customerIcon = L.divIcon({
+            className: '',
+            html: `<div class="live-green-marker"></div>`,
+            iconSize: [20,20]
+        });
+
+        const truckIcon = L.divIcon({
+            className: '',
+            html: `
+                <div style="
+                    width:42px;
+                    height:42px;
+                    border-radius:50%;
+                    background:#0d6efd;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    color:#fff;
+                    font-size:18px;
+                    box-shadow:0 4px 12px rgba(0,0,0,.25);
+                ">
+                    <i class="fas fa-truck"></i>
+                </div>
+            `,
+            iconSize:[42,42],
+            iconAnchor:[21,21]
+        });
+
+        const control = L.Routing.control({
+
+            waypoints: [
+
+                L.latLng(adminLat, adminLng),
+                L.latLng(customerLat, customerLng)
+
+            ],
+
+            routeWhileDragging:false,
+            draggableWaypoints:false,
+            addWaypoints:false,
+            fitSelectedRoutes:true,
+            show:false,
+
+            createMarker:function(i,wp){
+
+                return L.marker(wp.latLng,{
+                    icon:i===0 ? truckIcon : customerIcon
+                });
+
+            },
+
+            lineOptions:{
+                styles:[
+                    {
+                        color:'#0d6efd',
+                        weight:6,
+                        opacity:0.9
+                    }
+                ]
+            }
+
+        }).addTo(map);
+
+        control.on('routesfound', function(e){
+
+            const route = e.routes[0];
+
+            const distanceKm = (route.summary.totalDistance / 1000).toFixed(2);
+
+            const durationMin = Math.ceil(route.summary.totalTime / 60);
+
+            $('#distanceBadge').html(`
+                <i class="fas fa-route me-1"></i>
+                ${distanceKm} km
+            `);
+
+            $('#timeBadge').html(`
+                <i class="fas fa-clock me-1"></i>
+                ${durationMin} mins
+            `);
+
+        });
+
+    },200);
+
+}
+
+}
+
+function closeOrderDrawer(){
+
+    $('#drawerOverlay').removeClass('show');
+    $('#orderDrawer').removeClass('show');
+
+}
+
+$('#drawerOverlay').click(function(){
+    closeOrderDrawer();
+});
+window.addEventListener('load', function () {
+    console.log("Leaflet Version:", L.version);
+
+    console.log("Routing =", window.L.Routing);
+
+    console.log(typeof window.L.Routing);
+});
 </script>
 
 @endsection

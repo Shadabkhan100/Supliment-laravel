@@ -539,7 +539,22 @@
             <div class="userMenuItemX9 tab-btn" data-tab="subscription">
               <i class="fas fa-cog"></i> Manage Subscription
             </div>
+            
 
+             
+<div class="userMenuItemX9 tab-btn position-relative" data-tab="bundle-orders">
+
+    <i class="fas fa-box-open"></i>
+
+    Bundle Deals
+
+    @if(($bundleOrders ?? collect())->count())
+        <span class="bundleBadgeX9">
+            {{ $bundleOrders->count() }}
+        </span>
+    @endif
+
+</div>
             <a class="userMenuItemX9 text-danger" href="{{ url('/logout') }}">
               <i class="fas fa-sign-out-alt"></i> Logout
             </a>
@@ -634,6 +649,25 @@
             </div>
           </div>
 
+
+<!-- BUNDLE DEALS -->
+<div class="tab-content hideX9" id="bundle-orders">
+
+    <div class="userTitleX9">
+        Bundle Deals
+    </div>
+
+    @include('modules.user-bundle-deals')
+
+</div>
+
+
+
+
+
+
+
+
           <!-- PERSONAL -->
           <div class="tab-content hideX9" id="personal">
 
@@ -711,6 +745,9 @@
       </div>
 
     </div>
+
+
+
     <!-- UPDATE PROFILE DRAWER -->
     <div class="profileDrawerX9" id="profileDrawerX9">
 

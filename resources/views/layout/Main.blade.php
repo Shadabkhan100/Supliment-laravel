@@ -8,9 +8,9 @@
     <!-- SEO META -->
     <title>SLIMZA | Premium Dietary Supplements & Wellness Products</title>
 
-    <meta name="title" content="SLIMZA | Premium Dietary Supplements & Wellness Products" />
+    <meta name="title" content="{{ $websiteSetting->website_title ?? 'SLIMZA | Premium Dietary Supplements & Wellness Products' }}" />
 
-   <meta name="description" content="SLIMZA is a premium wellness brand offering natural dietary supplements, herbal teas, vitamins, and fitness nutrition products. We focus on high-quality ingredients designed to support weight management, energy, digestion, and overall wellbeing. Shop trusted health solutions with fast delivery across the UK, Middle East including UAE, Saudi Arabia, Qatar, and Kuwait." />
+<meta name="description" content="{{ $websiteSetting->meta_description ?? 'SLIMZA is a premium wellness brand offering natural dietary supplements, herbal teas, vitamins, and fitness nutrition products.' }}" />
 
     <meta name="keywords"
         content="dietary supplements, wellness products, vitamins, fitness supplements, nutrition products, weight management, health supplements UAE, Saudi supplements, Qatar vitamins, Kuwait health products, SLIMZA" />
@@ -37,7 +37,7 @@
         content="Shop premium wellness and fitness supplements across UAE, Saudi Arabia, Qatar, and Kuwait." />
     <meta property="twitter:image" content="{{ asset('images/favicon.png') }}" />
   <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('images/favicon.png') }}" />
+   <link rel="shortcut icon" type="image/x-icon" href="https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/{{ $websiteSetting->favicon ?? 'images/favicon.png' }}" />
 
     <!-- Performance (SEO boost, no UI impact) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +55,10 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
 <style>
-
+#tawkchat-container,
+.tawk-min-container {
+    z-index: 99999 !important;
+}
 .policyBarX9 {
     position: fixed;
     bottom: 0;
@@ -194,8 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
 <script src="{{ asset('js/slickAnimation.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
-<!--Start of Tawk.to Script-->
-<!-- <script type="text/javascript">
+<script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){
 var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
@@ -205,8 +207,7 @@ s1.charset='UTF-8';
 s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
-</script> -->
-<!--End of Tawk.to Script-->
+</script> 
 
 
 
@@ -671,7 +672,7 @@ document.addEventListener("click", function(e){
 
 
 window.openCheckoutModal = function () {
-     
+     Tawk_API.hideWidget();
     const quickViewEl = document.getElementById("productQuickView");
   
     if (quickViewEl) {
@@ -690,6 +691,7 @@ window.openCheckoutModal = function () {
 function closeCheckoutModal() {
     document.getElementById("checkoutModal").classList.remove("active");
     document.body.classList.remove("checkout-open");
+    Tawk_API.showWidget();
 }
 
 
@@ -700,6 +702,16 @@ function getLocalCart() {
 function saveLocalCart(cart) {
   localStorage.setItem("guest_cart", JSON.stringify(cart));
 }
+
+
+
+setInterval(() => {
+    const iframe = document.querySelector('iframe[title*="chat"], iframe[title*="Tawk"]');
+
+    if (iframe) {
+        iframe.style.setProperty('z-index', '99999', 'important');
+    }
+}, 500);
 </script>
 
 

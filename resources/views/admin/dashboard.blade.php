@@ -6,7 +6,47 @@
 
 @section('content')
 
-<!-- CARDS -->
+<style>
+.live-indicator {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    background: #ff2d2d;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.live-indicator::before,
+.live-indicator::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(255, 45, 45, 0.6);
+    animation: ripple 2s infinite;
+}
+
+.live-indicator::after {
+    animation-delay: 1s;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    70% {
+        transform: scale(3);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+
+</style>
 
 <div class="row g-4">
 <div class="col-lg-4 col-md-6">
@@ -90,9 +130,10 @@
                         <small class="text-muted">Store Performance Overview</small>
                     </div>
 
-                    <span class="badge bg-success px-3 py-2">
-                        Live Statistics
-                    </span>
+                   <span class="badge bg-success px-3 py-2 d-inline-flex align-items-center">
+                     <span class="live-indicator me-2"></span>
+                           Live Statistics
+                   </span>
                 </div>
 
                 <div class="row text-center">

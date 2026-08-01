@@ -14,7 +14,7 @@ class AdminMiddleware
             return redirect()->route('admin.login');
         }
 
-        if (Auth::user()->status !== 'admin') {
+        if (Auth::user()->status !== 'admin' ) {
             Auth::logout();
             return redirect()->route('admin.login');
         }

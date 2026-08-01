@@ -14,6 +14,9 @@ use App\Http\Controllers\PaymentController;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Http\Controllers\OneSignalController;
+use App\Http\Controllers\PageSettingController;
+use App\Http\Controllers\BundleOrders;
+
 
 Route::get('/test-auth-mail', function () {
 
@@ -41,10 +44,7 @@ Route::get('/railway-test', function () {
 
 
 Route::get('/cookie-check', function () {
-    dd(
-        $_COOKIE,
-        request()->cookie('guest_id')
-    );
+   dd(request()->cookie('guest_id'));
 });
 
 
@@ -81,7 +81,7 @@ Route::get('/return-policy', [WebRoutController::class, 'returnView']);
 Route::get('/shop/{slug}/{id}', [WebRoutController::class, 'shopDetails']);
 Route::get('/shop/all', [WebRoutController::class, 'shopAll']);
 Route::get('/contact', [WebRoutController::class, 'contactView']);
-
+Route::get('/make-your-own-offer', [WebRoutController::class, 'mixMatchView']);
 
 
 
@@ -100,6 +100,11 @@ Route::get('/stripe/cancel', [PaymentController::class, 'cancel'])
 Route::post('/create-cart-order', [PaymentController::class, 'createCartOrders']);
 Route::post('/auth-order/create', [OrderController::class, 'createAuthOrder']);
 
+
+
+
+Route::post('/order/bundle-order/create', [BundleOrders::class, 'createBundleOrder']);
+
 Route::post('/create-product-order', [OrderController::class, 'createGuestOrder']);
 
 
@@ -117,16 +122,39 @@ Route::post('/admin/login/form', [AuthController::class, 'loginAdmin'])->name('a
 
 
 Route::middleware(['admin'])->group(function () {
+
+
+
+Route::post(
+    '/admin/bundle-status/update/{id}/{status}',
+    [AdminWebController::class, 'updateStatus']
+);
+
+
+Route::get('delete/admin/{id}', [AdminWebController::class, 'deleteAdmin']);
+
+Route::post('/admin/web-setting/add', [PageSettingController::class, 'webSettingUpdate'])
+    ->name('admin.web-setting.add');
+
+
 Route::post('/admin/order/{id}/refund', [PaymentController::class, 'refund'])
     ->name('admin.order.refund');
 Route::post('/update-status/{id}', [OrderController::class, 'updateOrderStatus']);
 Route::get('/admin/orders', [AdminWebController::class, 'getOrdersView']);
 Route::get('/admin/settings', [AdminWebController::class, 'getSettingsView']);
-Route::get('/admin/users', [AdminWebController::class, 'getSusersView']);
+Route::get('/admin/users', [AdminWebController::class, 'getUsersView']);
 
 Route::get('/admin', [AdminWebController::class, 'getDashboardView']);
 Route::get('/admin/add-product', [AdminWebController::class, 'getAddProduct']);
-Route::get('/admin/products/{id}/edit', [ProductController::class, 'editPage']);
+
+Route::get('/admin/bundle-orders', [AdminWebController::class, 'getBundleView']);
+
+
+Route::get('/admin/products/{id}/edit', [AdminWebController::class, 'editPage']);
+Route::post('/product/pack/add/{p_id}', [AdminWebController::class, 'addProductPack']);
+Route::post('/product/pack/delete/{p_id}/{index}', [AdminWebController::class, 'deleteProductPack']);
+Route::post('/product/pack/update/{p_id}/{index}', [AdminWebController::class, 'updateProductPack']);
+
 Route::get('/admin/add-category', [AdminWebController::class, 'getAddCatrgory']);
 Route::get('/admin/update-banner', [AdminWebController::class, 'getUpdateBannerView']);
 Route::get('/admin/future-products-management', [AdminWebController::class, 'getFutureProducts']);

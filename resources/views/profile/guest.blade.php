@@ -3,6 +3,53 @@
 @section('content')
 
 <style>
+
+
+.bundleBadgeX9{
+    position:absolute;
+    top:8px;
+    right:10px;
+
+    min-width:20px;
+    height:20px;
+    padding:0 6px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#ef4444;
+    color:#fff;
+
+    font-size:11px;
+    font-weight:700;
+
+    border-radius:50px;
+    border:2px solid rgba(255,255,255,.15);
+
+    line-height:1;
+    animation:bundlePulse 1.8s infinite;
+}
+
+@keyframes bundlePulse{
+    0%{
+        transform:scale(1);
+        box-shadow:0 0 0 0 rgba(239,68,68,.6);
+    }
+    70%{
+        transform:scale(1.08);
+        box-shadow:0 0 0 8px rgba(239,68,68,0);
+    }
+    100%{
+        transform:scale(1);
+        box-shadow:0 0 0 0 rgba(239,68,68,0);
+    }
+}
+
+
+
+
+
 /* ================= ROOT WRAPPER ================= */
 .userProfileWrapX9{
     padding:40px 0;
@@ -199,6 +246,23 @@
             <i class="fas fa-box"></i> Orders
         </div>
 
+
+<div class="userMenuItemX9 tab-btn position-relative" data-tab="bundle-orders">
+
+    <i class="fas fa-box-open"></i>
+
+    Bundle Deals
+
+    @if(($bundleOrders ?? collect())->count())
+        <span class="bundleBadgeX9">
+            {{ $bundleOrders->count() }}
+        </span>
+    @endif
+
+</div>
+
+
+
         <div class="userMenuItemX9 tab-btn" data-tab="settings">
             <i class="fas fa-cog"></i> Settings
         </div>
@@ -247,6 +311,22 @@
 
 </div>
 
+
+<!-- BUNDLE DEALS -->
+<div class="tab-content hideX9" id="bundle-orders">
+
+    <div class="userTitleX9">
+        Bundle Deals
+    </div>
+
+    @include('modules.user-bundle-deals')
+
+</div>
+
+
+
+
+
 <!-- ORDERS -->
 <div class="tab-content hideX9" id="orders">
 
@@ -259,6 +339,12 @@
 <!-- SETTINGS -->
 <div class="tab-content hideX9" id="settings">
 <div class="userTitleX9">Settings</div>
+
+
+
+
+
+
 
 <div class="userStatX9">
 <button class="userBtnX9">Change Password</button>

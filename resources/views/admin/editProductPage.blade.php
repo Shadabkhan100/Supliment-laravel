@@ -6,7 +6,7 @@
   <title>Edit Product</title>
 
   <link rel="stylesheet" href="/css/bootstrap.min.css">
-
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
 
 .back-btn{
@@ -304,18 +304,37 @@
           <div class="col-md-4">
             <input type="text" id="packDurationInput" class="form-control" placeholder="Duration (e.g. 15 days)">
           </div>
+         <input type="hidden" id="editIndex" value="">
+          <div class="col-md-3">
+             <input type="file" id="optionImageInput" class="form-control" accept="image/*">
 
-          <input type="file" id="optionImageInput" accept="image/*" style="width:200px;">
+          <div id="imagePreview" class="mt-2 d-none">
+             <img id="previewImg"
+                  src=""
+                    style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+            </div>
+            </div>
 
-          <div class="col-md-2">
-            <button type="button" id="addPackOption" class="btn btn-dark w-100">
-              Add
-            </button>
-          </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
 
+    <button type="button" id="cancelEdit" class="btn btn-outline-secondary d-none">
+        <span class="material-icons align-middle me-1" style="font-size:18px;">
+            close
+        </span>
+        Cancel
+    </button>
+
+    <button type="button" id="addPackOption" class="btn btn-dark">
+        <span class="material-icons align-middle me-1" style="font-size:18px;">
+            add
+        </span>
+        Add
+    </button>
+
+</div>
         </div>
 
-        <div id="packBox"></div>
+        <div id="packBox" class="row g-3"></div>
 
       </div>
 
@@ -433,7 +452,8 @@
 
   });
 
-
+ let selectedOptions = Array.isArray(@json($product['options'] ?? [])) ?
+      @json($product['options'] ?? []) : [];
   $(document).ready(function() {
 
     /* =========================
@@ -462,16 +482,16 @@
 
     let galleryImages = Array.isArray(@json($product['gallery_images'] ?? [])) ?
       @json($product['gallery_images'] ?? []) : [];
-    let selectedOptions = Array.isArray(@json($product['options'] ?? [])) ?
-      @json($product['options'] ?? []) : [];
+   
 
     function renderOptions() {
       $('#packBox').html('');
 
-      selectedOptions.forEach((opt, i) => {
+    selectedOptions.forEach((opt, i) => {
 
-        $('#packBox').append(`
-            <div class="position-relative d-flex align-items-center gap-3 p-2 mb-2 border rounded">
+    $('#packBox').append(`
+        <div class="col-12 col-md-6">
+            <div class="position-relative d-flex align-items-center gap-3 p-2 border rounded h-100">
 
                 ${opt.image ? `
                     <img src="${opt.image}"
@@ -484,109 +504,289 @@
                     <div><b>Duration:</b> ${opt.duration}</div>
                 </div>
 
-                <!-- DELETE BUTTON -->
-                <button type="button"
-                        onclick="removeOption(${i})"
-                        style="
-                            position:absolute;
-                            top:6px;
-                            right:6px;
-                            width:24px;
-                            height:24px;
-                            border:none;
-                            border-radius:50%;
-                            background:#dc3545;
-                            color:#fff;
-                            font-weight:bold;
-                            line-height:1;
-                        ">
-                    ×
+                <button
+                    type="button"
+                    onclick="editPack(${i})"
+                    style="
+                        position:absolute;
+                        top:6px;
+                        right:36px;
+                        width:24px;
+                        height:24px;
+                        border:none;
+                        border-radius:50%;
+                        background:#0d6efd;
+                        color:#fff;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        cursor:pointer;
+                    ">
+                    <span class="material-icons" style="font-size:16px;">edit</span>
+                </button>
+
+                <button
+                    type="button"
+                    onclick="removeOption(${i})"
+                    style="
+                        position:absolute;
+                        top:6px;
+                        right:6px;
+                        width:24px;
+                        height:24px;
+                        border:none;
+                        border-radius:50%;
+                        background:#dc3545;
+                        color:#fff;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        cursor:pointer;
+                    ">
+                    <span class="material-icons" style="font-size:16px;">delete</span>
                 </button>
 
             </div>
-        `);
+        </div>
+    `);
 
-      });
+});
     }
-    window.removeOption = function(index) {
-      selectedOptions.splice(index, 1);
-      renderOptions();
-    };
-    $('#addPackOption').click(async function() {
 
-      let pack = $('#packInput').val().trim();
-      let price = $('#packPriceInput').val()?.trim();
-      let duration = $('#packDurationInput').val()?.trim();
 
-      if (!pack || !price || !duration) return;
 
-      let imageUrl = null;
 
-      if (optionImageFile) {
-        imageUrl = await uploadToSupabase(optionImageFile);
-      }
+window.removeOption = function(index) {
 
-      selectedOptions.push({
-        pack: parseInt(pack),
-        price: parseFloat(price),
-        duration: duration,
-        image: imageUrl
-      });
+    if (!confirm('Are you sure you want to delete this pack?')) {
+        return;
+    }
 
-      $('#packInput').val('');
-      $('#priceInput').val('');
-      $('#durationInput').val('');
-      $('#optionImageInput').val('');
+    const productId = {{ $product['id'] }};
 
-      optionImageFile = null;
+    $.ajax({
 
-      renderOptions();
-    });
-    /* =========================
-       CATEGORY + DEAL STATE
-    ========================= */
+        url: `/product/pack/delete/${productId}/${index}`,
+        type: 'POST',
 
-    let selectedCategoryId = "{{ $product['category_id'] ?? '' }}";
-    let selectedDealId = "{{ $product['deal_id'] ?? '' }}";
-
-    /* =========================
-       LOAD CATEGORIES
-    ========================= */
-
-    function loadCategories(selectedId = null) {
-      $.ajax({
-        url: '/api/categories',
-        type: 'GET',
-
-        success: function(res) {
-
-          let categories = res?.data?.data ?? res?.data ?? [];
-
-          let select = $('#categorySelect');
-          select.html('<option value="">Select Category</option>');
-
-          categories.forEach(cat => {
-            select.append(`
-                    <option value="${cat.id}">
-                        ${cat.name}
-                    </option>
-                `);
-          });
-
-          if (selectedId) {
-            select.val(selectedId);
-          }
+        data: {
+            _token: '{{ csrf_token() }}'
         },
 
-        error: function(err) {
-          console.log('CATEGORY ERROR:', err.responseText);
+        beforeSend: function () {
+
+            $('button').prop('disabled', true);
+
+        },
+
+        success: function(res){
+
+            selectedOptions.splice(index, 1);
+
+            renderOptions();
+
+            alert(res.message || '✅ Pack deleted successfully.');
+
+        },
+
+        error: function(xhr){
+
+            alert(xhr.responseJSON?.message || '❌ Failed to delete pack.');
+
+        },
+
+        complete: function(){
+
+            $('button').prop('disabled', false);
+
         }
-      });
+
+    });
+
+};
+
+$('#addPackOption').click(async function () {
+
+    const productId = {{ $product['id'] }};
+    const index = $('#editIndex').val();
+    console.log(productId);
+     console.log(index);
+
+    const pack = $('#packInput').val().trim();
+    const price = $('#packPriceInput').val().trim();
+    const duration = $('#packDurationInput').val().trim();
+
+    if (!pack || !price || !duration) {
+        alert('Please fill in Pack, Price and Duration.');
+        return;
     }
 
-    /* =========================
-       LOAD DEALS
-    ========================= */
+    // ==========================================
+    // ADD NEW PACK
+    // ==========================================
+if (index === '' || index === undefined || index === null) {
+
+    let imageUrl = null;
+
+    if (optionImageFile) {
+        imageUrl = await uploadToSupabase(optionImageFile);
+    }
+
+    const formData = new FormData();
+
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('pack', pack);
+    formData.append('price', price);
+    formData.append('duration', duration);
+    formData.append('image', imageUrl); // Send the Supabase URL
+
+    $.ajax({
+
+        url: `/product/pack/add/${productId}`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+
+        beforeSend: function () {
+
+            $('#addPackOption')
+                .prop('disabled', true)
+                .html(`
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Saving...
+                `);
+
+        },
+
+        success: function (res) {
+
+            // Add to local array
+            selectedOptions.push({
+                pack: parseInt(pack),
+                price: parseFloat(price),
+                duration: duration,
+                image: imageUrl
+            });
+
+            renderOptions();
+
+            // Clear form
+            $('#packInput').val('');
+            $('#packPriceInput').val('');
+            $('#packDurationInput').val('');
+            $('#optionImageInput').val('');
+            $('#previewImg').attr('src', '');
+            $('#imagePreview').addClass('d-none');
+
+            optionImageFile = null;
+
+            alert(res.message || '✅ Pack added successfully.');
+
+        },
+
+        error: function (xhr) {
+
+            alert(xhr.responseJSON?.message || '❌ Failed to add pack.');
+
+        },
+
+        complete: function () {
+
+            $('#addPackOption')
+                .prop('disabled', false)
+                .html(`
+                    <span class="material-icons align-middle me-1" style="font-size:18px;">add</span>
+                    Add
+                `);
+
+        }
+
+    });
+
+    return;
+}
+
+    // ==========================================
+    // UPDATE PACK
+    // ==========================================
+
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('pack', pack);
+    formData.append('price', price);
+    formData.append('duration', duration);
+
+    if ($('#optionImageInput')[0].files.length) {
+        formData.append('image', $('#optionImageInput')[0].files[0]);
+    }
+
+    $.ajax({
+
+        url: `/product/pack/update/${productId}/${index}`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+
+        beforeSend: function () {
+
+            $('#addPackOption')
+                .prop('disabled', true)
+                .html(`
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Updating...
+                `);
+
+        },
+
+        success: function (res) {
+
+            // Update local array
+            selectedOptions[index].pack = parseInt(pack);
+            selectedOptions[index].price = parseFloat(price);
+            selectedOptions[index].duration = duration;
+
+            if (res.image) {
+                selectedOptions[index].image = res.image;
+            }
+
+            renderOptions();
+
+            // Reset edit mode
+            $('#cancelEdit').trigger('click');
+
+            alert(res.message || '✅ Pack updated successfully.');
+
+        },
+
+        error: function (xhr) {
+
+            alert(xhr.responseJSON?.message || '❌ Failed to update pack.');
+
+        },
+
+        complete: function () {
+
+            $('#addPackOption')
+                .prop('disabled', false)
+                .html(`
+                    <span class="material-icons align-middle me-1" style="font-size:18px;">add</span>
+                    Add
+                `);
+
+        }
+
+    });
+
+}); 
+
+
+
+
+
+
+
 
     function loadDeals(selectedId = null) {
       $.ajax({
@@ -909,7 +1109,82 @@
     });
 
   });
-  </script>
+
+
+
+
+
+function editPack(index){
+        console.log("Edit clicked:", index);
+
+    $('#editIndex').val(index);
+
+    console.log("Hidden value:", $('#editIndex').val());
+    const pack = selectedOptions[index];
+
+    $('#packInput').val(pack.pack);
+    $('#packPriceInput').val(pack.price);
+    $('#packDurationInput').val(pack.duration);
+
+    $('#editIndex').val(index);
+
+    if(pack.image){
+
+        $('#previewImg').attr('src', pack.image);
+        $('#imagePreview').removeClass('d-none');
+
+    }else{
+
+        $('#imagePreview').addClass('d-none');
+
+    }
+
+    $('#addPackOption').text('Update');
+    $('#cancelEdit').removeClass('d-none');
+
+}
+
+
+$('#cancelEdit').click(function(){
+
+    $('#editIndex').val('');
+
+    $('#packInput').val('');
+    $('#packPriceInput').val('');
+    $('#packDurationInput').val('');
+
+    $('#optionImageInput').val('');
+
+    $('#previewImg').attr('src','');
+    $('#imagePreview').addClass('d-none');
+
+    $('#addPackOption').text('Add');
+    $('#cancelEdit').addClass('d-none');
+
+});
+
+$('#optionImageInput').on('change', function () {
+
+    const file = this.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        $('#previewImg').attr('src', e.target.result);
+        $('#imagePreview').removeClass('d-none');
+
+    };
+
+    reader.readAsDataURL(file);
+
+});
+
+
+
+ </script>
 </body>
 
 </html>

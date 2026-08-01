@@ -259,12 +259,23 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 </li>
 
 <li>
+    <a href="{{ url('/admin/bundle-orders') }}">
+        <i class="fa-solid fa-box-open"></i>
+        Bundle Orders
+    </a>
+</li>
+
+
+
+@if(Auth::check() && Auth::user()->status === 'admin')
+
+<li>
     <a href="{{ url('/admin/users') }}">
         <i class="fa fa-users"></i>
         Users
     </a>
 </li>
-
+@endif
       <li>
                 <a href="{{ url('/admin/add-product') }}">
                     <i class="fa fa-plus-circle"></i>
@@ -313,13 +324,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                     Blogs Management
                 </a>
             </li>
-       <li>
+
+@if(Auth::check() && Auth::user()->status === 'admin')
+<li>
     <a href="{{ url('/admin/settings') }}">
         <i class="fa fa-cog"></i>
         Settings
     </a>
 </li>
-      
+@endif
+
+<li>
+    <a href="{{ url('/logout') }}">
+        <i class="fa fa-sign-out"></i>
+        Logout
+    </a>
+</li>
         </ul>
 
     </div>
@@ -336,13 +356,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                 </div>
 
                 <h3>@yield('page-title')</h3>
+               
             </div>
 
             <div class="admin-user">
                 <img src="https://i.pravatar.cc/100" alt="">
                 <div>
                     <strong>{{ Auth::user()->name ?? 'Admin' }}</strong>
-                    <div class="text-muted small">Administrator</div>
+                    <div class="text-muted small">{{ Auth::user()->status ?? 'Admin' }}</div>
                 </div>
             </div>
 

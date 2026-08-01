@@ -23,7 +23,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Http;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
-
+use App\Services\OneSignalService;
 
 
 
@@ -104,7 +104,10 @@ public function success(Request $request)
                 'stripe_session_id' => $session->id,
                 'payment_intent' => $session->payment_intent,
             ]);
-
+        app(OneSignalService::class)->sendToAdmins(
+    '💳 Payment Received',
+    "Payment of {$currency} {$amountPaid} has been received for Order(s): #" . implode(', #', $orderIds)
+);
         return view('payment-gateway.success', [
             'message' => 'Payment successful',
             'orders' => $orderIds,
@@ -466,6 +469,9 @@ public function refund($id)
     Stripe::setApiKey(config('services.stripe.secret'));
 
     DB::beginTransaction();
+
+
+
 
     try {
 

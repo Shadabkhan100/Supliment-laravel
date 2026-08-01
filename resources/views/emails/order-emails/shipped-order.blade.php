@@ -1,3 +1,4 @@
+
 @php
 
 $currency = session('currency', 'GBP');
@@ -8,106 +9,365 @@ $rate = $config['rate'] ?? 1;
 
 $symbol = $config['symbol'] ?? '£';
 
-$convertedPrice = ($product->price ?? 0) * $rate;
+/*
+|--------------------------------------------------------------------------
+| Determine whether this is a normal order or a bundle order
+|--------------------------------------------------------------------------
+*/
+
+$isBundle = is_array($product);
+
+if (!$isBundle) {
+
+    $convertedPrice = ($product->price ?? 0) * $rate;
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Status information
+|--------------------------------------------------------------------------
+*/
+
+$statusColor = '#f0b429';
+$statusTextColor = '#8a6d3b';
+
+if (($currentStatus ?? '') === 'Delivered') {
+    $statusColor = '#28a745';
+    $statusTextColor = '#1e7e34';
+}
 
 @endphp
+
 <!DOCTYPE html>
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <title>Order Shipped</title>
+    <meta charset="UTF-8">
+    <title>Order {{ $currentStatus ?? 'Status' }}</title>
 </head>
 
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
 
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+<table width="100%" cellpadding="0" cellspacing="0"
+    style="background:#f4f4f4;padding:30px 0;">
+
     <tr>
-      <td align="center">
+        <td align="center">
 
-        <table width="650" cellpadding="0" cellspacing="0"
-          style="background:#ffffff;border-radius:12px;overflow:hidden;">
+            <table width="650"
+                cellpadding="0"
+                cellspacing="0"
+                style="background:#ffffff;border-radius:12px;overflow:hidden;">
 
-          <!-- HEADER -->
-          <tr>
-            <td align="center" style="background:#000;padding:30px;">
-              <a href="https://slimza.com/" target="_blank">
-                <img src="https://slimza.com/public/images/logo.png" alt="Slimza" style="max-width:220px;">
-              </a>
-            </td>
-          </tr>
+                <!-- HEADER -->
 
-          <!-- TITLE -->
-          <tr>
-            <td style="padding:35px 40px 20px 40px;">
-              <h1 style="margin:0;color:#111;font-size:28px;">
-                Order Shippment Details
-              </h1>
+                <tr>
+                    <td align="center" style="background:#000;padding:30px;">
 
-              <p style="color:#666;font-size:15px;line-height:24px;margin-top:15px;">
-                Hello <strong>{{ $order->name }}</strong>,
-              </p>
+                        <a href="https://slimza.com/" target="_blank">
 
-              <p style="color:#666;font-size:15px;line-height:24px;">
-                 Great news! Your Slimza order has been shipped and is now on its way. We're excited for you to receive it and hope you enjoy your purchase.
-              </p>
+                            <img
+                                src="https://slimza.com/public/images/logo.png"
+                                alt="Slimza"
+                                style="max-width:220px;">
 
-              @if(!$order->payment_status)
-              <div
-                style="background:#fff8e5;border-left:4px solid #f0b429;padding:15px;margin-top:20px;border-radius:6px;">
-                <strong style="color:#8a6d3b;">
-                  Order Status: Shipped
-                </strong>
-              </div>
-              @endif
-            </td>
-          </tr>
+                        </a>
+
+                    </td>
+                </tr>
+
+                <!-- TITLE -->
+
+                <tr>
+
+                    <td style="padding:35px 40px 20px 40px;">
+
+                        <h1 style="margin:0;color:#111;font-size:28px;">
+                            Order Shipment Details
+                        </h1>
+
+                        <p style="color:#666;font-size:15px;line-height:24px;margin-top:15px;">
+
+                            Hello
+                            <strong>
+                                {{ $order->name ?? ($order->first_name . ' ' . $order->last_name) }}
+                            </strong>,
+
+                        </p>
+
+                        <p style="color:#666;font-size:15px;line-height:24px;">
+
+                            @if(($currentStatus ?? '') === 'Delivered')
+
+                                Great news! Your Slimza order has been successfully delivered.
+
+                            @elseif(($currentStatus ?? '') === 'Shipped')
+
+                                Great news! Your Slimza order has been shipped and is now on its way.
+
+                            @else
+
+                                Your order status has been updated.
+
+                            @endif
+
+                        </p>
+
+                        @if(!$order->payment_status)
+
+                            <div
+                                style="background:#fff8e5;
+                                       border-left:4px solid {{ $statusColor }};
+                                       padding:15px;
+                                       margin-top:20px;
+                                       border-radius:6px;">
+
+                                <strong style="color:{{ $statusTextColor }};">
+
+                                    Order Status:
+                                    {{ $currentStatus ?? $order->order_status }}
+
+                                </strong>
+
+                            </div>
+
+                        @endif
+
+                    </td>
+
+                </tr>
 
           <!-- PRODUCT -->
           <tr>
             <td style="padding:0 40px 30px 40px;">
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #ececec;border-radius:10px;">
-                <tr>
+            @php
+    $products = is_array($product) ? $product : [$product];
+@endphp
 
-                  @if(!empty($product->image))
-                  <td width="220" align="center" style="padding:20px;">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}" style="max-width:180px;">
-                  </td>
-                  @endif
+@foreach ($products as $item)
 
-                  <td style="padding:20px;">
-                    <h2 style="margin:0;color:#111;">
-                      {{ $product->name }}
-                    </h2>
+    @php
+        $image = is_array($item)
+            ? ($item['main_image'] ?? $item['image'] ?? '')
+            : ($item->main_image ?? $item->image ?? '');
 
-                    <p style="margin-top:15px;color:#666;">
-                      <strong>Order ID:</strong>
-                      #{{ $order->id }}
-                    </p>
-                    <p style="color:#666;">
-                    <p style="color:#666;">
-                      <strong>Price:</strong>
-                      {{ $symbol }} {{ number_format($convertedPrice, 2) }}
-                    </p>
+        $name = is_array($item)
+            ? ($item['name'] ?? '')
+            : ($item->name ?? '');
 
-                    <p style="color:#666;">
-                      <strong>Quantity:</strong>
-                      {{ $order->quantity }}
-                    </p>
+        $price = is_array($item)
+            ? ($item['price'] ?? 0)
+            : ($item->price ?? 0);
 
-                    <p style="color:#666;">
-                      <strong>Status:</strong>
-                      Pending
-                    </p>
-                  </td>
+        $quantity = is_array($item)
+            ? ($item['qty'] ?? 1)
+            : ($item->qty ?? ($order->quantity ?? 1));
 
-                </tr>
-              </table>
+        $convertedPrice = $price * $rate;
+    @endphp
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+        style="border:1px solid #ececec;border-radius:10px;margin-bottom:20px;">
+
+        <tr>
+
+            @if(!empty($image))
+                <td width="220" align="center" style="padding:20px;">
+                    <img src="{{ $image }}"
+                        alt="{{ $name }}"
+                        style="max-width:180px;">
+                </td>
+            @endif
+
+            <td style="padding:20px;">
+
+                <h2 style="margin:0;color:#111;">
+                    {{ $name }}
+                </h2>
+
+                <p style="margin-top:15px;color:#666;">
+                    <strong>Order ID:</strong>
+                    #{{ $order->id }}
+                </p>
+
+                <p style="color:#666;">
+                    <strong>Price:</strong>
+                    {{ $symbol }} {{ number_format($convertedPrice, 2) }}
+                </p>
+
+                <p style="color:#666;">
+                    <strong>Quantity:</strong>
+                    {{ $quantity }}
+                </p>
+
+                <p style="color:#666;">
+                    <strong>Status:</strong>
+                    {{ $order->order_status ?? 'Pending' }}
+                </p>
+
+            </td>
+
+        </tr>
+
+    </table>
+
+@endforeach
 
             </td>
           </tr>
+<!-- PRODUCT -->
 
+@if($isBundle)
+
+<tr>
+    <td style="padding:0 40px 30px 40px;">
+
+        <h3 style="color:#111;">
+            Bundle Products
+        </h3>
+
+        @foreach($product as $item)
+
+            <table width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                style="border:1px solid #ececec;border-radius:10px;margin-bottom:20px;">
+
+                <tr>
+
+                    @if(!empty($item['main_image']))
+
+                        <td width="220"
+                            align="center"
+                            style="padding:20px;">
+
+                            <img
+                                src="{{ $item['main_image'] }}"
+                                alt="{{ $item['name'] }}"
+                                style="max-width:180px;">
+
+                        </td>
+
+                    @endif
+
+                    <td style="padding:20px;">
+
+                        <h2 style="margin:0;color:#111;">
+                            {{ $item['name'] }}
+                        </h2>
+
+                        <p style="margin-top:15px;color:#666;">
+                            <strong>Order ID:</strong>
+                            #{{ $order->id }}
+                        </p>
+
+                        <p style="color:#666;">
+                            <strong>Price:</strong>
+                            {{ $symbol }}
+                            {{ number_format($item['price'], 2) }}
+                        </p>
+
+                        <p style="color:#666;">
+                            <strong>Quantity:</strong>
+                            {{ $item['qty'] ?? 1 }}
+                        </p>
+
+                        <p style="color:#666;">
+                            <strong>Status:</strong>
+                            {{ $currentStatus ?? $order->order_status }}
+                        </p>
+
+                    </td>
+
+                </tr>
+
+            </table>
+
+        @endforeach
+
+    </td>
+</tr>
+
+@else
+
+<tr>
+
+    <td style="padding:0 40px 30px 40px;">
+
+        <table width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="border:1px solid #ececec;border-radius:10px;">
+
+            <tr>
+
+                @if(!empty($product->image))
+
+                    <td width="220"
+                        align="center"
+                        style="padding:20px;">
+
+                        <img
+                            src="{{ $product->image }}"
+                            alt="{{ $product->name }}"
+                            style="max-width:180px;">
+
+                    </td>
+
+                @endif
+
+                <td style="padding:20px;">
+
+                    <h2 style="margin:0;color:#111;">
+                        {{ $product->name }}
+                    </h2>
+
+                    <p style="margin-top:15px;color:#666;">
+
+                        <strong>Order ID:</strong>
+
+                        #{{ $order->id }}
+
+                    </p>
+
+                    <p style="color:#666;">
+
+                        <strong>Price:</strong>
+
+                        {{ $symbol }}
+                        {{ number_format($convertedPrice, 2) }}
+
+                    </p>
+
+                    <p style="color:#666;">
+
+                        <strong>Quantity:</strong>
+
+                        {{ $order->quantity }}
+
+                    </p>
+
+                    <p style="color:#666;">
+
+                        <strong>Status:</strong>
+
+                        {{ $currentStatus ?? $order->order_status }}
+
+                    </p>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </td>
+
+</tr>
+
+@endif
           <!-- SHIPPING -->
           <tr>
             <td style="padding:0 40px 30px 40px;">
@@ -185,7 +445,6 @@ $convertedPrice = ($product->price ?? 0) * $rate;
     </td>
 </tr>
 @endif
-```
 
           <!-- SHOP MORE -->
           <tr>

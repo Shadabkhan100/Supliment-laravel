@@ -6,8 +6,105 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\PageSetting;
 use App\Services\SupabaseStorageService;
+use App\Models\WebModel;
+use Illuminate\Support\Facades\Validator;
+
 class PageSettingController extends Controller
 {
+
+   public function webSettingUpdate(Request $request)
+{
+    try {
+
+        $validator = Validator::make($request->all(), [
+
+            'website_title'     => 'required|string|max:255',
+            'meta_description'  => 'nullable|string',
+            'promotion_text'    => 'nullable|string|max:255',
+            'support_email'     => 'required|email|max:255',
+            'canonical_url'     => 'required|url|max:255',
+
+            'logo'              => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:2048',
+            'favicon'           => 'nullable|image|mimes:jpg,jpeg,png,ico,svg|max:1024',
+            'og_image'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+
+        }
+
+        // Get existing settings or create new
+        $setting = WebModel::first();
+
+        if (!$setting) {
+            $setting = new WebModel();
+        }
+
+        $setting->website_title    = $request->website_title;
+        $setting->meta_description = $request->meta_description;
+        $setting->promotion_text   = $request->promotion_text;
+        $setting->support_email    = $request->support_email;
+        $setting->canonical_url    = $request->canonical_url;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload Images to Supabase
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->hasFile('logo')) {
+
+            $setting->logo = SupabaseStorageService::upload(
+                $request->file('logo'),
+                'website/logo'
+            );
+        }
+
+        if ($request->hasFile('favicon')) {
+
+            $setting->favicon = SupabaseStorageService::upload(
+                $request->file('favicon'),
+                'website/favicon'
+            );
+        }
+
+        if ($request->hasFile('og_image')) {
+
+            $setting->og_image = SupabaseStorageService::upload(
+                $request->file('og_image'),
+                'website/og-image'
+            );
+        }
+
+        $setting->save();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Website settings updated successfully.'
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'status'  => false,
+            'message' => 'Something went wrong while updating website settings.',
+            'error'   => config('app.debug') ? $e->getMessage() : null
+        ], 500);
+
+    }
+}
+
+
+
+
+
+
 
 public function save(Request $request)
 {

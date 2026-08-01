@@ -6,6 +6,8 @@ use App\Mail\WelcomeUserMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\AuthAttemptEmail;
+use App\Mail\BundleOrderMail;
+
 
 
 
@@ -13,8 +15,7 @@ class UserEmailService
 {
     public function sendUserEmail($user, string $type = 'register', array $data = [])
     {
-        try {
-
+        try
             switch ($type) {
 
                 case 'register':
@@ -52,6 +53,20 @@ class UserEmailService
                 case 'promotion':
                     // future implementation
                     break;
+                
+
+
+                 case 'bundle_order':
+
+    Mail::to($user->email)
+        ->send(
+            new BundleOrderMail(
+                $data['bundle_order']
+            )
+        );
+
+break;
+
 
                 default:
                     Log::warning("Unknown email type: {$type}");

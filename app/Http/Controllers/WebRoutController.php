@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use App\Models\Blogs;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Subscribers;
+use App\Models\BundleOrder;
 
 use App\Models\GuestOrder;
 
@@ -356,6 +357,11 @@ public function shopDetails($slug, $id)
     ]);
 }
 
+
+
+
+
+
 public function getGuestProfileView(Request $request)
 {
     $guestId = $request->cookie('guest_id');
@@ -372,9 +378,6 @@ public function getGuestProfileView(Request $request)
 
             $product = $o->product;
 
-            // =========================
-            // SAFE PRODUCT OPTION PARSE
-            // =========================
             $option = [];
 
             if (!empty($o->product_option)) {
@@ -383,9 +386,6 @@ public function getGuestProfileView(Request $request)
                     : (array) $o->product_option;
             }
 
-            // =========================
-            // SAFE PRODUCT FALLBACK
-            // =========================
             $productName = $product->name ?? 'Product';
 
             $productImage = $product->main_image
@@ -394,9 +394,6 @@ public function getGuestProfileView(Request $request)
 
             $productPrice = $product->price ?? 0;
 
-            // =========================
-            // OPTION OVERRIDES
-            // =========================
             $image = $option['image']
                 ?? $productImage
                 ?? '/images/placeholder.png';
@@ -408,30 +405,23 @@ public function getGuestProfileView(Request $request)
                 ?? $productName;
 
             return [
-                'id'            => $o->id,
-                'order_id'      => $o->id,
-                'product_id'    => $o->product_id,
-
-                'quantity'      => $o->quantity,
-                'purchase_type' => $o->purchase_type,
+                'id'             => $o->id,
+                'order_id'       => $o->id,
+                'product_id'     => $o->product_id,
+                'quantity'       => $o->quantity,
+                'purchase_type'  => $o->purchase_type,
                 'payment_status' => (bool) $o->payment_status,
-                'name'          => $o->name,
-                'email'         => $o->email,
-                'phone'         => $o->phone,
+                'name'           => $o->name,
+                'email'          => $o->email,
+                'phone'          => $o->phone,
+                'address1'       => $o->address1,
+                'city'           => $o->city,
+                'postal'         => $o->postal,
+                'country'        => $o->country,
+                'lat'            => $o->lat,
+                'lng'            => $o->lng,
+                'order_status'   => $o->order_status ?? 'Pending',
 
-                'address1'      => $o->address1,
-                'city'          => $o->city,
-                'postal'        => $o->postal,
-                'country'       => $o->country,
-                'lat'           => $o->lat,
-                'lng'           => $o->lng,
-
-                'order_status'  => $o->order_status ?? 'Pending',
-                'payment_status'=> (bool) $o->payment_status,
-
-                // =========================
-                // FRONTEND SAFE STRUCTURE
-                // =========================
                 'product' => [
                     'name'  => $name,
                     'image' => $image,
@@ -439,15 +429,10 @@ public function getGuestProfileView(Request $request)
                 ],
 
                 'product_option' => $option,
-
-                'created_at' => $o->created_at,
-                'updated_at' => $o->updated_at,
+                'created_at'     => $o->created_at,
+                'updated_at'     => $o->updated_at,
             ];
         });
-
-    if ($orders->isEmpty()) {
-        return redirect('/login');
-    }
 
     $user = (object)[
         'name'    => 'Guest User',
@@ -457,10 +442,32 @@ public function getGuestProfileView(Request $request)
         'address' => null,
     ];
 
-    return view('profile.guest', compact('user', 'orders', 'guestId'));
+    $userId = Auth::id();
+
+    $bundleOrders = BundleOrder::query()
+        ->when($userId, function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+        ->when(!$userId && $guestId, function ($query) use ($guestId) {
+            $query->where('guest_id', trim($guestId));
+        })
+        ->latest()
+        ->get();
+
+    // Redirect only if BOTH normal orders and bundle orders are empty
+    if ($orders->isEmpty() && $bundleOrders->isEmpty()) {
+        return redirect('/login');
+    }
+
+
+
+    return view('profile.guest', compact(
+        'user',
+        'orders',
+        'guestId',
+        'bundleOrders'
+    ));
 }
-
-
 
 
 
@@ -488,5 +495,24 @@ public function getGuestProfileView(Request $request)
     }
 
     return response()->json(['guest_id' => $guestId]);
+}
+
+
+
+
+
+
+
+public function mixMatchView()
+{
+    $products = ProductsModel::all();
+    $categories = CategoriesModel::all();
+    $cat = CategoriesModel::pluck('name', 'id');
+
+    $products = $products->map(function ($product) use ($cat) {
+        return $this->formatProduct($product, $cat);
+    });
+
+    return view('pages.mix-match', compact('products','categories'));
 }
 }

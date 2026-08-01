@@ -15,7 +15,10 @@ use App\Http\Controllers\TestimonialsController;
 
 
 
-
+Route::post(
+    '/admin/bundle-status/update/{id}/{status}',
+    [AdminWebController::class, 'updateStatus']
+);
 Route::post('/update/{id}', [ProductController::class, 'updateOrderStatus']);
 
 

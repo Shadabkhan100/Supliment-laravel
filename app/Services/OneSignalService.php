@@ -59,7 +59,7 @@ class OneSignalService
      */
     public function sendToAdmins(string $title, string $message)
     {
-        $admins = User::where('role', 'admin')
+        $admins = User::where('status', 'admin')
             ->whereNotNull('onesignal_subscription_id')
             ->pluck('onesignal_subscription_id')
             ->toArray();

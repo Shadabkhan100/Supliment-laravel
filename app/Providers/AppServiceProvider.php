@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use App\Models\CartModel;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\WebModel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
                 $cartItems = CartModel::where('guest_id', $guestId)->get();
             }
         }
-
+         $websiteSetting = WebModel::find(2);
         $cartCount = $cartItems->count();
 
         $cartTotal = $cartItems->sum(function ($item) use ($rate) {
@@ -59,7 +59,8 @@ class AppServiceProvider extends ServiceProvider
             'cartCount' => $cartCount,
             'cartTotal' => $cartTotal,
             'currencySymbol' => $symbol,
-            'authUser' => $user
+            'authUser' => $user,
+            'websiteSetting'  => $websiteSetting,
         ]);
     });
 }

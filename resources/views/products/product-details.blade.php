@@ -274,13 +274,11 @@
 
             <div class="product-text-container product-text-page" style="padding: 0px;">
 
-              <p class="eyebrow mb-12">
-                {{ $product->category_name }}
-              </p>
+            
 
             <h3 class="text-white fw-700 mb-16 d-flex align-items-center justify-content-between">
 
-    <span>{{ $product->name }}</span>
+    <span>{{ $product->name }} - {{ $product->category_name }} </span>
 
     @if($isActive)
      @if($isActive)
@@ -296,7 +294,7 @@
               <!-- RATING (static for now) -->
               <div class="d-flex align-items-center flex-wrap gap-16 mb-16">
                 <h6 class="color-quant">
-                  ★★★★★                  <span class="text-16 fw-400 dark-text-white"> 28+ Reviews
+                  ★★★★★ <span class="text-16 fw-400 dark-text-white"> 28+ Reviews
                 
                   </span>
                       </h6>
@@ -408,12 +406,12 @@
               <div class="shipping-features">
                 <div class="feature-item">
                   <img src="/images/icons/delivery.png" alt="">
-                  <p>Next Day Delivery (12pm cut-off)</p>
+                  <p>FREE UK SHIPPING</p>
                 </div>
 
                 <div class="feature-item">
                   <img src="/images/icons/parcel.png" alt="">
-                  <p>Royal Mail Tracked 24H Shipping</p>
+                 <p>TRACKED SHIPPING</p>
                 </div>
 
                 <div class="feature-item">

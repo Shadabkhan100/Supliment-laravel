@@ -11,15 +11,15 @@
           <div class="col-lg-3 col-md-6 col-6">
             <a href="{{ url('contact') }}" class="top-bar-links text-16 medium d-flex align-items-center gap-2">
               <i class="fa-regular fa-envelope"></i>
-              <span>info@slimza.com</span>
+              <span>{{ $websiteSetting->support_email ?? 'info@slimza.com' }}</span>
             </a>
           </div>
 
           <div class="col-lg-6 col-md-6 d-lg-block d-none text-center">
             <p>
-              <span class="text-16 semibold">Black Friday Sale:</span>
-              Save up to 60% with code <span class="text-16 semibold">Slimza.</span>
-            </p>
+    <span class="text-16 semibold">Special Offer:</span>
+    {{ $websiteSetting->promotion_text ?? 'Save up to 60% with code SLIMZA.' }}
+</p>
           </div>
 
           <div class="col-lg-3 col-md-6 col-6 header-end">
@@ -82,7 +82,9 @@
 
           <div class="col-xl-3 col-md-6 col-4">
             <a href="{{ url('/') }}" class="header-logo">
-              <img src="{{ asset('images/logo.png') }}" alt="">
+             <img
+    src="{{ !empty($websiteSetting?->logo) ? 'https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/'.$websiteSetting->logo : asset('images/logo.png') }}"
+    alt="Logo">
             </a>
           </div>
 
@@ -210,9 +212,7 @@
 <!-- Header Menu End -->
 
 <!-- Back To Top Start -->
-<a href="#main-wrapper" id="backto-top" class="back-to-top">
-  <i class="fa-light fa-chevron-up"></i>
-</a>
+
 
 <!-- Mobile Menu Start -->
 <div class="mobile-nav__wrapper">
@@ -234,7 +234,9 @@
     <ul class="mobile-nav__contact list-unstyled">
       <li>
         <i class="fas fa-envelope"></i>
-        <a href="mailto:example@company.com">info@slimza.com</a>
+       <a href="mailto:{{ $websiteSetting->support_email ?? 'info@slimza.com' }}">
+    {{ $websiteSetting->support_email ?? 'info@slimza.com' }}
+</a>
       </li>
       <li>
        <i class="fa fa-message"></i>

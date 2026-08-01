@@ -19,7 +19,7 @@ use App\Mail\AuthAttemptEmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
  use Illuminate\Support\Facades\Http;
-
+use App\Models\BundleOrder;
 
 
 
@@ -60,11 +60,12 @@ public function registerUser(Request $request)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
+            'password' => 'required|min:6',
             'phone' => 'nullable|string',
             'country' => 'nullable|string',
             'address' => 'nullable|string',
             'dob' => 'nullable|date',
+            'status' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -79,12 +80,15 @@ public function registerUser(Request $request)
             'country'  => $validated['country'] ?? null,
             'address'  => $validated['address'] ?? null,
             'dob'      => $validated['dob'] ?? null,
-            'status'   => 'user',
+            'status'   => $validated['status'] ?? 'user',
         ]);
 
         // Login
-        Auth::login($user);
-        $request->session()->regenerate();
+        
+        if (in_array($user->status, [null, 'User'])) {
+    Auth::login($user);
+    $request->session()->regenerate();
+}
 
         // =========================
         // MIGRATE GUEST DATA
@@ -102,6 +106,13 @@ public function registerUser(Request $request)
                     'user_id'  => $user->id,
                     'guest_id' => null,
                 ]);
+
+
+              BundleOrder::where('guest_id', $guestId)
+                ->update([
+                  'user_id'  => $user->id,
+                  'guest_id' => null,
+              ]);
         }
 
         DB::commit();

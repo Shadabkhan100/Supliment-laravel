@@ -293,11 +293,11 @@
                    {{ $days % 30 == 0 ? ($days / 30) . ' Month Supply' . ($days / 30 > 1 ? 's' : '') : $days . ' Days Supply' }}
                        
                     </div>
-                    <div class="small22" style="color:#9eef0b;">
-                         Buy {{ $pack }} to get {{ $pack }} Complimentary
-                     </div>
-
-                  
+                  @if($product->category_name === 'Teas')
+                      <div class="small22" style="color:#9eef0b;">
+                          Buy {{ $pack }} to get {{ $pack }} Complimentary
+                       </div>
+                    @endif
 
                      <div class="small mt-2" style="color:white;">
                        {{ $pack * 2 }} Packs Total

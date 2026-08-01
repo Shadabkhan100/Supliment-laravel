@@ -195,14 +195,34 @@
                 <input type="number" id="phone" placeholder="Phone Number" required>
             </div>
 
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required>
-            </div>
+          <!-- Password -->
+<div class="input-group password-group">
+    <input
+        type="password"
+        id="password"
+        class="form-control"
+        placeholder="Password"
+        required>
 
-            <div class="input-group">
-                <input type="password" id="password_confirmation" placeholder="Confirm Password" required>
-            </div>
+    <span class="password-toggle" data-target="password">
+        <i class="fa fa-eye"></i>
+    </span>
+</div>
 
+<!-- Confirm Password -->
+<div class="input-group password-group">
+    <input
+        type="password"
+        id="password_confirmation"
+        class="form-control"
+        placeholder="Confirm Password"
+        required>
+
+    <span class="password-toggle" data-target="password_confirmation">
+        <i class="fa fa-eye"></i>
+    </span>
+</div>
+         
         <button type="submit" class="auth-btn" id="signupBtn">
     <span id="btnText">Create Account</span>
     <span id="btnPercent" style="margin-left:6px;">0%</span>
@@ -476,6 +496,41 @@ signupForm.addEventListener("submit", async (e) => {
         hideLoader();
     }
 });
+
+
+
+
+
+
+
+document.querySelectorAll('.password-toggle').forEach(toggle => {
+
+    toggle.addEventListener('click', function () {
+
+        const input = document.getElementById(this.dataset.target);
+        const icon = this.querySelector('i');
+
+        if (input.type === 'password') {
+
+            input.type = 'text';
+
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+
+        } else {
+
+            input.type = 'password';
+
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+
+        }
+
+    });
+
+});
+
+
 
 </script>
 @include("modules.subscribe-us")
