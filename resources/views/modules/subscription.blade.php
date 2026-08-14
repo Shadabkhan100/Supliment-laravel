@@ -149,7 +149,7 @@ $(document).on("click", "#subscribeNowBtn", function () {
         discount: "{{ $defaultDiscount }}"
     };
 
-    console.log(data);
+
 
     btn.prop("disabled", true);
 
@@ -213,20 +213,22 @@ updatePrices("subscribe");
 
         error: function (xhr) {
 
-            btn.prop("disabled", false);
+    btn.prop("disabled", false);
+    btn.find(".btn-text").text("Subscribe");
 
-            btn.find(".btn-text").text("Subscribe");
+    let message = "Please try again.";
 
-            console.log(xhr);
-            console.log(xhr.responseText);
+    if (xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+    }
 
-            Swal.fire({
-                icon: "error",
-                title: "Something went wrong",
-                text: "Please try again."
-            });
-
-        }
+    Swal.fire({
+        icon: "error",
+        title: "Subscription Failed",
+        text: message
+    });
+}
+        
 
     });
 

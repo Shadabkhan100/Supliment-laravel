@@ -1,6 +1,130 @@
 <!-- Slick CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
 
+
+<style>
+.pages-dropdown>a.pages-dropdown-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.pages-dropdown>a.pages-dropdown-toggle i {
+  pointer-events: none;
+}
+
+.main-menu__list>li.dropdown>a {
+  cursor: pointer;
+}
+
+.main-menu__list>li.dropdown>a i {
+  pointer-events: none;
+}
+
+
+
+
+@media (min-width: 1200px) {
+
+  .main-menu__list>li.dropdown>a {
+    display: flex !important;
+    align-items: center;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 10;
+  }
+
+  .main-menu__list>li.dropdown>a .shop-text {
+    pointer-events: none;
+  }
+
+  .main-menu__list>li.dropdown>a i {
+    pointer-events: none !important;
+  }
+
+  .main-menu__list>li.dropdown>.sub-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  .main-menu__list>li.dropdown.open>.sub-menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .main-menu__list>li.dropdown.open>a i {
+    transform: rotate(180deg);
+  }
+}
+
+
+
+@media (max-width: 1199px) {
+
+  .mobile-nav__container .dropdown>a {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    cursor: pointer !important;
+  }
+
+  .mobile-nav__container .mobile-dropdown-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    width: 35px;
+    height: 35px;
+
+    border: 0;
+    background: transparent;
+    color: inherit;
+
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mobile-nav__container .mobile-dropdown-toggle i {
+    transition: transform 0.25s ease;
+  }
+
+  .mobile-nav__container .mobile-dropdown-toggle.expanded i {
+    transform: rotate(180deg);
+  }
+
+  .mobile-nav__container .dropdown>.sub-menu {
+    display: none;
+  }
+
+  .mobile-nav__container .dropdown.expanded>.sub-menu {
+    display: block;
+  }
+}
+
+
+
+/* Mobile dropdown arrow */
+.mobile-nav__container .main-menu__list .dropdown>a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-nav__container .main-menu__list .dropdown>a i {
+  transition: transform 0.25s ease;
+  transform: rotate(0deg);
+}
+
+/* Arrow points UP when dropdown is OPEN */
+.mobile-nav__container .main-menu__list .dropdown.expanded>a i {
+  transform: rotate(180deg);
+}
+</style>
 <header>
 
   <!-- Main Header Start -->
@@ -17,9 +141,18 @@
 
           <div class="col-lg-6 col-md-6 d-lg-block d-none text-center">
             <p>
-    <span class="text-16 semibold">Special Offer:</span>
-    {{ $websiteSetting->promotion_text ?? 'Save up to 60% with code SLIMZA.' }}
-</p>
+              <span class="text-16 semibold">Special Offer:</span>
+
+              @auth
+              @if(isset($promoCode) && $promoCode->is_used == 0)
+              Save 20% with code {{ $promoCode->code }}.
+              @else
+              {{ $websiteSetting->promotion_text ?? 'Save up to 60% with code SLIMZA.' }}
+              @endif
+              @else
+              {{ $websiteSetting->promotion_text ?? 'Save up to 60% with code SLIMZA.' }}
+              @endauth
+            </p>
           </div>
 
           <div class="col-lg-3 col-md-6 col-6 header-end">
@@ -82,9 +215,9 @@
 
           <div class="col-xl-3 col-md-6 col-4">
             <a href="{{ url('/') }}" class="header-logo">
-             <img
-    src="{{ !empty($websiteSetting?->logo) ? 'https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/'.$websiteSetting->logo : asset('images/logo.png') }}"
-    alt="Logo">
+              <img
+                src="{{ !empty($websiteSetting?->logo) ? 'https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/'.$websiteSetting->logo : asset('images/logo.png') }}"
+                alt="Logo">
             </a>
           </div>
 
@@ -97,13 +230,18 @@
                     <li><a href="{{ url('/') }}" class="active">Home</a></li>
 
                     <li class="dropdown" id="shop-category-dropdown">
-                      <a href="javascript:void(0);">
-                        <span class="shop-text ">Shop</span>
-                        <i style="color:white" class="fa-light fa-chevron-down d-lg-block d-none"></i>
+                      <a href="#" class="shop-dropdown-toggle">
+                        <span class="shop-text">
+                          Shop
+                        </span>
+
+                        <i class="fa-light fa-chevron-down"></i>
                       </a>
 
                       <ul class="sub-menu" id="category-menu">
-                        <li><a href="javascript:void(0);">Loading...</a></li>
+                        <li>
+                          <a href="javascript:void(0);">Loading...</a>
+                        </li>
                       </ul>
                     </li>
 
@@ -111,19 +249,21 @@
                     <li><a href="{{ url('all-blogs') }}">Blogs</a></li>
 
 
-                    <li class="dropdown">
-                      <a href="javascript:void(0);">
-                        Pages <i class="fa-light fa-chevron-down d-lg-block d-none"></i>
+                    <li class="dropdown pages-dropdown">
+                      <a href="#" class="shop-dropdown-toggle">
+                        <span>Pages</span>
+
+                        <i class="fa-light fa-chevron-down"></i>
                       </a>
+
                       <ul class="sub-menu">
                         <li><a href="{{ url('/contact') }}">Contact Us</a></li>
                         <li><a href="{{ url('/about-us') }}">About us</a></li>
-                        <li><a href="{{ url('/faq') }}" class="active">FAQ</a></li>
+                        <li><a href="{{ url('/faq') }}">FAQ</a></li>
                         <li><a href="{{ url('/return-policy') }}">Return & Refund Policy</a></li>
                         <li><a href="{{ url('/privacy-policy') }}">Privacy Policy</a></li>
                       </ul>
                     </li>
-
                     @if(Auth::check())
                     <li><a href="{{ url('/logout') }}">Logout</a></li>
                     @endif
@@ -148,29 +288,28 @@
                   </div>
                 </form>
               </div>
-           @if(Auth::check())
-    <a href="{{ url('/profile') }}" class="account-btn">
-        <i class="fa-light fa-user"></i>
-    </a>
-@else
-    <a href="{{ url('/profile/guest-profile') }}" class="account-btn">
-        <i class="fa-light fa-user"></i>
-    </a>
-@endif
-              
+              @if(Auth::check())
+              <a href="{{ url('/profile') }}" class="account-btn">
+                <i class="fa-light fa-user"></i>
+              </a>
+              @else
+              <a href="{{ url('/profile/guest-profile') }}" class="account-btn">
+                <i class="fa-light fa-user"></i>
+              </a>
+              @endif
 
-      <a href="#" class="main-menu__toggler mobile-nav__toggler">
+
+              <a href="#" class="main-menu__toggler mobile-nav__toggler">
                 <img src="{{ asset('images/menu-2.png') }}" alt="">
               </a>
-<a href="{{ url('cart') }}" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:white;text-decoration:none;">
+              <a href="{{ url('cart') }}"
+                style="display:flex;flex-direction:column;align-items:center;gap:10px;color:white;text-decoration:none;">
 
-    <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+                <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
 
-        <i class="fa-light fa-cart-shopping"></i>
+                  <i class="fa-light fa-cart-shopping"></i>
 
-<span
-    class="cart-count"
-    style="
+                  <span class="cart-count" style="
     position:absolute;
     top:-6px;
     right:-8px;
@@ -182,17 +321,17 @@
     font-weight:bold;
     line-height:1;
 ">
-    {{ $cartCount }}
-</span>
+                    {{ $cartCount }}
+                  </span>
 
-    </span>
+                </span>
 
-    <span style="font-size:8px;color:#fff;white-space:nowrap;margin-top:-13px">
-        {{ $currencySymbol ?? '$' }} {{ number_format($cartTotal, 2) }}
-    </span>
+                <span style="font-size:8px;color:#fff;white-space:nowrap;margin-top:-13px">
+                  {{ $currencySymbol ?? '$' }} {{ number_format($cartTotal, 2) }}
+                </span>
 
-</a>
-        
+              </a>
+
             </div>
           </div>
 
@@ -234,13 +373,12 @@
     <ul class="mobile-nav__contact list-unstyled">
       <li>
         <i class="fas fa-envelope"></i>
-       <a href="mailto:{{ $websiteSetting->support_email ?? 'info@slimza.com' }}">
-    {{ $websiteSetting->support_email ?? 'info@slimza.com' }}
-</a>
+        <a href="mailto:{{ $websiteSetting->support_email ?? 'info@slimza.com' }}">
+          {{ $websiteSetting->support_email ?? 'info@slimza.com' }}
+        </a>
       </li>
-      <li>
-       <i class="fa fa-message"></i>
-        <a href="tel:">Live Chat</a>
+      <li onclick="openLiveChat()">
+        <i class="fa fa-message"></i>
       </li>
     </ul>
 
@@ -268,29 +406,17 @@
 
 <!-- Slick JS -->
 <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-
+<script src="{{ asset('js/currency.js') }}"></script>
 <script>
-
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
 document.addEventListener('DOMContentLoaded', async function() {
+  function openLiveChat() {
+    if (typeof Tawk_API !== 'undefined') {
+      Tawk_API.maximize();
+    }
+  }
 
-  console.log('🚀 CATEGORY SCRIPT LOADED');
-  document.addEventListener("DOMContentLoaded", function() {
 
-    const shop = document.getElementById("shop-category-dropdown");
-    if (!shop) return;
-
-    const shopText = shop.querySelector(".shop-text");
-
-    if (!shopText) return;
-
-    shopText.addEventListener("click", function(e) {
-      e.preventDefault();
-      e.stopPropagation(); // important: prevents parent/menu interference
-      shop.classList.toggle("open");
-    });
-
-  });
   const categoryMenus = document.querySelectorAll('#category-menu');
 
   if (!categoryMenus.length) {
@@ -305,11 +431,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const categories = result.data || [];
 
-    console.log('Categories:', categories);
 
-categoryMenus.forEach(menu => {
 
-    if (!categories.length) {
+    categoryMenus.forEach(menu => {
+
+      if (!categories.length) {
         menu.innerHTML = `
             <li>
                 <a href="/shop/all">Shop All</a>
@@ -319,9 +445,9 @@ categoryMenus.forEach(menu => {
             </li>
         `;
         return;
-    }
+      }
 
-    menu.innerHTML = `
+      menu.innerHTML = `
         <li>
             <a href="/shop/all">
                 Shop All
@@ -336,9 +462,9 @@ categoryMenus.forEach(menu => {
         `).join('')}
     `;
 
-});
+    });
 
-    console.log('✅ Desktop + Mobile menus updated');
+
 
   } catch (error) {
     console.error('❌ Category Error:', error);
@@ -349,16 +475,13 @@ categoryMenus.forEach(menu => {
   }
 
 });
-</script>
 
-<script src="{{ asset('js/currency.js') }}"></script>
-<script>
 document.querySelectorAll('.currency-item').forEach(item => {
 
   item.addEventListener('click', function() {
 
     let currency = this.getAttribute('data-currency');
-    console.log(currency);
+
     fetch("{{ route('change.currency') }}", {
         method: "POST",
         headers: {
@@ -401,4 +524,3 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 </script>
-<!-- Mobile Menu End -->

@@ -51,4 +51,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function emailCampaigns()
+{
+    return $this->hasMany(EmailCampaign::class);
+}
 }

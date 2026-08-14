@@ -50,7 +50,7 @@
 <script>
 window.currencyConfig = @json(config('currency'));
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
-console.log(currentCurrency);
+
 function formatPrice(price) {
 
   const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
@@ -242,5 +242,5 @@ async function loadProducts() {
 }
 
 loadProducts();
-console.log(window.currencyConfig);
+
 </script>

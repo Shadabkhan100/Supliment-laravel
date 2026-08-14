@@ -66,22 +66,21 @@ public function shopAll()
 
     return view('pages.shop-all', compact('products'));
 }
+
+
+
  public function getFindProducts($slug, $id)
 {
-    // FETCH DEAL
     $deal = SlimzaDeals::findOrFail($id);
 
-    // FIX DEAL IMAGE
     $deal->image = $deal->image
         ? SupabaseStorageService::getPublicUrl($deal->image)
         : null;
 
-    // FETCH PRODUCTS RELATED TO THIS DEAL
     $products = ProductsModel::where('deal_id', $id)
         ->latest()
         ->get();
 
-    // FIX PRODUCT IMAGES (IMPORTANT PART)
     $products->transform(function ($product) {
         $product->main_image = $product->main_image
             ? SupabaseStorageService::getPublicUrl($product->main_image)
@@ -90,9 +89,12 @@ public function shopAll()
         return $product;
     });
 
+    if ($deal->title === "BUNDLE DEALS") {
+        return redirect("/make-your-own-offer");
+    }
+
     return view('pages.find-product', compact('deal', 'products'));
 }
-
 
 
 

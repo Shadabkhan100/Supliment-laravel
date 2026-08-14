@@ -2,6 +2,13 @@
 <style>
 
 
+#stepTitle{
+    color: #496d09;
+}
+#stepDesc{
+font-size:13px;  margin:0;
+color:black;
+}
 body.checkout-open {
     overflow: hidden;
 }
@@ -29,14 +36,13 @@ body.checkout-open {
   bottom: -100%;
   width: 100%;
   max-width: 100%;
-  background: #111;
-  color: white;
+  background: white;
+  color: #000000;
   border-radius: 18px 18px 0 0;
   padding: 20px;
 
-  box-shadow: 0 -10px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 -10px 30px rgba(#0a0b09);
   transition: all 0.35s ease-in-out;
-
   /* ✅ FIX ADDED */
   display: flex;
   flex-direction: column;
@@ -64,7 +70,7 @@ body.checkout-open {
 .close-btn {
   font-size: 22px;
   cursor: pointer;
-  color: #fff;
+  color: black;
   background: transparent;
   border: none;
 }
@@ -151,7 +157,7 @@ body.checkout-open {
       <div>
         <h4 id="stepTitle" style="margin:0;">Contact Details</h4>
 
-        <p id="stepDesc" style="font-size:13px; opacity:0.7; margin:0;">
+        <p id="stepDesc" >
           Enter your basic contact information
         </p>
       </div>
@@ -164,30 +170,39 @@ body.checkout-open {
 
       <!-- STEP 1 -->
       <div class="step step-1">
-        <input type="text" id="name" placeholder="Full Name">
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="text" id="phone" placeholder="Phone Number">
+        <input type="text" id="name" placeholder="Full Name" required>
+        
+        <input type="email" id="email" placeholder="Email Address" required>
+        
+        <input type="text" id="phone" placeholder="Phone Number" required>
       </div>
 
       <!-- STEP 2 -->
       <div class="step step-2" style="display:none;">
-        <input type="text" id="address1" placeholder="Address Line 1">
-        <input type="text" id="city" placeholder="City">
-        <input type="text" id="postal" placeholder="Postal Code">
-        <input type="text" id="country" placeholder="Country">
+        <input type="text" id="address1" placeholder="Address Line 1" required>
+        <input type="text" id="city" placeholder="City" required>
+        <input type="text" id="postal" placeholder="Postal Code" required>
+
+<small id="postal-error" style="color:red;display:none;">
+    Please enter the correct postal code.
+</small> 
+
+
+
+        <input type="text" id="country" placeholder="Country" required>
       </div>
        <!-- STEP 3 (MAP LOCATION) -->
    <div class="step step-3" style="display:none;">
 
-     <h3 style="color:#9eef0b; margin-bottom:10px;">Select Delivery Location</h3>
+     <h3 style="color:black; margin-bottom:10px;">Select Delivery Location</h3>
 
       <div id="map" style="width:100%; height:250px; border-radius:12px;"></div>
 
-      <p style="margin-top:10px; font-size:13px; color:#aaa;">
-        Click on map to select your location
+      <p style="margin-top:10px; font-size:13px; color:Black;">
+      Disclamer! Please Confirm Your Exact Location.
       </p>
 
-      <p id="selectedCoords" style="margin-top:5px; color:#9eef0b;"></p>
+      <p id="selectedCoords" style="margin-top:5px; color:#Black;"></p>
 
     </div>
 
@@ -208,6 +223,10 @@ body.checkout-open {
 
     </div>
 
+
+
+
+    <span id="inputError" class="text-danger"></span>
     <!-- BUTTONS -->
     <div class="actions">
       <button id="prevBtn" style="display:none;">Back</button>
@@ -224,6 +243,28 @@ body.checkout-open {
 window.authUser = @json($authUser);
 window.currencyConfig = @json(config('currency'));
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
+window.currencyConfig = @json(config('currency'));
+window.currentCurrency = "{{ session('currency', 'GBP') }}";
+
+function formatPrice(price) {
+
+  const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
+
+  const config = window.currencyConfig?.currencies?.[currency];
+
+  if (!config) {
+    console.warn("Currency not found:", currency);
+    return `£ ${price}`;
+  }
+
+  const converted = price * config.rate;
+
+  return `${config.symbol} ${converted.toFixed(2)}`;
+}
+
+
+
+
 
 localStorage.removeItem("checkout_cart");
 document.getElementById("productQuickView")?.classList.add("checkout-hidden");
@@ -277,9 +318,54 @@ function initMap() {
 }
 
 
+function updateMapLocation(lat, lng) {
+
+    if (!map) {
+        initMap();
+    }
+
+    map.setView([lat, lng], 15, {
+        animate: true
+    });
+
+    if (marker) {
+        marker.setLatLng([lat, lng]);
+    } else {
+        marker = L.marker([lat, lng]).addTo(map);
+    }
+    updateLocationName(lat,lng);
+    
+}
+
+
+async function updateLocationName(lat, lng) {
+
+    try {
+
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&addressdetails=1`
+        );
+
+        const data = await response.json();
+
+        document.getElementById("selectedCoords").innerText =
+            data.display_name || "Location not found";
+
+    } catch (error) {
+
+        document.getElementById("selectedCoords").innerText =
+            "Unable to determine location.";
+
+        console.error(error);
+    }
+}
+
+
+
+
 window.fillAuthUserData = function () {
     const user = window.authUser;
-    console.log(user)
+    
     if (!user) return;
 
     const setValue = (id, value) => {
@@ -304,184 +390,237 @@ document.addEventListener("click", function (e) {
 
 });
 async function goNextStep() {
-  console.log("chusssssssssss");
-  window.fillAuthUserData();
- 
-  if (currentStep === 1) {
-    document.querySelector(".step-1").style.display = "none";
-    document.querySelector(".step-2").style.display = "block";
 
-    document.getElementById("stepTitle").innerText = "Address Details";
-    document.getElementById("stepDesc").innerText = "Enter your delivery address";
-    
-    document.getElementById("prevBtn").style.display = "inline-block";
-    currentStep = 2;
-    return;
-  }
+    window.fillAuthUserData();
 
-  // STEP 2 → MAP
-  if (currentStep === 2) {
+    if (currentStep === 1) {
 
-    saveToLocalStorage();
+        // Check if any Step 1 information is empty
+        const inputs = document.querySelectorAll(
+            ".step-1 input, .step-1 select, .step-1 textarea"
+        );
 
-    document.querySelector(".step-2").style.display = "none";
-    document.querySelector(".step-3").style.display = "block";
+        let isValid = true;
 
-    document.getElementById("stepTitle").innerText = "Select Location";
-    document.getElementById("stepDesc").innerText = "Pick your delivery location";
+        inputs.forEach(function (input) {
+            if (input.value.trim() === "") {
+                isValid = false;
+            }
+        });
 
-    initMap(); // load map
+        // Show error if any field is empty
+        if (!isValid) {
+            document.getElementById("inputError").innerText =
+                "Please fill all the information.";
+            return;
+        }
 
-    currentStep = 3;
-    return;
-  }
+        // Clear previous error
+        document.getElementById("inputError").innerText = "";
 
-  // MAP → FINAL REVIEW
-  if (currentStep === 3) {
+        document.querySelector(".step-1").style.display = "none";
+        document.querySelector(".step-2").style.display = "block";
 
-    if (!selectedLat || !selectedLng) {
-      alert("Please select location on map");
-      return;
+        document.getElementById("stepTitle").innerText = "Address Details";
+        document.getElementById("stepDesc").innerText = "Enter your delivery address";
+
+        document.getElementById("prevBtn").style.display = "inline-block";
+        currentStep = 2;
+        return;
     }
 
-    // store location
-    const cart = JSON.parse(localStorage.getItem("checkout_cart")) || {};
-    cart.location = { lat: selectedLat, lng: selectedLng };
-    localStorage.setItem("checkout_cart", JSON.stringify(cart));
-    
-    // move to review
-    document.querySelector(".step-3").style.display = "none";
-    document.querySelector(".step-4").style.display = "block";
 
-    document.getElementById("stepTitle").innerText = "";
-    document.getElementById("stepDesc").innerText = "";
+    // STEP 2 → MAP
+    if (currentStep === 2) {
 
-    showLoader();
-    loadFinalReview();
+        // Check Step 2 address information
+        const addressFields = [
+            document.getElementById("address1"),
+            document.getElementById("city"),
+            document.getElementById("postal"),
+            document.getElementById("country")
+        ];
 
-    currentStep = 4;
-    const nextBtn = document.getElementById("nextBtn");
+        let isValid = true;
 
-nextBtn.innerHTML = `
-    <i class="fas fa-lock"></i>
-    Secure Pay
-`;
-    return;
-  }
+        addressFields.forEach(function (input) {
 
-if (currentStep === 4) {
-    
-    const nextBtn = document.getElementById("nextBtn");
-   const cart = JSON.parse(localStorage.getItem("checkout_cart"));
-     const payload = {
+            if (!input || input.value.trim() === "") {
+                isValid = false;
+            }
 
-        name: document.getElementById("name")?.value || "",
-        email: document.getElementById("email")?.value || "",
-        phone: document.getElementById("phone")?.value || "",
-        currency: window.currentCurrency,
-        address1: document.getElementById("address1")?.value || "",
-        city: document.getElementById("city")?.value || "",
-        postal: document.getElementById("postal")?.value || "",
-        country: document.getElementById("country")?.value || "",
-        product_id: cart.product.id,
-            quantity: cart.product.quantity,
-            purchase_type: cart.product.purchase_type,
-            option: cart.product.option,
-        lat: selectedLat,
-        lng: selectedLng,
-
-        product: {
-            product_id: cart.product.id,
-            quantity: cart.product.quantity,
-            purchase_type: cart.product.purchase_type,
-            option: cart.product.option
-        }
-    };
-     console.log(payload);
-    nextBtn.disabled = true;
-    nextBtn.classList.add("loading");
-
-    nextBtn.innerHTML = `
-        <span class="btn-spinner"></span>
-        Creating Order...
-    `;
-
-    
-
-   
-
-    try {
-
-        const res = await fetch("/create-product-order", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content")
-            },
-            body: JSON.stringify(payload)
         });
 
-        const data = await res.json().catch(() => null);
-
-        console.log("HTTP STATUS:", res.status);
-        console.log("RESPONSE DATA:", data);
-
-        if (!res.ok) {
-            throw data;
+        // Show error if any address field is empty
+        if (!isValid) {
+            document.getElementById("inputError").innerText =
+                "Please fill all the information.";
+            return;
         }
 
-if (data?.status) {
+        // Clear previous error
+        document.getElementById("inputError").innerText = "";
 
-    const orderId = data.order_id;
-    const total = data.total_price || 0;
+        saveToLocalStorage();
 
-    if (!orderId) {
+        document.querySelector(".step-2").style.display = "none";
+        document.querySelector(".step-3").style.display = "block";
 
-        Swal.fire({
-            icon: "error",
-            title: "Order Error",
-            text: "No order was created."
-        });
+        document.getElementById("stepTitle").innerText = "Select Location";
+        document.getElementById("stepDesc").innerText = "Pick your delivery location";
+
+        initMap(); // load map
+
+        currentStep = 3;
+        return;
+    }
+
+
+    // MAP → FINAL REVIEW
+    if (currentStep === 3) {
+
+        if (!selectedLat || !selectedLng) {
+            alert("Please select location on map");
+            return;
+        }
+
+        // store location
+        const cart = JSON.parse(localStorage.getItem("checkout_cart")) || {};
+        cart.location = { lat: selectedLat, lng: selectedLng };
+        localStorage.setItem("checkout_cart", JSON.stringify(cart));
+
+        // move to review
+        document.querySelector(".step-3").style.display = "none";
+        document.querySelector(".step-4").style.display = "block";
+
+        document.getElementById("stepTitle").innerText = "";
+        document.getElementById("stepDesc").innerText = "";
+
+        showLoader();
+        loadFinalReview();
+
+        currentStep = 4;
+        const nextBtn = document.getElementById("nextBtn");
+
+        nextBtn.innerHTML = `
+            <i class="fas fa-lock"></i>
+            Secure Pay`;
 
         return;
     }
 
-    window.location.href =
-        `/stripe/checkout?order_ids=${orderId}&total=${total}`;
 
-    return;
-}
+    if (currentStep === 4) {
 
-        throw data;
+        const nextBtn = document.getElementById("nextBtn");
 
-    } catch (err) {
+        const cart = JSON.parse(localStorage.getItem("checkout_cart"));
 
-        console.error(err);
+        const payload = {
 
-        nextBtn.disabled = false;
-        nextBtn.classList.remove("loading");
+            name: document.getElementById("name")?.value || "",
+            email: document.getElementById("email")?.value || "",
+            phone: document.getElementById("phone")?.value || "",
+            currency: window.currentCurrency,
+            address1: document.getElementById("address1")?.value || "",
+            city: document.getElementById("city")?.value || "",
+            postal: document.getElementById("postal")?.value || "",
+            country: document.getElementById("country")?.value || "",
+            product_id: cart.product.id,
+            quantity: cart.product.quantity,
+            purchase_type: cart.product.purchase_type,
+            option: cart.product.option,
+            lat: selectedLat,
+            lng: selectedLng,
+
+            product: {
+                product_id: cart.product.id,
+                quantity: cart.product.quantity,
+                purchase_type: cart.product.purchase_type,
+                option: cart.product.option
+            }
+        };
+
+        nextBtn.disabled = true;
+        nextBtn.classList.add("loading");
 
         nextBtn.innerHTML = `
-            <i class="fas fa-lock"></i>
-            Secure Pay
+            <span class="btn-spinner"></span>
+            Creating Order...
         `;
 
-        Swal.fire({
-            icon: "error",
-            title: "Order Failed",
-            text: err?.message || "Something went wrong"
-        });
+
+        try {
+
+            const res = await fetch("/create-product-order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute("content")
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => null);
+
+
+            if (!res.ok) {
+                throw data;
+            }
+
+
+            if (data?.status) {
+
+                const orderId = data.order_id;
+                const total = data.total_price || 0;
+                const type = data.type;
+
+                if (!orderId) {
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Order Error",
+                        text: "No order was created."
+                    });
+
+                    return;
+                }
+
+                window.location.href =
+                    `/stripe/checkout?order_ids=${orderId}&total=${total}&type=${type}`;
+
+                return;
+            }
+
+
+            throw data;
+
+        } catch (err) {
+
+            console.error(err);
+
+            nextBtn.disabled = false;
+            nextBtn.classList.remove("loading");
+
+            nextBtn.innerHTML = `
+                <i class="fas fa-lock"></i>
+                Secure Pay
+            `;
+
+            Swal.fire({
+                icon: "error",
+                title: "Order Failed",
+                text: err?.message || "Something went wrong"
+            });
+        }
+
+        return;
     }
 
-    return;
 }
-
-
-}
-
 
 
 
@@ -599,8 +738,6 @@ function saveToLocalStorage() {
 function loadFinalReview() {
 
   const cart = JSON.parse(localStorage.getItem("checkout_cart"));
-console.log(cart); console.log("FINAL CART", cart);
-console.log("PRODUCT ID", cart?.product?.id);
   if (!cart || !cart.product.id) return;
 
   fetch(`/api/get-product-by-id/${cart.product.id}`)
@@ -639,7 +776,7 @@ console.log("PRODUCT ID", cart?.product?.id);
 
       <!-- ✅ PRICE ALWAYS SHOWN -->
       <p style="margin-top:10px; font-size:16px;">
-        <b>Price:</b> <span style="color:#9eef0b;">$${finalPrice}</span>
+        <b>Price:</b> <span style="color:#9eef0b;">${formatPrice(finalPrice)}</span>
       </p>
 
     </div>
@@ -668,7 +805,7 @@ console.log("PRODUCT ID", cart?.product?.id);
             </p>
 
             <p style="margin:0; font-size:14px;">
-              <b>Price:</b> <span style="color:#9eef0b;">$${option.price}</span>
+              <b>Price:</b> <span style="color:#9eef0b;">${formatPrice(option.price)}</span>
             </p>
 
             <p style="margin:0; font-size:13px; color:#aaa;">
@@ -722,7 +859,54 @@ console.log("PRODUCT ID", cart?.product?.id);
 
 
 
+document.getElementById("postal").addEventListener("change", async function () {
+    const postal = this.value.trim();
+    const country = document.getElementById("country").value.trim();
+  
 
 
+
+    if (!postal) return;
+
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(postal)}&country=${encodeURIComponent(country)}&format=jsonv2&limit=1`
+        );
+
+        const data = await response.json();
+
+        if (data.length === 0) {
+            this.style.border = "2px solid red";
+            showPostalError("Please try another postal code.");
+            return;
+        }
+
+        this.style.border = "2px solid #28a745";
+        removePostalError();
+
+        selectedLat = parseFloat(data[0].lat);
+        selectedLng = parseFloat(data[0].lon);
+
+        updateMapLocation(selectedLat, selectedLng);
+
+    } catch (e) {
+        console.error(e);
+        showPostalError("Unable to verify postal code.");
+    }
+});
+
+
+
+
+
+function showPostalError(message) {
+    const error = document.getElementById("postal-error");
+    error.innerText = message;
+    error.style.display = "block";
+}
+
+function removePostalError() {
+    document.getElementById("postal-error").style.display = "none";
+}
 
 </script>    

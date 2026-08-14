@@ -229,7 +229,7 @@
                                     <div class="d-flex align-items-center flex-wrap gap-16 mb-16">
                                         <h6 class="color-quant">
                                             ★★★★★
-                                         <span class="text-16 fw-400 dark-black">(42+ Reviews)</span>
+                                         <span class="text-16 fw-400 dark-black" id="qv-reviews"></span>
                                         </h6>
                                     </div>
   
@@ -287,7 +287,8 @@
 <script>
 
 function renderQuickViewOptions(product) {
-
+    document.getElementById("qv-reviews").textContent =
+    `(${Math.floor(Math.random() * 181) + 20}+ Reviews)`;
     const container = document.getElementById("qv-buying-options");
 
     if (!container) return;
@@ -312,7 +313,7 @@ if (!Array.isArray(options)) {
     options = [];
 }
 
-console.log(options);
+
     options.forEach((opt) => {
 
         container.insertAdjacentHTML("beforeend", `
@@ -345,10 +346,7 @@ console.log(options);
                             £${parseFloat(opt.price).toFixed(2)}
                         </div>
 
-                        <div class="option-badge">
-                            🎁 Get Free ${opt.pack} Pack
-                        </div>
-                    </div>
+                      </div>
 
                 </div>
             </div>

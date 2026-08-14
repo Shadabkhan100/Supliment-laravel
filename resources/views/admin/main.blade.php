@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Panel')</title>
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}">
     <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
@@ -13,7 +13,27 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     @yield('styles')
 </head>
  <style>
-     
+    .admin-user .notification-icon {
+    color: #333;
+    font-size: 30px;
+    text-decoration: none;
+}
+
+.admin-user .notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    min-width: 18px;
+    height: 18px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 14px;
+}
 
         .admin-wrapper{
             display:flex;
@@ -360,11 +380,34 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             </div>
 
             <div class="admin-user">
-                <img src="https://i.pravatar.cc/100" alt="">
-                <div>
-                    <strong>{{ Auth::user()->name ?? 'Admin' }}</strong>
-                    <div class="text-muted small">{{ Auth::user()->status ?? 'Admin' }}</div>
-                </div>
+  <a href="{{ url('/admin/messages') }}" class="notification-icon position-relative">
+        <i class="fa-regular fa-bell"></i>
+
+        <span class="notification-badge">
+            {{ isset($messages) ? $messages->count() : 0 }}
+        </span>
+    </a>
+
+
+                <div class="d-flex align-items-center justify-content-between w-100">
+
+    <div class="admin-user d-flex align-items-center">
+        <img src="https://i.pravatar.cc/100" alt="Admin">
+
+        <div>
+            <strong>{{ Auth::user()->name ?? 'Admin' }}</strong>
+            <div class="text-muted small">
+                {{ Auth::user()->status ?? 'Admin' }}
+            </div>
+        </div>
+    </div>
+
+  
+</div>
+
+
+
+
             </div>
 
         </div>

@@ -16,7 +16,7 @@ use App\Mail\OrderStatusMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
  use Illuminate\Support\Facades\Http;
-
+use App\Models\WebModel;
 
 
 
@@ -84,14 +84,16 @@ public function createAuthOrder(Request $request)
     ]);
     $product = ProductsModel::find($validated['product_id']);
 try {
-   $currentStatus="Pending";
-    Mail::to($user->email)->send(
-        new OrderStatusMail(
-            $order,
-            $product,
-            $currentStatus
-        )
-    );
+    
+  $currentStatus="Pending";
+
+Mail::to($user->email)->send(
+    new OrderStatusMail(
+        $order,
+        $product,
+        $currentStatus
+    )
+);
 
     return response()->json([
         'status' => true,
@@ -111,9 +113,53 @@ try {
     return response()->json([
         'status' => true,
         'message' => 'Auth order created successfully',
-        'order_id' => $order->id
+        'order_id' => $order->id,
+        'type' => "order"
     ]);
 }
+
+
+private function sendOrderStatusEmails($order, $product, $currentStatus)
+{
+    // Get admin email from website settings
+    try {
+        $websiteSetting = WebModel::find(2);
+
+        $adminEmail = $websiteSetting->support_email ?? 'info@slimza.com';
+
+        // If empty/null, use fallback
+        if (empty($adminEmail)) {
+            $adminEmail = 'info@slimza.com';
+        }
+
+    } catch (\Throwable $e) {
+        // If anything goes wrong, use fallback email
+        $adminEmail = 'info@slimza.com';
+    }
+
+    // Send to customer
+    Mail::to($order->email)->send(
+        new OrderStatusMail(
+            $order,
+            $product,
+            $currentStatus
+        )
+    );
+
+    // Send the exact same email to admin
+    Mail::to($adminEmail)->send(
+        new OrderStatusMail(
+            $order,
+            $product,
+            $currentStatus
+        )
+    );
+}
+
+
+
+
+
 
 public function createGuestOrder(Request $request)
 {
@@ -205,16 +251,17 @@ try {
     $mailError = null;
 
     try {
-         $currentStatus="Pending";
-        Mail::to($validated['email'])->send(
-            new OrderStatusMail(
-                $order,
-                $product,
-                $currentStatus
-            )
-        );
+      $currentStatus = "Pending";
 
-        $mailStatus = true;
+$this->sendOrderStatusEmails(
+    $order,
+    $product,
+    $currentStatus
+);
+
+$mailStatus = true;
+
+
 
     } catch (\Throwable $e) {
 
@@ -284,7 +331,7 @@ public function getGuestOrder()
                 'purchase_type' => $order->purchase_type,
                 'payment_status' => $order->payment_status,
                 'order_status' => $order->order_status,
-                
+                  'type' => "order",
                 'user' => [
                     'name' => $order->name,
                     'email' => $order->email,
@@ -296,7 +343,7 @@ public function getGuestOrder()
                     'lat' => $order->lat,
                     'lng' => $order->lng,
                 ],
-
+               
                 'option' => $order->product_option,
             ],
          
@@ -465,20 +512,20 @@ public function updateOrderStatus(Request $request, $id)
         $order->order_status = $currentStatus;
 
         // Send email only for required statuses
-        if (
-            ($currentStatus === 'Shipped') ||
-            ($currentStatus === 'Delivered') ||
-            ($currentStatus === 'Suspended')
-        ) {
+       if (
+    ($currentStatus === 'Shipped') ||
+    ($currentStatus === 'Delivered') ||
+    ($currentStatus === 'Suspended')
+) {
 
-            Mail::to($order->email)->send(
-                new OrderStatusMail(
-                    $order,
-                    $product,
-                    $currentStatus
-                )
-            );
-        }
+    Mail::to($order->email)->send(
+        new OrderStatusMail(
+            $order,
+            $product,
+            $currentStatus
+        )
+    );
+}
 
         // Save after successful email (or immediately if no email required)
         $order->save();
@@ -556,4 +603,81 @@ public function deleteOrder($id)
         ], 500);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   public function usePromo($code)
+{
+    try {
+
+        $promo = PromoCode::where('code', trim($code))
+            ->where('user_id', auth()->id())
+            ->where('is_used', 0)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$promo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired promo code.'
+            ], 404);
+        }
+
+        $cartItems = CartModel::where('user_id', auth()->id())->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your cart is empty.'
+            ], 400);
+        }
+
+        $grandTotal = $cartItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+
+        $discountAmount = round(
+            ($grandTotal * $promo->discount) / 100,
+            2
+        );
+
+        $finalTotal = $grandTotal - $discountAmount;
+
+        return response()->json([
+            'success'           => true,
+            'message'           => 'Promo code applied successfully.',
+            'discount'          => $promo->discount,
+            'discount_amount'   => $discountAmount,
+            'grand_total'       => $grandTotal,
+            'final_total'       => $finalTotal,
+            'promo_code'        => $promo->code,
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to apply promo code.',
+            'error'   => $e->getMessage(),
+            'line'    => $e->getLine(),
+            'file'    => basename($e->getFile()),
+        ], 500);
+    }
+}
+
+
+
+
 }

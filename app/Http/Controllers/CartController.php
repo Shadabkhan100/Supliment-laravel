@@ -13,6 +13,44 @@ use App\Services\SupabaseStorageService;
 class CartController extends Controller
 {
    
+
+public function usePromo($code)
+{
+    try {
+
+        $promo = PromoCode::where('code', trim($code))
+            ->where('user_id', auth()->id())
+            ->where('is_used', false)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$promo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid, expired, or already used promo code.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Promo code applied successfully.',
+            'discount'  => $promo->discount,
+            'promoCode' => $promo->code,
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to apply promo code.',
+            'error'   => $e->getMessage(),
+            'line'    => $e->getLine(),
+            'file'    => basename($e->getFile()),
+        ], 500);
+    }
+}
+
+
 public function count()
 {
     if (auth()->check()) {
@@ -274,5 +312,98 @@ public function deleteCartItem($id)
     ]);
 }
   
-   
+
+
+public function updateCartItemQuantity(Request $request, $cartId, $status)
+{
+    try {
+
+        if (!in_array($status, ['increment', 'decrement'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid quantity status.',
+            ], 422);
+        }
+
+        $userId = Auth::id();
+        $guestId = trim($request->cookie('guest_id', ''));
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find cart item
+        |--------------------------------------------------------------------------
+        */
+
+        $query = CartModel::where('id', $cartId);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('guest_id', $guestId);
+        }
+
+        $cartItem = $query->first();
+
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart item not found.',
+            ], 404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Current quantity
+        |--------------------------------------------------------------------------
+        */
+
+        $currentQuantity = (int) ($cartItem->quantity ?? 1);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update quantity
+        |--------------------------------------------------------------------------
+        */
+
+        if ($status === 'increment') {
+            $newQuantity = $currentQuantity + 1;
+        } else {
+            $newQuantity = max(1, $currentQuantity - 1);
+        }
+
+        $cartItem->quantity = $newQuantity;
+        $cartItem->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculate subtotal
+        |--------------------------------------------------------------------------
+        */
+
+        $unitPrice = (float) ($cartItem->unit_price ?? $cartItem->price ?? 0);
+
+        $subtotal = $unitPrice * $newQuantity;
+
+        return response()->json([
+            'success' => true,
+            'quantity' => $newQuantity,
+            'price' => $unitPrice,
+            'subtotal' => $subtotal,
+            'cart_id' => $cartItem->id,
+        ]);
+
+    } catch (\Throwable $e) {
+
+        \Log::error('Cart quantity update error', [
+            'cart_id' => $cartId,
+            'status' => $status,
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to update cart quantity.',
+        ], 500);
+    }
+}   
 }

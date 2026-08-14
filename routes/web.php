@@ -16,6 +16,10 @@ use Stripe\Checkout\Session;
 use App\Http\Controllers\OneSignalController;
 use App\Http\Controllers\PageSettingController;
 use App\Http\Controllers\BundleOrders;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FutureProductController;
+use App\Http\Controllers\TestimonialsController;
+
 
 
 Route::get('/test-auth-mail', function () {
@@ -82,12 +86,17 @@ Route::get('/shop/{slug}/{id}', [WebRoutController::class, 'shopDetails']);
 Route::get('/shop/all', [WebRoutController::class, 'shopAll']);
 Route::get('/contact', [WebRoutController::class, 'contactView']);
 Route::get('/make-your-own-offer', [WebRoutController::class, 'mixMatchView']);
-
+Route::post('/post-comment/contact', [ContactController::class, 'postComment'])
+    ->name('post-comment.contact');
 
 
 Route::post('/cart/add', [CartController::class, 'addToCart']);
 Route::get('/cart', [CartController::class, 'cartView']);
 Route::get('/cart/count', [CartController::class, 'count']);
+
+Route::post('/cart-items/updates/{cartId}/{status}', [CartController::class, 'updateCartItemQuantity'])
+    ->name('cart.items.update.quantity');
+
 
 
 Route::get('/stripe/checkout', [PaymentController::class, 'checkout'])
@@ -99,6 +108,9 @@ Route::get('/stripe/cancel', [PaymentController::class, 'cancel'])
     ->name('stripe.cancel');
 Route::post('/create-cart-order', [PaymentController::class, 'createCartOrders']);
 Route::post('/auth-order/create', [OrderController::class, 'createAuthOrder']);
+
+Route::post('/user/use-promo/{code}', [OrderController::class, 'usePromo']);
+
 
 
 
@@ -124,6 +136,22 @@ Route::post('/admin/login/form', [AuthController::class, 'loginAdmin'])->name('a
 Route::middleware(['admin'])->group(function () {
 
 
+
+
+
+
+Route::post(
+    '/testimonials/edit/{id}',
+    [TestimonialsController::class, 'update']
+)->name('testimonials.update');
+
+Route::post('/future-product/edit/{id}', [FutureProductController::class, 'update'])
+    ->name('future-product.update');
+Route::get('/admin/messages', [AdminWebController::class, 'getContactMessages']);
+Route::delete(
+    '/user-contact/message-delete/{id}',
+    [AdminWebController::class, 'messageDelete']
+)->name('user-contact.message-delete');
 
 Route::post(
     '/admin/bundle-status/update/{id}/{status}',

@@ -24,7 +24,7 @@ use App\Models\BundleOrder;
 use App\Services\UserEmailService;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderStatusMail;
-
+use App\Models\ContactForm;
 
 class AdminWebController extends Controller
 {
@@ -112,6 +112,7 @@ public function getTestimonialmanagement()
 
 public function getDashboardView()
 {
+
     $blogs = Blogs::all();
     $carts = CartModel::all();
     $categories = CategoriesModel::all();
@@ -122,6 +123,7 @@ public function getDashboardView()
     $subscribers = Subscribers::all();
     $testimonials = Testimonials::all();
     $users = User::all();
+    $messages = ContactForm::all();
     $recentOrders = GuestOrder::latest('updated_at')->take(5)->get();
 
     // Currency rates
@@ -209,7 +211,8 @@ public function getDashboardView()
         'totalPaid',
         'totalFailed',
         'availableBalance',
-        'pendingBalance'
+        'pendingBalance',
+         'messages'
     ));
 }
 
@@ -638,4 +641,33 @@ public function updateStatus($id, $status)
         ], 500);
     }
 }
+
+
+
+
+
+
+
+     
+public function getContactMessages(){
+     $messages = ContactForm::all();
+      return view('admin.contact-messages', compact('messages'));
+
+
+}
+
+
+
+public function messageDelete($id)
+{
+    $message = ContactForm::findOrFail($id);
+
+    $message->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Message deleted successfully.',
+    ]);
+}
+
 }

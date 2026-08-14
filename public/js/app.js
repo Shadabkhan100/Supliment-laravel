@@ -169,10 +169,89 @@ var MyScroll = "";
         }
       }
 
-      if ($(".main-menu__list").length) {
-        let mainNavUL = $(".main-menu__list");
-        dynamicCurrentMenuClass(mainNavUL);
-      }
+     if ($(".main-menu__list").length) {
+    let mainNavUL = $(".main-menu__list");
+    dynamicCurrentMenuClass(mainNavUL);
+
+
+
+function initDesktopDropdowns() {
+
+    // Remove previous handlers
+    $(document).off(".desktopDropdown");
+
+    // SHOP + PAGES CLICK
+    $(document).on(
+        "click.desktopDropdown",
+        ".main-menu__list > li.dropdown > a",
+        function (e) {
+
+            // Desktop only
+            if (window.innerWidth < 1200) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const dropdown = this.closest("li.dropdown");
+
+            if (!dropdown) {
+                return;
+            }
+
+            // Close other dropdowns
+            document
+                .querySelectorAll(".main-menu__list > li.dropdown.open")
+                .forEach(function (item) {
+                    if (item !== dropdown) {
+                        item.classList.remove("open");
+                    }
+                });
+
+            // Toggle clicked dropdown
+            dropdown.classList.toggle("open");
+        }
+    );
+
+    // Prevent submenu clicks from closing dropdown
+    $(document).on(
+        "click.desktopDropdown",
+        ".main-menu__list > li.dropdown > .sub-menu",
+        function (e) {
+            e.stopPropagation();
+        }
+    );
+
+    // Close when clicking outside
+    $(document).on(
+        "click.desktopDropdown",
+        function (e) {
+
+            if (
+                !e.target.closest(
+                    ".main-menu__list > li.dropdown"
+                )
+            ) {
+                document
+                    .querySelectorAll(".main-menu__list > li.dropdown.open")
+                    .forEach(function (item) {
+                        item.classList.remove("open");
+                    });
+            }
+        }
+    );
+}
+
+initDesktopDropdowns();
+console.log("Desktop dropdown system loaded");
+
+$(document).on("click.testDropdown", ".main-menu__list > li.dropdown > a", function () {
+    console.log("DROPDOWN CLICKED:", this);
+});
+
+
+}
 
       if ($(".main-menu__nav").length && $(".mobile-nav__container").length) {
         let navContent = document.querySelector(".main-menu__nav").innerHTML;
@@ -189,27 +268,38 @@ var MyScroll = "";
         mobileNavContainer.innerHTML = navContent;
       }
 
-      if ($(".mobile-nav__container .main-menu__list").length) {
-        let dropdownAnchor = $(
-          ".mobile-nav__container .main-menu__list .dropdown > a"
-        );
-        dropdownAnchor.each(function () {
-          let self = $(this);
-          let toggleBtn = document.createElement("BUTTON");
-          toggleBtn.setAttribute("aria-label", "dropdown toggler");
-          toggleBtn.innerHTML = "<i class='fa fa-angle-down'></i>";
-          self.append(function () {
-            return toggleBtn;
-          });
-          self.find("button").on("click", function (e) {
+  // ================= MOBILE DROPDOWN =================
+if ($(".mobile-nav__container .main-menu__list").length) {
+
+    const $mobileNav = $(".mobile-nav__container");
+
+    // Remove any previous custom handlers
+    $mobileNav
+        .off("click.mobileDropdown", ".main-menu__list .dropdown > a");
+
+    // Use delegated click handler
+    $mobileNav.on(
+        "click.mobileDropdown",
+        ".main-menu__list .dropdown > a",
+        function (e) {
+
             e.preventDefault();
-            let self = $(this);
-            self.toggleClass("expanded");
-            self.parent().toggleClass("expanded");
-            self.parent().parent().children("ul").slideToggle();
-          });
-        });
-      }
+            e.stopImmediatePropagation();
+
+            const $link = $(this);
+            const $dropdown = $link.parent(".dropdown");
+
+            // Close other mobile dropdowns
+            $mobileNav
+                .find(".main-menu__list .dropdown.expanded")
+                .not($dropdown)
+                .removeClass("expanded");
+
+            // Toggle current dropdown
+            $dropdown.toggleClass("expanded");
+        }
+    );
+}
 
       if ($(".mobile-nav__toggler").length) {
         $(".mobile-nav__toggler").on("click", function (e) {

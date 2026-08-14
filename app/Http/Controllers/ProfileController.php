@@ -12,6 +12,10 @@ use App\Services\SupabaseStorageService;
  use App\Models\Subscribers;
 use Illuminate\Support\Facades\Validator;
 use App\Models\SlimzaDeals;
+use App\Models\BundleOrder;
+
+
+
 
 class ProfileController extends Controller
 {
@@ -89,12 +93,30 @@ class ProfileController extends Controller
       $deal = SlimzaDeals::findOrFail(6);
       $subscriptions = $this->getSubscribers();
 
+
+
+       $userId=$user->id;
+
+$query = BundleOrder::query();
+
+if (!empty($userId)) {
+    $query->where('user_id', $userId);
+} elseif (!empty($guestId)) {
+    $query->where('guest_id', trim($guestId));
+}
+
+$bundleOrders = $query
+    ->latest()
+    ->get();
+
+
+
 return view('profile.user-profile', compact(
     'user',
     'cartItems',
     'orders',
     'deal',
-    'subscriptions'
+    'subscriptions','bundleOrders'
 ));
     }
 

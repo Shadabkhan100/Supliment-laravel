@@ -30,7 +30,12 @@ class BundleOrder extends Model
         'user_id',
         'guest_id',
         'payment_status',
-        'order_status'
+        'order_status',
+    'payment_status',
+    'currency',
+    'paid_amount',
+    'payment_intent',
+    'stripe_session_id',
     ];
 
     protected $casts = [

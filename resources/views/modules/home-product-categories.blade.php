@@ -89,7 +89,7 @@ function loadCategories()
 
         error: function (xhr) {
 
-            console.log('API Error:', xhr.responseText);
+           
 
             $('#categoryContainer').html(`
                 <div class="col-12 text-center text-danger">

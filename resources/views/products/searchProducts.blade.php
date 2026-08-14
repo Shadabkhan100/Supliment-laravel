@@ -150,7 +150,7 @@ document.addEventListener("click", function (e) {
 
     const product = JSON.parse(btn.dataset.product);
 
-    console.log(product);
+   
 });
 
 </script>

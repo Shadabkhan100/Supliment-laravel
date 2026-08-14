@@ -78,7 +78,7 @@ async function loadHeroBanners() {
                 </p>
 
                 <div class="mb-48">
-                  <a href="/make-your-own-offer" class="cus-btn-arrow">
+                  <a href="/shop/all" class="cus-btn-arrow">
                     View Collection
                     <div class="icon">
                       <i class="fa-light fa-chevron-right"></i>

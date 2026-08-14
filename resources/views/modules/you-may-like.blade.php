@@ -16,7 +16,7 @@
 
 window.currencyConfig = @json(config('currency'));
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
-console.log(currentCurrency);
+
 function formatPrice(price) {
 
   const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
@@ -43,8 +43,7 @@ function formatPrice(price) {
       const res = await fetch('/api/get-all-product');
       const json = await res.json();
 
-      console.log("You May Like API:", json);
-
+      
       const container = document.getElementById('youMayLikeContainer');
 
       if (!container) return;

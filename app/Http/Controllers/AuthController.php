@@ -20,8 +20,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
  use Illuminate\Support\Facades\Http;
 use App\Models\BundleOrder;
-
-
+use App\Models\EmailCampaign;
+  use App\Models\PromoCode;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -29,28 +30,33 @@ class AuthController extends Controller
 
 
 public function sendTestEmail(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'type'  => 'nullable|string'
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'type' => 'nullable|string',
+    ]);
 
-        // fake user object (no DB required)
-        $user = new User();
-        $user->email = $request->email;
-        $user->name = 'Test User';
+    $user = User::first();
 
-        $type = $request->type ?? 'register';
-
-        app(UserEmailService::class)
-            ->sendUserEmail($user, $type);
-
+    if (!$user) {
         return response()->json([
-            'success' => true,
-            'message' => "Test email sent using type: {$type}"
-        ]);
+            'success' => false,
+            'message' => 'No user found.',
+        ], 404);
     }
 
+    EmailCampaign::create([
+        'user_id' => $user->id,
+        'email_type' => 'sequence_1',
+        'send_at' => now()->addMinute(),
+        'is_sent' => false,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Email scheduled successfully.',
+    ]);
+}
 
 
 public function registerUser(Request $request)
@@ -116,10 +122,49 @@ public function registerUser(Request $request)
         }
 
         DB::commit();
+      
 
-            app(UserEmailService::class)
-            ->sendUserEmail($user, 'register');
+try {
 
+    $promo = PromoCode::create([
+        'user_id'    => $user->id,
+        'code'       => 'WELCOME-' . strtoupper(Str::random(8)),
+        'discount'   => 10,
+        'expires_at' => now()->addHours(24),
+    ]);
+
+$emails = [
+    [
+        'email_type' => 'sequence_1',
+        'send_at' => now(), // Immediately after account creation
+        'promo_code' => $promo->code,
+    ],
+    [
+        'email_type' => 'sequence_2',
+        'send_at' => now()->addDay(), // After 24 hours
+    ],
+    [
+        'email_type' => 'sequence_3',
+        'send_at' => now()->addDays(2), // After 2 days
+    ],
+    [
+        'email_type' => 'sequence_4',
+        'send_at' => now()->addDays(3), // After 3 days
+    ],
+    [
+        'email_type' => 'sequence_5',
+        'send_at' => now()->addDays(5), // After 5 days
+    ],
+];
+
+    foreach ($emails as $email) {
+        EmailCampaign::create([
+            'user_id'    => $user->id,
+            'email_type' => $email['email_type'],
+            'send_at'    => $email['send_at'],
+            'promo_code' => $email['promo_code'] ?? null,
+        ]);
+    }
         return response()
             ->json([
                 'success' => true,
@@ -127,6 +172,19 @@ public function registerUser(Request $request)
                 'redirect' => '/profile'
             ])
             ->withoutCookie('guest_id');
+} catch (\Exception $e) {
+
+    DB::rollBack();
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Failed to create welcome email sequence.',
+        'error' => $e->getMessage(),
+        'line' => $e->getLine(),
+        'file' => basename($e->getFile()),
+    ], 500);
+}
+
 
     } catch (ValidationException $e) {
 
@@ -157,95 +215,8 @@ public function registerUser(Request $request)
 
 
 
-public function LoginUser(Request $request)
-{
-    $request->validate([
-        'email'     => 'required|email',
-        'password'  => 'required',
-        'latitude'  => 'nullable',
-        'longitude' => 'nullable',
-        'location' => 'nullable|string',
-         
-    ]);
 
-    if (Auth::attempt([
-        'email'    => $request->email,
-        'password' => $request->password
-    ])) {
 
-        $request->session()->regenerate();
-
-        $user = Auth::user();
-
-        $ipAddress = $request->ip();
-        $location = 'Unknown';
-
-        // GPS from frontend
-      if (
-    !empty($request->latitude) &&
-    !empty($request->longitude)
-) {
-
-    try {
-
-        $response = Http::withHeaders([
-            'User-Agent' => 'Slimza/1.0'
-        ])->get(
-            'https://nominatim.openstreetmap.org/reverse',
-            [
-                'lat' => $request->latitude,
-                'lon' => $request->longitude,
-                'format' => 'jsonv2'
-            ]
-        );
-
-        if ($response->successful()) {
-
-            $geo = $response->json();
-
-            $location = $geo['display_name']
-                ?? 'Location unavailable';
-
-        }
-
-    } catch (\Exception $e) {
-
-        $location =
-            $request->latitude .
-            ', ' .
-            $request->longitude;
-    }
-
-}
-
-        // Send login notification email
-        try {
-         $location = $request->location ?? $location;
-            Mail::to($user->email)->send(
-                new AuthAttemptEmail(
-                    $user,
-                    $ipAddress,
-                    $location
-                )
-            );
-
-        } catch (\Exception $e) {
-            // Optional:
-            // Log::error($e->getMessage());
-        }
-
-        return response()->json([
-            'success'  => true,
-            'message'  => 'User logged in successfully.',
-            'redirect' => '/profile'
-        ]);
-    }
-
-    return response()->json([
-        'success' => false,
-        'message' => 'Invalid email or password.'
-    ], 401);
-}
 
 
 

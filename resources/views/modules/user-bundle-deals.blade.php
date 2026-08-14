@@ -273,7 +273,7 @@ const bundleOrders = @json($bundleOrders ?? []);
 
 window.bundleOrders = bundleOrders;
 
-console.log(bundleOrders);
+
 
 
 document.getElementById('bundleSearch').addEventListener('keyup', function () {

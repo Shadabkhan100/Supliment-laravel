@@ -84,7 +84,9 @@
         <div class="col-md-4">
             <div class="card-box">
 
-                <h5 class="mb-3">Add Testimonial</h5>
+                <h5 class="mb-3" id="testimonialFormTitle">
+    Add Testimonial
+</h5>
 
                 <form id="testimonialForm">
 <input type="file" id="image" class="form-control mb-3"
@@ -151,11 +153,18 @@
 const GET_URL = "/api/testimonials";
 const POST_URL = "/api/create-testimonials";
 const DELETE_URL = "/api/testimonials";
+const EDIT_URL = "/testimonials/edit";
+
+let editTestimonialId = null;
+let currentImage = null;
+
 
 /* =========================
    LOAD TESTIMONIALS
 ========================= */
+
 function loadTestimonials() {
+
     $("#tableLoader").show();
     $("#testimonialTable").html("");
 
@@ -164,118 +173,702 @@ function loadTestimonials() {
         $("#tableLoader").hide();
 
         data.forEach(item => {
-
-            let img = item.image
-                ? item.image
-                : '/images/user-1.png';
-
-            $("#testimonialTable").append(`
-                <tr>
-                    <td>
-                        <img src="${img}"
-                             style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:8px;">
-                        ${item.name}
-                    </td>
-                    <td>${item.message}</td>
-                    <td>${item.rating}</td>
-                    <td>
-                        <button class="btn btn-danger btn-sm"
-                                onclick="deleteTestimonial(${item.id})">
-                            Delete
-                        </button>
-                    </td>
-                </tr>
-            `);
+            $("#testimonialTable").append(
+                createTestimonialRow(item)
+            );
         });
+
+    }).fail(function (xhr) {
+
+        $("#tableLoader").hide();
+
+        console.log(xhr.responseText);
+
+        $("#testimonialTable").html(`
+            <tr>
+                <td colspan="4" class="text-center text-danger">
+                    Failed to load testimonials
+                </td>
+            </tr>
+        `);
+
     });
 }
 
+
 /* =========================
-   ADD TESTIMONIAL (UPLOAD)
+   CREATE TABLE ROW
 ========================= */
-$("#testimonialForm").submit(function (e) {
-    e.preventDefault();
 
-    $("#submitBtn").prop("disabled", true);
-    $("#formLoader").show();
+function createTestimonialRow(item) {
 
-    let formData = new FormData();
-    formData.append("name", $("#name").val());
-    formData.append("role", $("#role").val());
-    formData.append("rating", $("#rating").val());
-    formData.append("message", $("#message").val());
+    let img = item.image
+        ? item.image
+        : '/images/user-1.png';
 
-    let imageFile = $("#image")[0].files[0];
-    if (imageFile) {
-        formData.append("image", imageFile);
-    }
+    return `
+        <tr data-testimonial-id="${item.id}">
 
-    $.ajax({
-        url: POST_URL,
-        method: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
+            <td>
+                <img src="${img}"
+                     style="
+                        width:40px;
+                        height:40px;
+                        border-radius:50%;
+                        object-fit:cover;
+                        margin-right:8px;
+                     ">
 
-        success: function (res) {
+                ${item.name}
+            </td>
 
-            $("#testimonialForm")[0].reset();
+            <td>
+                ${item.message}
+            </td>
 
-            loadTestimonials();
+            <td>
+                ${item.rating}
+            </td>
 
-            $("#submitBtn").prop("disabled", false);
+            <td>
+
+                <button
+                    class="btn btn-warning btn-sm edit-testimonial-btn"
+                    data-id="${item.id}">
+
+                    <i class="fa fa-edit"></i>
+                    Edit
+
+                </button>
+
+                <button
+                    class="btn btn-danger btn-sm"
+                    onclick="deleteTestimonial(${item.id})">
+
+                    <i class="fa fa-trash"></i>
+                    Delete
+
+                </button>
+
+            </td>
+
+        </tr>
+    `;
+}
+
+
+/* =========================
+   ADD / EDIT MODE RESET
+========================= */
+function resetTestimonialForm() {
+
+    editTestimonialId = null;
+    currentImage = null;
+
+    $("#testimonialForm")[0].reset();
+
+    $("#submitBtn").text("Add Testimonial");
+
+    $("#testimonialFormTitle").text("Add Testimonial");
+
+    $("#currentImagePreview").remove();
+}
+
+/* =========================
+   EDIT TESTIMONIAL
+========================= */
+
+$(document).on(
+    "click",
+    ".edit-testimonial-btn",
+    function () {
+
+        const id = $(this).data("id");
+
+        editTestimonialId = id;
+
+        $("#formLoader").show();
+
+        /*
+        Get the testimonial from existing API
+        */
+
+        $.get(GET_URL, function (data) {
+
+            const testimonial = data.find(
+                item => String(item.id) === String(id)
+            );
+
+            if (!testimonial) {
+
+                $("#formLoader").hide();
+
+                alert("Testimonial not found.");
+
+                return;
+            }
+
+
+            /*
+            Fill form
+            */
+
+            $("#name").val(
+                testimonial.name || ""
+            );
+
+            $("#role").val(
+                testimonial.role || "Customer"
+            );
+
+            $("#rating").val(
+                testimonial.rating || 5
+            );
+
+            $("#message").val(
+                testimonial.message || ""
+            );
+
+
+            /*
+            Store existing image
+            */
+
+            currentImage =
+                testimonial.image || null;
+
+
+            /*
+            Reset file input
+            */
+
+            $("#image").val("");
+
+
+            /*
+            Remove previous preview
+            */
+
+            $("#currentImagePreview").remove();
+
+
+            /*
+            Show existing image
+            */
+
+            if (currentImage) {
+
+                $("#image").after(`
+
+                    <div id="currentImagePreview"
+                         style="margin-top:10px;">
+
+                        <small style="
+                            display:block;
+                            color:#aaa;
+                            margin-bottom:5px;
+                        ">
+                            Current Image
+                        </small>
+
+                        <img src="${currentImage}"
+                             style="
+                                width:90px;
+                                height:90px;
+                                border-radius:10px;
+                                object-fit:cover;
+                                border:2px solid #333;
+                             ">
+
+                        <div style="
+                            color:#aaa;
+                            font-size:12px;
+                            margin-top:5px;
+                        ">
+                            Select a new image to replace it.
+                        </div>
+
+                    </div>
+
+                `);
+
+            }
+
+
+            /*
+            Change form to EDIT mode
+            */
+
+            $("#submitBtn")
+                .text("Update Testimonial");
+
+            $("#testimonialForm")
+                .find("h5")
+                .text("Edit Testimonial");
+
+
             $("#formLoader").hide();
 
-            alert(res.message || "Testimonial added successfully");
-        },
 
-        error: function (xhr) {
+            /*
+            Scroll to form
+            */
+
+            $("html, body").animate({
+                scrollTop: $("#testimonialForm").offset().top - 100
+            }, 400);
+
+        }).fail(function (xhr) {
+
+            $("#formLoader").hide();
 
             console.log(xhr.responseText);
 
-            alert("Error saving testimonial");
+            alert(
+                "Failed to load testimonial."
+            );
 
-            $("#submitBtn").prop("disabled", false);
-            $("#formLoader").hide();
-        }
-    });
+        });
+
+    }
+);
+
+
+/* =========================
+   IMAGE PREVIEW
+========================= */
+
+$("#image").on("change", function () {
+
+    const file = this.files[0];
+
+    /*
+    Remove old preview
+    */
+
+    $("#newImagePreview").remove();
+
+
+    if (!file) {
+        return;
+    }
+
+
+    /*
+    Show selected image
+    */
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+
+        $("#image").after(`
+
+            <div id="newImagePreview"
+                 style="margin-top:10px;">
+
+                <small style="
+                    display:block;
+                    color:#9eef0b;
+                    margin-bottom:5px;
+                ">
+                    New Image
+                </small>
+
+                <img src="${e.target.result}"
+                     style="
+                        width:90px;
+                        height:90px;
+                        border-radius:10px;
+                        object-fit:cover;
+                        border:2px solid #9eef0b;
+                     ">
+
+            </div>
+
+        `);
+
+    };
+
+    reader.readAsDataURL(file);
+
 });
+
+
+/* =========================
+   ADD / UPDATE TESTIMONIAL
+========================= */
+
+$("#testimonialForm").submit(function (e) {
+
+    e.preventDefault();
+
+
+    $("#submitBtn").prop(
+        "disabled",
+        true
+    );
+
+    $("#formLoader").show();
+
+
+    let formData = new FormData();
+
+
+    formData.append(
+        "name",
+        $("#name").val()
+    );
+
+    formData.append(
+        "role",
+        $("#role").val()
+    );
+
+    formData.append(
+        "rating",
+        $("#rating").val()
+    );
+
+    formData.append(
+        "message",
+        $("#message").val()
+    );
+
+
+    /*
+    New image
+    */
+
+    let imageFile =
+        $("#image")[0].files[0];
+
+    if (imageFile) {
+
+        formData.append(
+            "image",
+            imageFile
+        );
+
+    }
+
+
+    /*
+    Existing image
+    */
+
+    if (currentImage) {
+
+        formData.append(
+            "current_image",
+            currentImage
+        );
+
+    }
+
+
+    /*
+    =========================
+    EDIT
+    =========================
+    */
+
+    if (editTestimonialId) {
+
+        $.ajax({
+
+            url:
+                EDIT_URL +
+                "/" +
+                editTestimonialId,
+
+            method: "POST",
+
+            data: formData,
+
+            processData: false,
+
+            contentType: false,
+
+                headers: {
+        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+    },
+            success: function (res) {
+
+                /*
+                Get updated testimonial
+                */
+
+                const updated =
+                    res.data ||
+                    res.testimonial;
+
+
+                if (updated) {
+
+                    const row =
+                        $(
+                            `tr[data-testimonial-id="${editTestimonialId}"]`
+                        );
+
+
+                    row.replaceWith(
+                        createTestimonialRow(
+                            updated
+                        )
+                    );
+
+                } else {
+
+                    loadTestimonials();
+
+                }
+
+
+                $("#formLoader").hide();
+
+                $("#submitBtn")
+                    .prop("disabled", false);
+
+
+                resetTestimonialForm();
+
+
+                alert(
+                    res.message ||
+                    "Testimonial updated successfully."
+                );
+
+            },
+
+
+            error: function (xhr) {
+
+                $("#formLoader").hide();
+
+                $("#submitBtn")
+                    .prop("disabled", false);
+
+                console.log(
+                    xhr.responseText
+                );
+
+                alert(
+                    xhr.responseJSON?.message ||
+                    "Failed to update testimonial."
+                );
+
+            }
+
+        });
+
+
+        return;
+    }
+
+
+    /*
+    =========================
+    ADD
+    =========================
+    */
+
+    $.ajax({
+
+        url: POST_URL,
+
+        method: "POST",
+
+        data: formData,
+
+        processData: false,
+
+        contentType: false,
+
+
+        success: function (res) {
+
+            const newTestimonial =
+                res.data ||
+                res.testimonial;
+
+
+            if (newTestimonial) {
+
+                /*
+                Remove "No testimonials"
+                */
+
+                $("#testimonialTable")
+                    .find("td[colspan='4']")
+                    .closest("tr")
+                    .remove();
+
+
+                /*
+                Add new row instantly
+                */
+
+                $("#testimonialTable")
+                    .prepend(
+                        createTestimonialRow(
+                            newTestimonial
+                        )
+                    );
+
+            } else {
+
+                loadTestimonials();
+
+            }
+
+
+            $("#formLoader").hide();
+
+            $("#submitBtn")
+                .prop("disabled", false);
+
+
+            resetTestimonialForm();
+
+
+            alert(
+                res.message ||
+                "Testimonial added successfully."
+            );
+
+        },
+
+
+        error: function (xhr) {
+
+            $("#formLoader").hide();
+
+            $("#submitBtn")
+                .prop("disabled", false);
+
+            console.log(
+                xhr.responseText
+            );
+
+            alert(
+                xhr.responseJSON?.message ||
+                "Error saving testimonial."
+            );
+
+        }
+
+    });
+
+});
+
 
 /* =========================
    DELETE TESTIMONIAL
 ========================= */
+
 function deleteTestimonial(id) {
 
-    if (!confirm("Are you sure?")) return;
+    if (!confirm(
+        "Are you sure you want to delete this testimonial?"
+    )) {
+        return;
+    }
+
 
     $.ajax({
-        url: DELETE_URL + "/" + id,
+
+        url:
+            DELETE_URL +
+            "/" +
+            id,
+
         method: "DELETE",
+
+
         success: function () {
-            loadTestimonials();
+
+            $(
+                `tr[data-testimonial-id="${id}"]`
+            ).remove();
+
+
+            /*
+            Show empty message
+            */
+
+            if (
+                $("#testimonialTable tr").length === 0
+            ) {
+
+                $("#testimonialTable").html(`
+
+                    <tr>
+
+                        <td colspan="4"
+                            class="text-center py-4">
+
+                            No testimonials found
+
+                        </td>
+
+                    </tr>
+
+                `);
+
+            }
+
         },
+
+
         error: function (xhr) {
-            console.log(xhr.responseText);
-            alert("Delete failed");
+
+            console.log(
+                xhr.responseText
+            );
+
+            alert(
+                "Delete failed."
+            );
+
         }
+
     });
+
 }
 
+
 /* =========================
-   SEARCH FILTER
+   SEARCH
 ========================= */
+
 $("#search").on("keyup", function () {
 
-    let value = $(this).val().toLowerCase();
+    let value =
+        $(this)
+        .val()
+        .toLowerCase();
 
-    $("#testimonialTable tr").filter(function () {
-        $(this).toggle(
-            $(this).text().toLowerCase().indexOf(value) > -1
-        );
-    });
+
+    $("#testimonialTable tr")
+        .filter(function () {
+
+            $(this).toggle(
+                $(this)
+                .text()
+                .toLowerCase()
+                .indexOf(value) > -1
+            );
+
+        });
+
 });
 
-/* INIT */
+
+/* =========================
+   INIT
+========================= */
+
 loadTestimonials();
 
 </script>

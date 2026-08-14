@@ -295,7 +295,7 @@
                     </div>
                   @if($product->category_name === 'Teas')
                       <div class="small22" style="color:#9eef0b;">
-                          Buy {{ $pack }} to get {{ $pack }} Complimentary
+                          Buy {{ $pack }} get {{ $pack }} free
                        </div>
                     @endif
 
@@ -554,7 +554,7 @@ $(document).on("click", "#subscribeCard", function () {
             updateMainPrice(finalPrice);
 
 
-            console.log("Selected option:", window.selectedOption);
+         
         });
 
     });
@@ -703,7 +703,6 @@ $(document).on("click",".cancelSubscriptionBtn",function(){
             success:function(res){
 
                 if(res.status){
-                  console.log(res);
                     Swal.fire({
                         icon:"success",
                         title:"Cancelled",
@@ -726,8 +725,7 @@ $(document).on("click",".cancelSubscriptionBtn",function(){
             },
 
             error:function(xhr){
-                 console.log(xhr);
-
+                
                 let msg="Something went wrong.";
 
                 if(xhr.responseJSON && xhr.responseJSON.message){

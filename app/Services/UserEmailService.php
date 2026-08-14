@@ -9,19 +9,25 @@ use App\Mail\AuthAttemptEmail;
 use App\Mail\BundleOrderMail;
 
 
-
-
 class UserEmailService
 {
     public function sendUserEmail($user, string $type = 'register', array $data = [])
     {
-        try
+        try{
             switch ($type) {
 
-                case 'register':
-                    Mail::to($user->email)
-                        ->send(new WelcomeUserMail($user));
-                    break;
+              case 'register':
+
+              Mail::to($user->email)
+    ->send(
+        new WelcomeUserMail(
+            $user,
+            $data['sequence'] ?? 1,
+            $data['promo_code'] ?? null
+        )
+    );
+
+                break;
 
                 case 'auth_attempt':
                     Mail::to($user->email)
@@ -44,7 +50,6 @@ class UserEmailService
 
                 break;
 
-
                 case 'birthday':
                     // future implementation
                     // Mail::to($user->email)->send(new BirthdayMail($user));
@@ -64,15 +69,11 @@ class UserEmailService
                 $data['bundle_order']
             )
         );
-
 break;
-
-
                 default:
                     Log::warning("Unknown email type: {$type}");
                     break;
             }
-
         } catch (\Exception $e) {
             Log::warning("Email sending failed ({$type}): " . $e->getMessage());
         }

@@ -197,90 +197,66 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
 <script src="{{ asset('js/slickAnimation.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
+
+
+
+
 <script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/6a087755f2f4431c3320f1cc/1jooh4a18';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
+var Tawk_API = Tawk_API || {},
+    Tawk_LoadStart = new Date();
+
+Tawk_API.onLoad = function () {
+    Tawk_API.hideWidget();
+};
+
+(function () {
+    var s1 = document.createElement("script"),
+        s0 = document.getElementsByTagName("script")[0];
+
+    s1.async = true;
+    s1.src = 'https://embed.tawk.to/6a087755f2f4431c3320f1cc/1jooh4a18';
+    s1.charset = 'UTF-8';
+    s1.setAttribute('crossorigin', '*');
+
+    s0.parentNode.insertBefore(s1, s0);
 })();
-</script> 
-
-
+</script>
 
 
 
 
 <script>
 
-console.log("Loading OneSignal...");
+
 
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 
 OneSignalDeferred.push(async function (OneSignal) {
-
-    console.log("✅ OneSignal SDK Loaded");
-
     try {
-
         await OneSignal.init({
             appId: "a41850fa-8b13-4ac9-badf-68cd0fd6b646",
         });
-console.log("Can Request Permission:",
-    OneSignal.Notifications.permissionNative);
-
-console.log("Is Push Supported:",
-    OneSignal.Notifications.isPushSupported());
-
-console.log("Current Permission:",
-    Notification.permission);
-        console.log("✅ OneSignal Initialized");
-
-        console.log("Browser Permission:", Notification.permission);
-
         // Ask for permission only if not already decided
         if (Notification.permission === "default") {
-
-            console.log("Requesting notification permission...");
-
             await OneSignal.Notifications.requestPermission();
-
-            console.log("Permission after request:", Notification.permission);
-
         }
 
-        console.log("Opted In:", OneSignal.User.PushSubscription.optedIn);
-        console.log("Subscription ID:", OneSignal.User.PushSubscription.id);
-
+       
         // Save immediately if already subscribed
         if (OneSignal.User.PushSubscription.id) {
-
-            console.log("Saving existing subscription...");
-
             await saveSubscription(OneSignal.User.PushSubscription.id);
-
         }
 
         // Listen for future changes
         OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
-
-            console.log("Subscription Changed:", event);
-
             if (!event.current?.id) {
                 console.warn("No Subscription ID");
                 return;
             }
-
             await saveSubscription(event.current.id);
 
         });
-
     } catch (err) {
-
-        console.error("OneSignal Init Error:", err);
 
     }
 
@@ -288,7 +264,7 @@ console.log("Current Permission:",
 
 async function saveSubscription(subscriptionId) {
 
-    console.log("Saving Subscription ID:", subscriptionId);
+ 
 
     try {
 
@@ -311,11 +287,11 @@ async function saveSubscription(subscriptionId) {
 
         });
 
-        console.log("HTTP Status:", response.status);
+
 
         const data = await response.json();
 
-        console.log("Laravel Response:", data);
+   
 
     } catch (err) {
 
@@ -403,11 +379,11 @@ let product = null;
 
 try {
     product = JSON.parse(decodeURIComponent(data));
-       console.log(product);
+      
 } catch {
     try {
         product = JSON.parse(data);
-       console.log(product);
+   
     } catch (err) {
         console.error("Invalid product data:", err);
         return;
@@ -417,8 +393,7 @@ try {
   window.currentQuickViewProduct = product;
   
   window.selectedProductId = product.id; 
-  console.log("Product:", product);
-console.log("Options:", product.options);
+
 
 renderQuickViewOptions(product);
   // MAIN IMAGE
@@ -543,7 +518,7 @@ document.addEventListener("click", function (e) {
     quantity: document.querySelector('input[name="quantity"]')?.value || 1
   };
 
-  console.log("CLICKED ADD TO CART", basePayload);
+ 
 
   // =========================
   // AUTH USER
@@ -564,7 +539,7 @@ document.addEventListener("click", function (e) {
   .then(res => res.json())
   .then(data => {
 
-    console.log("GUEST RESPONSE:", data);
+
 
     if (!data.guest_id) {
       Swal.fire({
@@ -605,9 +580,7 @@ function sendCart(payload) {
 
     const data = await res.json().catch(() => ({}));
 
-    console.log("SERVER RESPONSE:", res.status, data);
-
-    if (!res.ok || data.status === false) {
+       if (!res.ok || data.status === false) {
 
       Swal.fire({
         toast: true,

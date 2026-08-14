@@ -86,4 +86,84 @@ public function destroy($id)
         'message' => 'Deleted successfully'
     ]);
 }
+
+
+
+
+
+    /**
+ * UPDATE FUTURE PRODUCT
+ */
+public function update(Request $request, $id)
+{
+
+    $product = FutureProduct::findOrFail($id);
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'validity' => 'nullable|date',
+        'status' => 'nullable|boolean',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Basic Information
+    |--------------------------------------------------------------------------
+    */
+
+    $product->title = $request->title;
+    $product->validity = $request->validity;
+    $product->status = $request->status ?? true;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update Image Only If New Image Is Uploaded
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->hasFile('image')) {
+
+        $imagePath = SupabaseStorageService::upload(
+            $request->file('image'),
+            'future-products'
+        );
+
+        $product->image = $imagePath;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save Product
+    |--------------------------------------------------------------------------
+    */
+
+    $product->save();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return Public Image URL
+    |--------------------------------------------------------------------------
+    */
+
+    $product->image = $product->image
+        ? SupabaseStorageService::getPublicUrl($product->image)
+        : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Future product updated successfully',
+        'data' => $product
+    ]);
+}
 }

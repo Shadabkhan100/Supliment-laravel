@@ -2283,17 +2283,16 @@ async function submitBundleOrder() {
                 result.message || "Something went wrong."
             );
         }
-        console.log("Closing Drawer...");
+        const orderId = result.order_id;
+const total = result.data.total || 0;
+const type = "bundle";
+
+console.log("Closing Drawer...");
 closeBundleDrawer();
 resetBundleBuilder();
-console.log("Drawer Closed");
-        Swal.fire({
-            icon: "success",
-            title: "Success",
-            text: result.message
-        });
 
-        console.log(result);
+window.location.href =
+    `/stripe/checkout?order_ids=${orderId}&total=${total}&type=${type}`;
 
     } catch (error) {
 

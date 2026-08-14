@@ -12,6 +12,49 @@ return [
 })->values();
 @endphp
 <style>
+.quantityControlX1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-right: 10px;
+}
+
+.quantityBtnX1 {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: #222;
+  color: #fff;
+  border-radius: 7px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.quantityBtnX1:hover:not(:disabled) {
+  background: #9eef0b;
+  color: #000;
+}
+
+.quantityBtnX1:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.quantityValueX1 {
+  min-width: 25px;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.packInfoX1 {
+  margin-left: 5px;
+  color: #aaa;
+}
+
 .checkoutBtnX1 {
   position: relative;
   min-width: 220px;
@@ -310,30 +353,52 @@ return [
           </div>
 
           <div class="cartMetaX1">
-            Qty: {{ $qty }} | {{ $pack }} Packs
+            Qty:
+            <span class="cartQtyTextX1">{{ $qty }}</span>
+            |
+            {{ $pack }} Packs
+          </div>
+          <div class="cartMetaX1">
+
+            <div class="quantityControlX1" data-cart-id="{{ $item->id }}">
+
+              <button type="button" class="quantityBtnX1 quantity-decrease" data-cart-id="{{ $item->id }}"
+                {{ $qty <= 1 ? 'disabled' : '' }}>
+                −
+              </button>
+
+              <span class="quantityValueX1">
+                {{ $qty }}
+              </span>
+
+              <button type="button" class="quantityBtnX1 quantity-increase" data-cart-id="{{ $item->id }}">
+                +
+              </button>
+
+            </div>
+
+
+
           </div>
         </div>
 
         <!-- PRICE -->
         <div class="cartPriceX1">
 
-          <!-- SUBTOTAL -->
-          <div class="cartPriceMainX1 currency-price" data-value="{{ $subtotal }}">
-            {{ number_format($item->subtotal, 2) }}
+          <div class="cartPriceMainX1 currency-price cart-item-subtotal" data-value="{{ $subtotal }}">
+            {{ number_format($subtotal, 2) }}
           </div>
 
-          <!-- UNIT PRICE -->
-          <!-- UNIT PRICE -->
-          <div class="cartPriceSubX1 currency-price" data-value="{{ $unitPrice / max($pack,1) }}">
-            {{ number_format($unitPrice / max($pack,1), 2) }} each
+          <div class="cartPriceSubX1 currency-price" data-value="{{ $unitPrice / max($pack, 1) }}">
+            {{ number_format($unitPrice / max($pack, 1), 2) }} each
           </div>
 
-          <!-- VIEW -->
           <div class="mt-3">
             <a href="javascript:void(0)" class="btn btn-sm btn-outline-light view-product-btn mx-1"
               data-cart-id="{{ $item->id }}" data-bs-toggle="modal" data-bs-target="#productModal">
               <i class="fas fa-eye"></i>
             </a>
+
             <a href="javascript:void(0)" class="btn btn-sm btn-outline-danger delete-cart-btn mx-1"
               data-cart-id="{{ $item->id }}">
               <i class="fas fa-trash"></i>
@@ -374,19 +439,51 @@ return [
           <span>Shipping</span>
           <span>Free</span>
         </div>
-        @php
-        $discount = 0; // or from coupon logic later
-        @endphp
         <div class="summaryRowX1">
-          <span>Discount</span>
-          <span class="currency-price" data-value="{{ $discount }}">
-            {{ number_format($discount, 2) }}
+          <span>
+            Discount
+            <small id="discountPercentage"></small>
+          </span>
+
+          <span id="discountAmount" class="currency-price" data-value="0">
+            £0.00
           </span>
         </div>
 
+
+
+        @auth
+
+        <div class="summaryLineX1 mt-3 align-items-center">
+
+          <label class="mb-2 fw-bold w-100">
+            Use Promo Code
+          </label>
+
+          <div class="d-flex gap-2 w-100">
+
+            <input type="text" id="promoCode" value="{{ $promoCode?->code ?? '' }}" placeholder="Enter promo code"
+              autocomplete="off">
+
+            <button type="button" class="btn btn-success" id="applyPromoBtn">
+              Apply
+            </button>
+
+          </div>
+
+        </div>
+
+        <div id="promoMessage" class="mt-2"></div>
+
+        @endauth
+
+
+
+
+        <div id="promoMessage" class="mt-2"></div>
         <div class="summaryTotalX1">
           Total:
-          <span class="currency-price" data-value="{{ $grandTotal }}">
+          <span id="grandTotal" class="currency-price" data-value="{{ $grandTotal }}">
             {{ number_format($grandTotal,2) }}
           </span>
         </div>
@@ -394,14 +491,13 @@ return [
         <form action="{{ route('stripe.checkout') }}" method="POST">
           @csrf
 
-          {{-- total price --}}
-          <input type="hidden" name="total" value="{{ $grandTotal }}">
+          <input type="hidden" name="total" id="checkoutTotal" value="{{ $grandTotal }}">
 
-          {{-- cart IDs --}}
           <input type="hidden" name="cart_ids" value="{{ $cartItems->pluck('id')->implode(',') }}">
 
           <button type="submit" class="btn btn-success w-100 mt-3">
-            Pay <span class="currency-price" data-value="{{ $grandTotal }}">
+            Pay
+            <span id="payTotal" class="currency-price" data-value="{{ $grandTotal }}">
               {{ number_format($grandTotal,2) }}
             </span>
           </button>
@@ -586,359 +682,1894 @@ return [
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-window.cartItemsPayload = @json($cartPayload);
-</script>
+
 
 <script>
+window.cartItemsPayload = @json($cartPayload);
+
 window.currencyConfig = @json(config('currency'));
 window.currentCurrency = "{{ session('currency', 'GBP') }}";
 
+/*
+|--------------------------------------------------------------------------
+| DEFAULT / FALLBACK UK LOCATION
+|--------------------------------------------------------------------------
+|
+| London coordinates are used if address geocoding fails.
+|
+*/
+
+const DEFAULT_LAT = 51.5074;
+const DEFAULT_LNG = -0.1278;
+
+
+/*
+|--------------------------------------------------------------------------
+| CURRENCY
+|--------------------------------------------------------------------------
+*/
+
 function formatCurrency(value) {
 
-  const currency = window.currentCurrency || "GBP";
-  const config = window.currencyConfig?.currencies?. [currency];
+    const currency = window.currentCurrency || "GBP";
 
-  if (!config) {
-    return value.toFixed(2);
-  }
+    const config =
+        window.currencyConfig?.currencies?.[currency];
 
-  const converted = parseFloat(value) * parseFloat(config.rate);
+    if (!config) {
+        return Number(value).toFixed(2);
+    }
 
-  return `${config.symbol}${converted.toFixed(2)}`;
+    const converted =
+        parseFloat(value) * parseFloat(config.rate);
+
+    return `${config.symbol}${converted.toFixed(2)}`;
 }
+
 
 function updateAllPrices() {
 
-  document.querySelectorAll('.currency-price').forEach(el => {
+    document.querySelectorAll('.currency-price').forEach(el => {
 
-    const raw = parseFloat(el.dataset.value || 0);
+        const raw =
+            parseFloat(el.dataset.value || 0);
 
-    if (isNaN(raw)) return;
+        if (isNaN(raw)) {
+            return;
+        }
 
-    let formatted = formatCurrency(raw);
+        let formatted =
+            formatCurrency(raw);
 
-    if (el.classList.contains('cartPriceSubX1')) {
-      formatted += ' each';
-    }
+        if (el.classList.contains('cartPriceSubX1')) {
+            formatted += ' each';
+        }
 
-    el.innerText = formatted;
-  });
-
+        el.innerText = formatted;
+    });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  updateAllPrices();
+
+document.addEventListener('DOMContentLoaded', function () {
+    updateAllPrices();
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| VIEW PRODUCT
+|--------------------------------------------------------------------------
+*/
 
+document.addEventListener('click', function (e) {
 
+    const btn =
+        e.target.closest('.view-product-btn');
 
-document.addEventListener('click', function(e) {
-
-  const btn = e.target.closest('.view-product-btn');
-  if (!btn) return;
-
-  window.__cartItemId = btn.dataset.cartId;
-
-});
-
-
-
-
-
-document.addEventListener('click', async function(e) {
-
-  const btn = e.target.closest('.delete-cart-btn');
-  if (!btn) return;
-
-  const id = btn.dataset.cartId;
-
-  const confirmDelete = await Swal.fire({
-    title: "Are you sure?",
-    text: "This item will be removed from your cart.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Yes, delete it!"
-  });
-
-  if (!confirmDelete.isConfirmed) return;
-
-  try {
-
-    const res = await fetch(`/api/cart/delete/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-      }
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-
-      Swal.fire({
-        title: "Deleted!",
-        text: "Cart item removed successfully.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false
-      });
-
-      const card = btn.closest('.cartItemCardX1');
-
-      const subtotalEl = card.querySelector('.cartPriceMainX1');
-      const removedAmount = parseFloat(subtotalEl.dataset.value || 0);
-      card.remove();
-
-      // Update summary
-      document.querySelectorAll('.summaryRowX1 .currency-price, .summaryTotalX1 .currency-price')
-        .forEach(el => {
-
-          let current = parseFloat(el.dataset.value || 0);
-
-          current -= removedAmount;
-
-          if (current < 0) current = 0;
-
-          el.dataset.value = current;
-        });
-
-      updateAllPrices();
-      refreshCartCount();
-
-    } else {
-
-      Swal.fire({
-        title: "Error",
-        text: data.message || "Failed to delete item.",
-        icon: "error"
-      });
-
+    if (!btn) {
+        return;
     }
 
-  } catch (error) {
-
-    Swal.fire({
-      title: "Error",
-      text: "Something went wrong.",
-      icon: "error"
-    });
-
-    console.error(error);
-  }
-
+    window.__cartItemId =
+        btn.dataset.cartId;
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| DELETE CART ITEM
+|--------------------------------------------------------------------------
+*/
 
+document.addEventListener('click', async function (e) {
 
+    const btn =
+        e.target.closest('.delete-cart-btn');
 
+    if (!btn) {
+        return;
+    }
 
+    const id =
+        btn.dataset.cartId;
 
+    const confirmDelete =
+        await Swal.fire({
+            title: "Are you sure?",
+            text: "This item will be removed from your cart.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!"
+        });
 
-document.addEventListener('DOMContentLoaded', function() {
+    if (!confirmDelete.isConfirmed) {
+        return;
+    }
 
-  const proceedBtn = document.getElementById('proceedCheckoutBtn');
-  const backBtn = document.getElementById('backToCartBtn');
+    try {
 
-  const cartWrap = document.getElementById('cartWrapX1');
-  const checkoutWrap = document.getElementById('checkoutWrapX1');
+        const res =
+            await fetch(`/api/cart/delete/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                }
+            });
 
-  if (proceedBtn) {
+        const data =
+            await res.json();
 
-    proceedBtn.addEventListener('click', function() {
+        if (data.success) {
 
-      cartWrap.style.display = 'none';
-      checkoutWrap.style.display = 'flex';
-      initMap();
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+            await Swal.fire({
+                title: "Deleted!",
+                text: "Cart item removed successfully.",
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false
+            });
 
-    });
+            const card =
+                btn.closest('.cartItemCardX1');
 
-  }
+            const subtotalEl =
+                card.querySelector('.cartPriceMainX1');
 
-  if (backBtn) {
+            const removedAmount =
+                parseFloat(
+                    subtotalEl.dataset.value || 0
+                );
 
-    backBtn.addEventListener('click', function() {
+            card.remove();
 
-      checkoutWrap.style.display = 'none';
-      cartWrap.style.display = 'block';
+            /*
+            |--------------------------------------------------------------------------
+            | Update summary
+            |--------------------------------------------------------------------------
+            */
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+            document
+                .querySelectorAll(
+                    '.summaryRowX1 .currency-price, .summaryTotalX1 .currency-price'
+                )
+                .forEach(el => {
 
-    });
+                    let current =
+                        parseFloat(
+                            el.dataset.value || 0
+                        );
 
-  }
+                    current -= removedAmount;
 
+                    if (current < 0) {
+                        current = 0;
+                    }
+
+                    el.dataset.value = current;
+                });
+
+            updateAllPrices();
+
+            if (typeof refreshCartCount === 'function') {
+                refreshCartCount();
+            }
+
+        } else {
+
+            Swal.fire({
+                title: "Error",
+                text:
+                    data.message ||
+                    "Failed to delete item.",
+                icon: "error"
+            });
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        Swal.fire({
+            title: "Error",
+            text: "Something went wrong.",
+            icon: "error"
+        });
+    }
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| CHECKOUT
+|--------------------------------------------------------------------------
+*/
 
-let map;
-let marker;
+document.addEventListener('DOMContentLoaded', function () {
+
+    const proceedBtn =
+        document.getElementById('proceedCheckoutBtn');
+
+    const backBtn =
+        document.getElementById('backToCartBtn');
+
+    const cartWrap =
+        document.getElementById('cartWrapX1');
+
+    const checkoutWrap =
+        document.getElementById('checkoutWrapX1');
+
+
+    if (proceedBtn) {
+
+        proceedBtn.addEventListener('click', function () {
+
+            cartWrap.style.display = 'none';
+
+            checkoutWrap.style.display = 'flex';
+
+            initMap();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Try to find address immediately
+            |--------------------------------------------------------------------------
+            */
+
+            setTimeout(() => {
+                geocodeDeliveryAddress();
+            }, 500);
+
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+
+    if (backBtn) {
+
+        backBtn.addEventListener('click', function () {
+
+            checkoutWrap.style.display = 'none';
+
+            cartWrap.style.display = 'block';
+
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| LEAFLET MAP
+|--------------------------------------------------------------------------
+*/
+
+let map = null;
+let marker = null;
+
 let selectedLat = null;
 let selectedLng = null;
 
+
+/*
+|--------------------------------------------------------------------------
+| INITIALIZE MAP
+|--------------------------------------------------------------------------
+*/
+
 function initMap() {
 
-  // prevent double init
-  if (map) {
-    setTimeout(() => {
-      map.invalidateSize(); // FIX for hidden container issue
-    }, 200);
-    return;
-  }
+    /*
+    |--------------------------------------------------------------------------
+    | Prevent double initialization
+    |--------------------------------------------------------------------------
+    */
 
-  // default location (Riyadh)
-  const defaultLat = 24.7136;
-  const defaultLng = 46.6753;
+    if (map) {
 
-  map = L.map('map', {
-    center: [defaultLat, defaultLng],
-    zoom: 10,
-    zoomControl: true
-  });
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  // click event
-  map.on('click', function(e) {
-
-    selectedLat = e.latlng.lat;
-    selectedLng = e.latlng.lng;
-
-    // update marker
-    if (marker) {
-      marker.setLatLng(e.latlng);
-    } else {
-      marker = L.marker(e.latlng).addTo(map);
+        return;
     }
 
-    console.log("Selected:", selectedLat, selectedLng);
-  });
 
-  // FIX: map must recalc size after visible
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 300);
+    /*
+    |--------------------------------------------------------------------------
+    | Default UK location
+    |--------------------------------------------------------------------------
+    */
+
+    selectedLat = DEFAULT_LAT;
+    selectedLng = DEFAULT_LNG;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create map
+    |--------------------------------------------------------------------------
+    */
+
+    map = L.map('map', {
+        center: [
+            DEFAULT_LAT,
+            DEFAULT_LNG
+        ],
+        zoom: 10,
+        zoomControl: true
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OpenStreetMap tiles
+    |--------------------------------------------------------------------------
+    */
+
+    L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            attribution:
+                '&copy; OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default marker
+    |--------------------------------------------------------------------------
+    */
+
+    marker =
+        L.marker([
+            DEFAULT_LAT,
+            DEFAULT_LNG
+        ])
+        .addTo(map)
+        .bindPopup('Delivery Location');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manual map click
+    |--------------------------------------------------------------------------
+    */
+
+    map.on('click', function (e) {
+
+        selectedLat =
+            e.latlng.lat;
+
+        selectedLng =
+            e.latlng.lng;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Move marker
+        |--------------------------------------------------------------------------
+        */
+
+        updateMapMarker(
+            selectedLat,
+            selectedLng
+        );
+
+
+        console.log(
+            'Manually selected location:',
+            selectedLat,
+            selectedLng
+        );
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fix hidden map rendering
+    |--------------------------------------------------------------------------
+    */
+
+    setTimeout(() => {
+
+        map.invalidateSize();
+
+    }, 300);
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| UPDATE MAP MARKER
+|--------------------------------------------------------------------------
+*/
+
+function updateMapMarker(lat, lng) {
+
+    if (!map) {
+        return;
+    }
 
 
-document.addEventListener('DOMContentLoaded', function() {
+    /*
+    |--------------------------------------------------------------------------
+    | Update coordinates
+    |--------------------------------------------------------------------------
+    */
 
-  const checkoutBtn = document.querySelector('.checkoutBtnX1');
+    selectedLat = parseFloat(lat);
 
-  if (!checkoutBtn) return;
+    selectedLng = parseFloat(lng);
 
-  checkoutBtn.addEventListener('click', async function() {
 
-    checkoutBtn.disabled = true;
-    checkoutBtn.classList.add('loading');
+    /*
+    |--------------------------------------------------------------------------
+    | Create marker if missing
+    |--------------------------------------------------------------------------
+    */
 
-    checkoutBtn.innerHTML = `
-    <span class="btn-spinner"></span>
-    Creating Order...
-`;
+    if (!marker) {
 
-    const payload = {
-      name: document.getElementById('name')?.value || '',
-      email: document.getElementById('email')?.value || '',
-      phone: document.getElementById('phone')?.value || '',
+        marker =
+            L.marker([
+                selectedLat,
+                selectedLng
+            ])
+            .addTo(map);
 
-      address1: document.getElementById('address1')?.value || '',
-      city: document.getElementById('city')?.value || '',
-      postal: document.getElementById('postal')?.value || '',
-      country: document.getElementById('country')?.value || '',
+    } else {
 
-      lat: typeof selectedLat !== 'undefined' ? selectedLat : null,
-      lng: typeof selectedLng !== 'undefined' ? selectedLng : null,
+        marker.setLatLng([
+            selectedLat,
+            selectedLng
+        ]);
+    }
 
-      items: Array.isArray(window.cartItemsPayload) ?
-        window.cartItemsPayload : [],
-    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | Move map
+    |--------------------------------------------------------------------------
+    */
+
+    map.setView(
+        [
+            selectedLat,
+            selectedLng
+        ],
+        15,
+        {
+            animate: true
+        }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Popup
+    |--------------------------------------------------------------------------
+    */
+
+    marker
+        .bindPopup('Delivery Location')
+        .openPopup();
+
+
+    console.log(
+        'Map coordinates:',
+        selectedLat,
+        selectedLng
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| GET DELIVERY ADDRESS
+|--------------------------------------------------------------------------
+*/
+
+function getDeliveryAddress() {
+
+    const address1 =
+        document.getElementById('address1')?.value.trim() || '';
+
+    const city =
+        document.getElementById('city')?.value.trim() || '';
+
+    const country =
+        document.getElementById('country')?.value.trim() || '';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Combine address fields
+    |--------------------------------------------------------------------------
+    */
+
+    const fullAddress =
+        [
+            address1,
+            city,
+            country
+        ]
+        .filter(Boolean)
+        .join(', ');
+
+
+    return fullAddress;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| GEOCODE DELIVERY ADDRESS
+|--------------------------------------------------------------------------
+|
+| Uses Nominatim / OpenStreetMap.
+|
+*/
+
+async function geocodeDeliveryAddress() {
+
+    const address =
+        getDeliveryAddress();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | No address entered
+    |--------------------------------------------------------------------------
+    */
+
+    if (!address) {
+
+        console.log(
+            'No delivery address entered. Using UK default.'
+        );
+
+        useDefaultUKLocation();
+
+        return;
+    }
+
+
+    console.log(
+        'Searching location for:',
+        address
+    );
+
 
     try {
-      const res = await fetch('/create-cart-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify(payload)
-      });
 
-      const data = await res.json().catch(() => null);
+        /*
+        |--------------------------------------------------------------------------
+        | Nominatim API
+        |--------------------------------------------------------------------------
+        */
 
-      console.log('HTTP STATUS:', res.status);
-      console.log('RESPONSE DATA:', data);
+        const url =
+            `https://nominatim.openstreetmap.org/search?` +
+            `format=json` +
+            `&q=${encodeURIComponent(address)}` +
+            `&limit=1`;
 
-      if (!res.ok) {
-        console.error('Server Error Response:', data);
-        alert(data?.message || 'Server error occurred');
-        checkoutBtn.disabled = false;
-        checkoutBtn.classList.remove('loading');
 
-        checkoutBtn.innerHTML = `
-    <i class="fas fa-lock"></i>
-    <span class="btn-text">Continue To Payment</span>
-`;
-        return;
-      }
+        const response =
+            await fetch(url, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
 
-      if (data?.status) {
 
-        const orderIds = data.order_ids || [];
-        const total = data.total_price || 0;
-
-        if (!orderIds.length) {
-          alert('No orders created');
-
-          return;
+        if (!response.ok) {
+            throw new Error(
+                `Geocoding request failed: ${response.status}`
+            );
         }
 
-        window.location.href =
-          `/stripe/checkout?order_ids=${orderIds.join(',')}&total=${total}`;
 
-      } else {
-        console.error('Application Error:', data);
-        alert(data?.message || 'Order creation failed');
-        checkoutBtn.disabled = false;
-        checkoutBtn.classList.remove('loading');
+        const results =
+            await response.json();
 
-        checkoutBtn.innerHTML = `
-    <i class="fas fa-lock"></i>
-    <span class="btn-text">Continue To Payment</span>
-`;
-      }
+
+        /*
+        |--------------------------------------------------------------------------
+        | No result
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !Array.isArray(results) ||
+            results.length === 0
+        ) {
+
+            throw new Error(
+                'No location found for this address.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get coordinates
+        |--------------------------------------------------------------------------
+        */
+
+        const lat =
+            parseFloat(results[0].lat);
+
+        const lng =
+            parseFloat(results[0].lon);
+
+
+        if (
+            isNaN(lat) ||
+            isNaN(lng)
+        ) {
+
+            throw new Error(
+                'Invalid coordinates returned by geocoder.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update map
+        |--------------------------------------------------------------------------
+        */
+
+        updateMapMarker(
+            lat,
+            lng
+        );
+
+
+        console.log(
+            'Address successfully located:',
+            results[0].display_name
+        );
+
 
     } catch (error) {
-      console.error('Fetch Failed (Network/JS Error):', error);
-      alert('Network error while creating order');
-      checkoutBtn.disabled = false;
-      checkoutBtn.classList.remove('loading');
 
-      checkoutBtn.innerHTML = `
-    <i class="fas fa-lock"></i>
-    <span class="btn-text">Continue To Payment</span>
-`;
+        console.error(
+            'Address geocoding failed:',
+            error
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FALLBACK TO UK
+        |--------------------------------------------------------------------------
+        */
+
+        useDefaultUKLocation();
     }
-  });
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| UK FALLBACK
+|--------------------------------------------------------------------------
+*/
+
+function useDefaultUKLocation() {
+
+    selectedLat =
+        DEFAULT_LAT;
+
+    selectedLng =
+        DEFAULT_LNG;
+
+
+    if (map) {
+
+        updateMapMarker(
+            DEFAULT_LAT,
+            DEFAULT_LNG
+        );
+    }
+
+
+    console.log(
+        'Using UK fallback location:',
+        DEFAULT_LAT,
+        DEFAULT_LNG
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADDRESS FIELD EVENTS
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const address1 =
+        document.getElementById('address1');
+
+    const city =
+        document.getElementById('city');
+
+    const country =
+        document.getElementById('country');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Debounce geocoding
+    |--------------------------------------------------------------------------
+    */
+
+    let geocodeTimer = null;
+
+
+    function scheduleGeocoding() {
+
+        clearTimeout(geocodeTimer);
+
+
+        geocodeTimer =
+            setTimeout(() => {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Only geocode when map exists
+                |--------------------------------------------------------------------------
+                */
+
+                if (!map) {
+                    return;
+                }
+
+                geocodeDeliveryAddress();
+
+            }, 1000);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Address changes
+    |--------------------------------------------------------------------------
+    */
+
+    if (address1) {
+        address1.addEventListener(
+            'input',
+            scheduleGeocoding
+        );
+    }
+
+
+    if (city) {
+        city.addEventListener(
+            'input',
+            scheduleGeocoding
+        );
+    }
+
+
+    if (country) {
+        country.addEventListener(
+            'input',
+            scheduleGeocoding
+        );
+    }
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| CONTINUE TO PAYMENT / CREATE ORDER
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const checkoutBtn =
+        document.querySelector('.checkoutBtnX1');
+
+
+    if (!checkoutBtn) {
+        return;
+    }
+
+
+    checkoutBtn.addEventListener(
+        'click',
+        async function () {
+
+            checkoutBtn.disabled = true;
+
+            checkoutBtn.classList.add('loading');
+
+
+            checkoutBtn.innerHTML = `
+                <span class="btn-spinner"></span>
+                Creating Order...
+            `;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Make sure coordinates exist
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                selectedLat === null ||
+                selectedLng === null
+            ) {
+
+                useDefaultUKLocation();
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Payload
+            |--------------------------------------------------------------------------
+            */
+
+            const payload = {
+
+                name:
+                    document.getElementById('name')?.value || '',
+
+                email:
+                    document.getElementById('email')?.value || '',
+
+                phone:
+                    document.getElementById('phone')?.value || '',
+
+
+                address1:
+                    document.getElementById('address1')?.value || '',
+
+                city:
+                    document.getElementById('city')?.value || '',
+
+                postal:
+                    document.getElementById('postal')?.value || '',
+
+                country:
+                    document.getElementById('country')?.value || '',
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Selected map coordinates
+                |--------------------------------------------------------------------------
+                */
+
+                lat:
+                    selectedLat,
+
+                lng:
+                    selectedLng,
+
+
+                items:
+                    Array.isArray(window.cartItemsPayload)
+                        ? window.cartItemsPayload
+                        : []
+            };
+
+
+            console.log(
+                'Order payload:',
+                payload
+            );
+
+
+            try {
+
+                const csrfToken =
+                    document.querySelector(
+                        'meta[name="csrf-token"]'
+                    )?.getAttribute('content');
+
+
+                const res =
+                    await fetch(
+                        '/create-cart-order',
+                        {
+                            method: 'POST',
+
+                            headers: {
+
+                                'Content-Type':
+                                    'application/json',
+
+                                'Accept':
+                                    'application/json',
+
+                                'X-CSRF-TOKEN':
+                                    csrfToken
+                            },
+
+                            body:
+                                JSON.stringify(payload)
+                        }
+                    );
+
+
+                const data =
+                    await res
+                        .json()
+                        .catch(() => null);
+
+
+                console.log(
+                    'HTTP STATUS:',
+                    res.status
+                );
+
+                console.log(
+                    'RESPONSE DATA:',
+                    data
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Server error
+                |--------------------------------------------------------------------------
+                */
+
+                if (!res.ok) {
+
+                    console.error(
+                        'Server Error Response:',
+                        data
+                    );
+
+
+                    alert(
+                        data?.message ||
+                        'Server error occurred'
+                    );
+
+
+                    resetCheckoutButton();
+
+                    return;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Order created
+                |--------------------------------------------------------------------------
+                */
+
+                if (data?.status) {
+
+                    const orderIds =
+                        data.order_ids || [];
+
+                    const total =
+                        data.total_price || 0;
+
+
+                    if (!orderIds.length) {
+
+                        alert(
+                            'No orders created'
+                        );
+
+
+                        resetCheckoutButton();
+
+                        return;
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Go to Stripe
+                    |--------------------------------------------------------------------------
+                    */
+
+                    window.location.href =
+                        `/stripe/checkout?order_ids=${orderIds.join(',')}&total=${total}`;
+
+
+                } else {
+
+                    console.error(
+                        'Application Error:',
+                        data
+                    );
+
+
+                    alert(
+                        data?.message ||
+                        'Order creation failed'
+                    );
+
+
+                    resetCheckoutButton();
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    'Fetch Failed:',
+                    error
+                );
+
+
+                alert(
+                    'Network error while creating order'
+                );
+
+
+                resetCheckoutButton();
+            }
+        }
+    );
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| RESET CHECKOUT BUTTON
+|--------------------------------------------------------------------------
+*/
+
+function resetCheckoutButton() {
+
+    const checkoutBtn =
+        document.querySelector('.checkoutBtnX1');
+
+
+    if (!checkoutBtn) {
+        return;
+    }
+
+
+    checkoutBtn.disabled = false;
+
+    checkoutBtn.classList.remove('loading');
+
+
+    checkoutBtn.innerHTML = `
+        <i class="fas fa-lock"></i>
+        <span class="btn-text">
+            Continue To Payment
+        </span>
+    `;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PROMO CODE
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const applyPromoBtn =
+        document.getElementById('applyPromoBtn');
+
+    const promoInput =
+        document.getElementById('promoCode');
+
+    const promoMessage =
+        document.getElementById('promoMessage');
+
+    const discountAmountEl =
+        document.getElementById('discountAmount');
+
+    const discountPercentageEl =
+        document.getElementById('discountPercentage');
+
+    const grandTotalEl =
+        document.getElementById('grandTotal');
+
+    const payTotalEl =
+        document.getElementById('payTotal');
+
+    const checkoutTotalEl =
+        document.getElementById('checkoutTotal');
+
+
+    const originalTotal =
+        parseFloat(
+            grandTotalEl?.dataset.value || 0
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Promo discount from Laravel
+    |--------------------------------------------------------------------------
+    */
+
+    const promoDiscount =
+        Number(
+            {{ $promoCode?->discount ?? 0 }}
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Make globally available
+    |--------------------------------------------------------------------------
+    */
+
+    window.promoDiscount =
+        promoDiscount;
+
+    window.promoApplied =
+        false;
+
+
+    if (!applyPromoBtn) {
+        return;
+    }
+
+
+    applyPromoBtn.addEventListener(
+        'click',
+        function () {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CANCEL PROMO
+            |--------------------------------------------------------------------------
+            */
+
+            if (window.promoApplied) {
+
+                window.promoApplied = false;
+
+
+                let currentSubtotal = 0;
+
+
+                document
+                    .querySelectorAll('.cartItemCardX1')
+                    .forEach(card => {
+
+                        const subtotalEl =
+                            card.querySelector(
+                                '.cart-item-subtotal'
+                            );
+
+
+                        if (!subtotalEl) {
+                            return;
+                        }
+
+
+                        const value =
+                            parseFloat(
+                                subtotalEl.dataset.value || 0
+                            );
+
+
+                        if (!isNaN(value)) {
+                            currentSubtotal += value;
+                        }
+                    });
+
+
+                grandTotalEl.dataset.value =
+                    currentSubtotal;
+
+                payTotalEl.dataset.value =
+                    currentSubtotal;
+
+                checkoutTotalEl.value =
+                    currentSubtotal.toFixed(2);
+
+
+                discountAmountEl.dataset.value =
+                    0;
+
+                discountPercentageEl.innerText =
+                    '';
+
+
+                promoInput.value =
+                    '';
+
+
+                promoMessage.innerHTML =
+                    '<span class="text-muted">Promo code removed.</span>';
+
+
+                applyPromoBtn.innerText =
+                    'Apply';
+
+
+                applyPromoBtn.classList.remove(
+                    'btn-danger'
+                );
+
+                applyPromoBtn.classList.add(
+                    'btn-success'
+                );
+
+
+                updateAllPrices();
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | APPLY PROMO
+            |--------------------------------------------------------------------------
+            */
+
+            if (!promoInput.value.trim()) {
+
+                promoMessage.innerHTML =
+                    '<span class="text-danger">No promo code available.</span>';
+
+                return;
+            }
+
+
+            if (
+                !promoDiscount ||
+                promoDiscount <= 0
+            ) {
+
+                promoMessage.innerHTML =
+                    '<span class="text-danger">This promo code is not valid.</span>';
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate discount
+            |--------------------------------------------------------------------------
+            */
+
+            const discountAmount =
+                originalTotal *
+                (promoDiscount / 100);
+
+
+            const discountedTotal =
+                originalTotal -
+                discountAmount;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update discount
+            |--------------------------------------------------------------------------
+            */
+
+            discountAmountEl.dataset.value =
+                discountAmount;
+
+
+            discountPercentageEl.innerText =
+                `(${promoDiscount}% OFF)`;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update total
+            |--------------------------------------------------------------------------
+            */
+
+            grandTotalEl.dataset.value =
+                discountedTotal;
+
+            payTotalEl.dataset.value =
+                discountedTotal;
+
+            checkoutTotalEl.value =
+                discountedTotal.toFixed(2);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Message
+            |--------------------------------------------------------------------------
+            */
+
+            promoMessage.innerHTML = `
+                <span class="text-success">
+                    Promo code applied successfully.
+                    ${promoDiscount}% discount applied.
+                </span>
+            `;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Mark promo as active
+            |--------------------------------------------------------------------------
+            */
+
+            window.promoApplied =
+                true;
+
+
+            applyPromoBtn.innerText =
+                'Cancel';
+
+
+            applyPromoBtn.classList.remove(
+                'btn-success'
+            );
+
+            applyPromoBtn.classList.add(
+                'btn-danger'
+            );
+
+
+            updateAllPrices();
+        }
+    );
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| QUANTITY UPDATE
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+    'click',
+    async function (e) {
+
+        const btn =
+            e.target.closest(
+                '.quantity-increase, .quantity-decrease'
+            );
+
+
+        if (!btn) {
+            return;
+        }
+
+
+        const cartId =
+            btn.dataset.cartId;
+
+
+        if (!cartId) {
+            return;
+        }
+
+
+        const isIncrease =
+            btn.classList.contains(
+                'quantity-increase'
+            );
+
+
+        const status =
+            isIncrease
+                ? 'increment'
+                : 'decrement';
+
+
+        const card =
+            btn.closest('.cartItemCardX1');
+
+
+        if (!card) {
+            return;
+        }
+
+
+        const quantityValue =
+            card.querySelector(
+                '.quantityValueX1'
+            );
+
+
+        const decreaseBtn =
+            card.querySelector(
+                '.quantity-decrease'
+            );
+
+
+        const increaseBtn =
+            card.querySelector(
+                '.quantity-increase'
+            );
+
+
+        const subtotalEl =
+            card.querySelector(
+                '.cart-item-subtotal'
+            );
+
+
+        if (
+            !quantityValue ||
+            !subtotalEl
+        ) {
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent multiple clicks
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            btn.dataset.loading === 'true'
+        ) {
+            return;
+        }
+
+
+        btn.dataset.loading =
+            'true';
+
+
+        decreaseBtn.disabled =
+            true;
+
+        increaseBtn.disabled =
+            true;
+
+
+        const oldQuantity =
+            parseInt(
+                quantityValue.innerText
+            ) || 1;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Loader
+        |--------------------------------------------------------------------------
+        */
+
+        quantityValue.innerHTML = `
+            <span class="btn-spinner"></span>
+        `;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/cart-items/updates/${encodeURIComponent(cartId)}/${encodeURIComponent(status)}`,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Accept':
+                                'application/json',
+
+                            'X-CSRF-TOKEN':
+                                document
+                                    .querySelector(
+                                        'meta[name="csrf-token"]'
+                                    )
+                                    .getAttribute('content')
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                'Quantity update response:',
+                data
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | API ERROR
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                console.error(
+                    data?.message ||
+                    'Unable to update product quantity.'
+                );
+
+
+                quantityValue.innerText =
+                    oldQuantity;
+
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | NEW QUANTITY
+            |--------------------------------------------------------------------------
+            */
+
+            const newQuantity =
+                parseInt(
+                    data.quantity ??
+                    data.new_quantity ??
+                    oldQuantity
+                );
+
+
+            quantityValue.innerText =
+                newQuantity;
+
+
+            const cartQtyText =
+                card.querySelector(
+                    '.cartQtyTextX1'
+                );
+
+
+            if (cartQtyText) {
+
+                cartQtyText.innerText =
+                    newQuantity;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Decrease button
+            |--------------------------------------------------------------------------
+            */
+
+            decreaseBtn.disabled =
+                newQuantity <= 1;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | PRODUCT SUBTOTAL
+            |--------------------------------------------------------------------------
+            */
+
+            let newSubtotal =
+                null;
+
+
+            if (
+                data.subtotal !== undefined
+            ) {
+
+                newSubtotal =
+                    parseFloat(
+                        data.subtotal
+                    );
+
+            } else if (
+                data.price !== undefined
+            ) {
+
+                newSubtotal =
+                    parseFloat(
+                        data.price
+                    ) * newQuantity;
+            }
+
+
+            if (
+                newSubtotal !== null &&
+                !isNaN(newSubtotal)
+            ) {
+
+                subtotalEl.dataset.value =
+                    newSubtotal;
+
+
+                subtotalEl.innerText =
+                    formatCurrency(
+                        newSubtotal
+                    );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Recalculate totals
+            |--------------------------------------------------------------------------
+            */
+
+            recalculateCartTotals();
+
+
+        } catch (error) {
+
+            console.error(
+                'Quantity update error:',
+                error
+            );
+
+
+            quantityValue.innerText =
+                oldQuantity;
+
+
+        } finally {
+
+            btn.dataset.loading =
+                'false';
+
+
+            const currentQuantity =
+                parseInt(
+                    quantityValue.innerText
+                ) || oldQuantity;
+
+
+            decreaseBtn.disabled =
+                currentQuantity <= 1;
+
+
+            increaseBtn.disabled =
+                false;
+        }
+    }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| RECALCULATE CART TOTALS
+|--------------------------------------------------------------------------
+*/
+
+function recalculateCartTotals() {
+
+    let subtotal = 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calculate subtotal
+    |--------------------------------------------------------------------------
+    */
+
+    document
+        .querySelectorAll('.cartItemCardX1')
+        .forEach(card => {
+
+            const subtotalEl =
+                card.querySelector(
+                    '.cart-item-subtotal'
+                );
+
+
+            if (!subtotalEl) {
+                return;
+            }
+
+
+            const value =
+                parseFloat(
+                    subtotalEl.dataset.value || 0
+                );
+
+
+            if (!isNaN(value)) {
+
+                subtotal += value;
+            }
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart subtotal
+    |--------------------------------------------------------------------------
+    */
+
+    const subtotalEl =
+        document.querySelector(
+            '.summaryRowX1 .currency-price'
+        );
+
+
+    if (subtotalEl) {
+
+        subtotalEl.dataset.value =
+            subtotal;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Promo
+    |--------------------------------------------------------------------------
+    */
+
+    let discountAmount =
+        0;
+
+    let finalTotal =
+        subtotal;
+
+
+    if (
+        window.promoApplied &&
+        window.promoDiscount > 0
+    ) {
+
+        discountAmount =
+            subtotal *
+            (window.promoDiscount / 100);
+
+
+        finalTotal =
+            subtotal -
+            discountAmount;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Discount amount
+    |--------------------------------------------------------------------------
+    */
+
+    const discountAmountEl =
+        document.getElementById(
+            'discountAmount'
+        );
+
+
+    if (discountAmountEl) {
+
+        discountAmountEl.dataset.value =
+            discountAmount;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Discount percentage
+    |--------------------------------------------------------------------------
+    */
+
+    const discountPercentageEl =
+        document.getElementById(
+            'discountPercentage'
+        );
+
+
+    if (discountPercentageEl) {
+
+        discountPercentageEl.innerText =
+            window.promoApplied
+                ? `(${window.promoDiscount}% OFF)`
+                : '';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Grand total
+    |--------------------------------------------------------------------------
+    */
+
+    const grandTotalEl =
+        document.getElementById(
+            'grandTotal'
+        );
+
+
+    if (grandTotalEl) {
+
+        grandTotalEl.dataset.value =
+            finalTotal;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment total
+    |--------------------------------------------------------------------------
+    */
+
+    const payTotalEl =
+        document.getElementById(
+            'payTotal'
+        );
+
+
+    if (payTotalEl) {
+
+        payTotalEl.dataset.value =
+            finalTotal;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hidden checkout total
+    |--------------------------------------------------------------------------
+    */
+
+    const checkoutTotalEl =
+        document.getElementById(
+            'checkoutTotal'
+        );
+
+
+    if (checkoutTotalEl) {
+
+        checkoutTotalEl.value =
+            finalTotal.toFixed(2);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Currency
+    |--------------------------------------------------------------------------
+    */
+
+    updateAllPrices();
+}
 </script>
+
+
 @endsection

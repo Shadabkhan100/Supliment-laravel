@@ -213,14 +213,15 @@
 
             <div class="col-md-6 mb-3 mb-md-0">
 
-                <button style=""color:white" class="btn btn-main"
-                        data-bs-toggle="modal"
-                        data-bs-target="#addProductModal">
+          <button class="btn btn-main"
+        id="addProductBtn"
+        data-bs-toggle="modal"
+        data-bs-target="#addProductModal">
 
-                    <i class="fa fa-plus"></i>
-                    Add Product
+    <i class="fa fa-plus"></i>
+    Add Product
 
-                </button>
+</button>
 
             </div>
 
@@ -284,7 +285,7 @@
 
             <div class="modal-header border-0">
 
-                <h4 class="fw-bold">Add Future Product</h4>
+                <h4 class="fw-bold" id="productModalTitle">Add Future Product</h4>
 
                 <button type="button"
                         class="btn-close"
@@ -340,12 +341,13 @@
 
     <div class="custom-upload-wrapper">
 
-        <input style="display:block"  type="file"
-               id="image"
-               class="custom-file-input"
-               name="image"
-               accept="image/*"
-               required>
+        <input
+            type="file"
+            id="image"
+            class="custom-file-input"
+            name="image"
+            accept="image/*"
+        >
 
         <label for="image" class="custom-upload-box">
 
@@ -357,6 +359,33 @@
 
         </label>
 
+        <!-- IMAGE PREVIEW -->
+        <div
+            id="imagePreviewWrapper"
+            style="display:none; margin-top:15px;"
+        >
+
+            <div class="fw-bold mb-2">
+                Image Preview
+            </div>
+
+            <img
+                id="imagePreview"
+                src=""
+                alt="Product Image"
+                style="
+                    width:180px;
+                    height:120px;
+                    object-fit:cover;
+                    border-radius:12px;
+                    border:1px solid #ddd;
+                    padding:4px;
+                    background:#fff;
+                "
+            >
+
+        </div>
+
     </div>
 
 </div>
@@ -367,12 +396,13 @@
 
                     <div class="text-end mt-3">
 
-                        <button type="submit"
-                                class="btn btn-main px-4">
+                     <button type="submit"
+        class="btn btn-main px-4"
+        id="productSubmitBtn">
 
-                            Save Product
+    Save Product
 
-                        </button>
+</button>
 
                     </div>
 
@@ -395,239 +425,941 @@
 
 <script>
 
-    const API_URL = "/api/get-future-products";
-    const STORE_API = "/api/future-products";
+const API_URL = "/api/get-future-products";
+const STORE_API = "/api/future-products";
 const DELETE_API = "/api/future-products";
+
+/*
+|--------------------------------------------------------------------------
+| EDIT STATE
+|--------------------------------------------------------------------------
+*/
+
+let editProductId = null;
+
+
+/*
+|--------------------------------------------------------------------------
+| IMAGE NAME
+|--------------------------------------------------------------------------
+*/
+
 $("#image").on("change", function () {
 
     let fileName = this.files[0]?.name;
 
-    if(fileName){
+    if (fileName) {
 
         $("#uploadText").text(fileName);
 
-    }else{
+    } else {
 
         $("#uploadText").text("Click to Upload Image");
 
     }
 
 });
-    $(document).ready(function () {
 
-        loadProducts();
+
+/*
+|--------------------------------------------------------------------------
+| DOCUMENT READY
+|--------------------------------------------------------------------------
+*/
+
+$(document).ready(function () {
+
+    loadProducts();
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| LOADER
+|--------------------------------------------------------------------------
+*/
+
+function showLoader() {
+
+    $("#globalLoader").css("display", "flex");
+
+}
+
+
+function hideLoader() {
+
+    $("#globalLoader").hide();
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| LOAD PRODUCTS
+|--------------------------------------------------------------------------
+*/
+
+function loadProducts() {
+
+    showLoader();
+
+    $.ajax({
+
+        url: API_URL,
+        type: "GET",
+
+        success: function (res) {
+
+            let html = "";
+
+            if (!res.data || res.data.length === 0) {
+
+                html = `
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            No products found
+                        </td>
+                    </tr>
+                `;
+
+            } else {
+
+                res.data.forEach((item) => {
+
+                    html += createProductRow(item);
+
+                });
+
+            }
+
+            $("#productTable").html(html);
+
+            hideLoader();
+
+        },
+
+        error: function () {
+
+            hideLoader();
+
+            $("#productTable").html(`
+                <tr>
+                    <td colspan="6"
+                        class="text-center text-danger py-5">
+
+                        Failed to load products
+
+                    </td>
+                </tr>
+            `);
+
+        }
 
     });
 
-    function showLoader(){
-        $("#globalLoader").css("display","flex");
-    }
+}
 
-    function hideLoader(){
-        $("#globalLoader").hide();
-    }
 
-    function loadProducts(){
+/*
+|--------------------------------------------------------------------------
+| CREATE TABLE ROW
+|--------------------------------------------------------------------------
+| Used both when loading products and after editing.
+|--------------------------------------------------------------------------
+*/
 
-        showLoader();
+function createProductRow(item) {
+
+    let remainingDays =
+        calculateRemainingDays(item.validity);
+
+    let statusBadge =
+        remainingDays < 0
+            ? `<span class="status-expired">Expired</span>`
+            : `<span class="status-active">Active</span>`;
+
+    return `
+
+        <tr data-product-id="${item.id}">
+
+            <td>
+
+                <img src="${item.image}"
+                     class="product-img">
+
+            </td>
+
+
+            <td>
+
+                <strong>
+                    ${item.title}
+                </strong>
+
+            </td>
+
+
+            <td>
+
+                ${item.validity ?? '-'}
+
+            </td>
+
+
+            <td>
+
+                ${
+                    remainingDays >= 0
+                        ? remainingDays + ' Days'
+                        : 'Expired'
+                }
+
+            </td>
+
+
+            <td>
+
+                ${statusBadge}
+
+            </td>
+
+
+            <td>
+
+                <button
+                    class="action-btn btn btn-primary">
+
+                    <i class="fa fa-eye"></i>
+
+                </button>
+
+
+                <button
+                    class="action-btn btn btn-warning edit-product-btn"
+                    data-id="${item.id}">
+
+                    <i class="fa fa-edit"></i>
+
+                </button>
+
+
+                <button
+                    class="action-btn btn btn-danger"
+                    onclick="deleteProduct(${item.id}, this)">
+
+                    <i class="fa fa-trash"></i>
+
+                </button>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REMAINING DAYS
+|--------------------------------------------------------------------------
+*/
+
+function calculateRemainingDays(date) {
+
+    if (!date) return '-';
+
+    const today = new Date();
+
+    const validityDate = new Date(date);
+
+    const diffTime =
+        validityDate - today;
+
+    return Math.ceil(
+        diffTime / (1000 * 60 * 60 * 24)
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADD BUTTON
+|--------------------------------------------------------------------------
+| Reset modal to ADD mode.
+|--------------------------------------------------------------------------
+*/
+
+$("#addProductBtn").on("click", function () {
+
+    resetProductModal();
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| RESET MODAL
+|--------------------------------------------------------------------------
+*/
+
+function resetProductModal() {
+
+    editProductId = null;
+
+    $("#productModalTitle")
+        .text("Add Future Product");
+
+    $("#productSubmitBtn")
+        .text("Save Product");
+
+    $("#productForm")[0].reset();
+
+    $("#image").val("");
+
+    $("#uploadText")
+        .text("Click to Upload Image");
+
+    $("#imagePreview")
+        .attr("src", "");
+
+    $("#imagePreviewWrapper")
+        .hide();
+
+    $("#productForm")
+        .removeData("current-image");
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EDIT PRODUCT
+|--------------------------------------------------------------------------
+*/
+
+$(document).on("click", ".edit-product-btn", function () {
+
+    const id = $(this).data("id");
+
+    editProductId = id;
+
+    showLoader();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get product from API
+    |--------------------------------------------------------------------------
+    */
+
+    $.ajax({
+
+        url: API_URL,
+        type: "GET",
+
+        success: function (res) {
+
+            const product =
+                res.data.find(
+                    item => String(item.id) === String(id)
+                );
+
+            if (!product) {
+
+                hideLoader();
+
+                alert("Product not found.");
+
+                return;
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fill modal
+            |--------------------------------------------------------------------------
+            */
+
+            $("#productModalTitle")
+                .text("Edit Future Product");
+
+            $("#productSubmitBtn")
+                .text("Update Product");
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Product title
+            |--------------------------------------------------------------------------
+            */
+
+            $('input[name="title"]')
+                .val(product.title || "");
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Validity
+            |--------------------------------------------------------------------------
+            */
+
+            $('input[name="validity"]')
+                .val(product.validity || "");
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status
+            |--------------------------------------------------------------------------
+            */
+
+            $('select[name="status"]')
+                .val(
+                    product.status !== undefined
+                        ? product.status
+                        : 1
+                );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reset image input
+            |--------------------------------------------------------------------------
+            */
+
+            $("#image").val("");
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Show existing image name
+            |--------------------------------------------------------------------------
+            */
+
+     if (product.image) {
+
+    $("#uploadText").text(
+        "Select a new image to replace this image"
+    );
+
+    $("#imagePreview")
+        .attr("src", product.image);
+
+    $("#imagePreviewWrapper").show();
+
+} else {
+
+    $("#uploadText")
+        .text("Click to Upload Image");
+
+    $("#imagePreview")
+        .attr("src", "");
+
+    $("#imagePreviewWrapper")
+        .hide();
+
+}
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Store current image
+            |--------------------------------------------------------------------------
+            */
+
+            $("#productForm")
+                .data("current-image", product.image || "");
+
+
+            hideLoader();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Open modal
+            |--------------------------------------------------------------------------
+            */
+
+            const modalElement =
+                document.getElementById(
+                    "addProductModal"
+                );
+
+            const modal =
+                bootstrap.Modal.getOrCreateInstance(
+                    modalElement
+                );
+
+            modal.show();
+
+        },
+
+        error: function () {
+
+            hideLoader();
+
+            alert(
+                "Failed to load product details."
+            );
+
+        }
+
+    });
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| SEARCH
+|--------------------------------------------------------------------------
+*/
+
+$("#searchInput").on("keyup", function () {
+
+    let value =
+        $(this).val().toLowerCase();
+
+    $("#productTable tr").filter(function () {
+
+        $(this).toggle(
+            $(this)
+                .text()
+                .toLowerCase()
+                .indexOf(value) > -1
+        );
+
+    });
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| ADD / EDIT PRODUCT
+|--------------------------------------------------------------------------
+*/
+
+$("#productForm").submit(function (e) {
+   
+    e.preventDefault();
+
+    showLoader();
+
+    const form =
+        this;
+
+    const formData =
+        new FormData(form);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT MODE
+    |--------------------------------------------------------------------------
+    */
+
+    if (editProductId) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing image
+        |--------------------------------------------------------------------------
+        */
+
+        const currentImage =
+            $(form).data("current-image");
+
+        if (currentImage) {
+
+            formData.append(
+                "current_image",
+                currentImage
+            );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Edit API
+        |--------------------------------------------------------------------------
+        */
 
         $.ajax({
 
-            url: API_URL,
-            type: "GET",
+            url:
+                "/future-product/edit/"
+                + editProductId,
 
-            success: function (res){
+            type: "POST",
 
-                let html = "";
+            data: formData,
 
-                if(res.data.length === 0){
+            processData: false,
 
-                    html = `
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                No products found
-                            </td>
-                        </tr>
-                    `;
+            contentType: false,
+             headers: {
+        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+    },
 
-                }else{
+            success: function (res) {
 
-                    res.data.forEach((item)=>{
+                hideLoader();
 
-                        let remainingDays = calculateRemainingDays(item.validity);
 
-                        let statusBadge = remainingDays < 0
-                            ? `<span class="status-expired">Expired</span>`
-                            : `<span class="status-active">Active</span>`;
+                /*
+                |--------------------------------------------------------------------------
+                | Updated product
+                |--------------------------------------------------------------------------
+                */
 
-                        html += `
-                            <tr>
+                const updatedProduct =
+                    res.data || res.product;
 
-                                <td>
-                                    <img src="${item.image}"
-                                         class="product-img">
-                                </td>
 
-                                <td>
-                                    <strong>${item.title}</strong>
-                                </td>
+                /*
+                |--------------------------------------------------------------------------
+                | If backend returns updated product
+                |--------------------------------------------------------------------------
+                */
 
-                                <td>
-                                    ${item.validity ?? '-'}
-                                </td>
+                if (updatedProduct) {
 
-                                <td>
-                                    ${remainingDays >= 0
-                                        ? remainingDays + ' Days'
-                                        : 'Expired'}
-                                </td>
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Replace ONLY the edited row
+                    |--------------------------------------------------------------------------
+                    */
 
-                                <td>
-                                    ${statusBadge}
-                                </td>
+                    const row =
+                        $(
+                            `tr[data-product-id="${editProductId}"]`
+                        );
 
-                                <td>
+                    row.replaceWith(
+                        createProductRow(
+                            updatedProduct
+                        )
+                    );
 
-                                    <button class="action-btn btn btn-primary">
-                                        <i class="fa fa-eye"></i>
-                                    </button>
+                } else {
 
-                                    <button class="action-btn btn btn-warning">
-                                        <i class="fa fa-edit"></i>
-                                    </button>
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Fallback
+                    |--------------------------------------------------------------------------
+                    */
 
-                                   <button class="action-btn btn btn-danger"
-                                        onclick="deleteProduct(${item.id}, this)">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-  
-
-                                </td>
-
-                            </tr>
-                        `;
-
-                    });
+                    loadProducts();
 
                 }
 
-                $("#productTable").html(html);
 
-                hideLoader();
+                /*
+                |--------------------------------------------------------------------------
+                | Close modal
+                |--------------------------------------------------------------------------
+                */
+
+                const modalElement =
+                    document.getElementById(
+                        "addProductModal"
+                    );
+
+                const modal =
+                    bootstrap.Modal.getInstance(
+                        modalElement
+                    );
+
+                if (modal) {
+
+                    modal.hide();
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Reset
+                |--------------------------------------------------------------------------
+                */
+
+                resetProductModal();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Success message
+                |--------------------------------------------------------------------------
+                */
+
+                alert(
+                    res.message ||
+                    "Product updated successfully."
+                );
 
             },
 
-            error:function (){
+            error: function (err) {
 
                 hideLoader();
 
+                console.error(
+                    "Update error:",
+                    err
+                );
+
+                alert(
+                    err.responseJSON?.message ||
+                    "Failed to update product."
+                );
+
+            }
+
+        });
+
+
+        return;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADD MODE
+    |--------------------------------------------------------------------------
+    */
+
+    $.ajax({
+
+        url: STORE_API,
+
+        type: "POST",
+
+        data: formData,
+
+        processData: false,
+
+        contentType: false,
+
+        success: function (res) {
+
+            hideLoader();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Close modal
+            |--------------------------------------------------------------------------
+            */
+
+            const modalElement =
+                document.getElementById(
+                    "addProductModal"
+                );
+
+            const modal =
+                bootstrap.Modal.getInstance(
+                    modalElement
+                );
+
+            if (modal) {
+
+                modal.hide();
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reset form
+            |--------------------------------------------------------------------------
+            */
+
+            resetProductModal();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Add new row instantly
+            |--------------------------------------------------------------------------
+            */
+
+            const newProduct =
+                res.data || res.product;
+
+            if (newProduct) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Remove "No products found"
+                |--------------------------------------------------------------------------
+                */
+
+                $("#productTable")
+                    .find(
+                        'td[colspan="6"]'
+                    )
+                    .closest("tr")
+                    .remove();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Add row
+                |--------------------------------------------------------------------------
+                */
+
+                $("#productTable")
+                    .prepend(
+                        createProductRow(
+                            newProduct
+                        )
+                    );
+
+            } else {
+
+                loadProducts();
+
+            }
+
+
+            alert(
+                res.message ||
+                "Product added successfully."
+            );
+
+        },
+
+        error: function (err) {
+
+            hideLoader();
+
+            console.error(
+                "Store error:",
+                err
+            );
+
+            alert(
+                err.responseJSON?.message ||
+                "Something went wrong."
+            );
+
+        }
+
+    });
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE PRODUCT
+|--------------------------------------------------------------------------
+*/
+
+function deleteProduct(id, el) {
+
+    if (!confirm("Are you sure?")) return;
+
+    showLoader();
+
+    $.ajax({
+
+        url:
+            DELETE_API + "/" + id,
+
+        type: "DELETE",
+
+        success: function () {
+
+            $(el)
+                .closest("tr")
+                .remove();
+
+            hideLoader();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | If no rows remain
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $("#productTable tr").length === 0
+            ) {
+
                 $("#productTable").html(`
                     <tr>
-                        <td colspan="6" class="text-center text-danger py-5">
-                            Failed to load products
+                        <td colspan="6"
+                            class="text-center py-5">
+
+                            No products found
+
                         </td>
                     </tr>
                 `);
 
             }
 
-        });
+        },
 
-    }
+        error: function () {
 
-    function calculateRemainingDays(date){
+            hideLoader();
 
-        if(!date) return '-';
+            alert(
+                "Delete failed"
+            );
 
-        const today = new Date();
-
-        const validityDate = new Date(date);
-
-        const diffTime = validityDate - today;
-
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    }
-
-    // SEARCH
-    $("#searchInput").on("keyup", function() {
-
-        let value = $(this).val().toLowerCase();
-
-        $("#productTable tr").filter(function() {
-
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-
-        });
+        }
 
     });
 
-    // STORE PRODUCT
-    $("#productForm").submit(function (e){
+}
 
-        e.preventDefault();
 
-        showLoader();
 
-        let formData = new FormData(this);
+$("#image").on("change", function () {
 
-        $.ajax({
+    const file = this.files[0];
 
-            url: STORE_API,
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
+    if (file) {
 
-            success:function (res){
+        // Show selected file name
+        $("#uploadText").text(file.name);
 
-                hideLoader();
+        // Create temporary preview
+        const reader = new FileReader();
 
-                $("#addProductModal").modal('hide');
+        reader.onload = function (e) {
 
-                $("#productForm")[0].reset();
+            $("#imagePreview")
+                .attr("src", e.target.result);
 
-                loadProducts();
+            $("#imagePreviewWrapper").show();
 
-            },
+        };
 
-            error:function (err){
+        reader.readAsDataURL(file);
 
-                hideLoader();
+    } else {
 
-                alert("Something went wrong");
-
-                console.log(err);
-
-            }
-
-        });
-
-    });
-  function deleteProduct(id, el){
-
-        if(!confirm("Are you sure?")) return;
-
-        showLoader();
-
-        $.ajax({
-            url: DELETE_API + "/" + id,
-            type: "DELETE",
-
-            success:function(){
-
-                $(el).closest("tr").remove();
-                hideLoader();
-
-            },
-
-            error:function(){
-                hideLoader();
-                alert("Delete failed");
-            }
-        });
+        // No new image selected
+        $("#uploadText").text("Click to Upload Image");
 
     }
+
+});
+
+
+
+
+
 </script>
-
 @endsection

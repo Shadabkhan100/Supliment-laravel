@@ -140,7 +140,7 @@
 /* responsive */
 @media (max-width: 380px) {
   .shipping-features {
-    flex-direction: column;
+   
     gap: 15px;
   }
  .product-text-container .product-text-page{
@@ -305,7 +305,7 @@
 
 @if($product->old_price)
 <h6
-    class="dark-gray text-decoration-line-through old-price"
+    class="color-quant text-decoration-line-through old-price"
     data-price="{{ $product->old_price }}">
     {{ number_format($product->old_price, 2) }}
 </h6>
@@ -503,31 +503,7 @@
   </div>
 </div>
 @endif
-                <!-- HALAL CERTIFICATION -->
-                @if(!empty($product->halal_certification))
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="headingHalal">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                      data-bs-target="#collapseHalal">
-                      Halal Certification
-                    </button>
-                  </h2>
-                  <div id="collapseHalal" class="accordion-collapse collapse" data-bs-parent="#productAccordion">
-                    <div class="accordion-body">
-
-                      <img src="{{ $product->halal_certification }}" style="
-                width: 100%;
-                max-width: 100%;
-                height: 300px;
-                object-fit: contain;
-                border-radius: 12px;
-                background: #fff;
-             ">
-
-                    </div>
-                  </div>
-                </div>
-                @endif
+               
 
               </div>
             </div>
@@ -580,10 +556,7 @@ $(window).on('load', function () {
 function formatPrice(value) {
   const currency = window.currentCurrency || window.currencyConfig.default || "GBP";
   const config = window.currencyConfig?.currencies?. [currency];
-  console.log("Currency:", currency);
-  console.log("Config found:", config);
-  console.log("Symbol:", config?.symbol);
-  if (!config) return value;
+   if (!config) return value;
 
   const converted = value * config.rate;
 
@@ -615,21 +588,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-document.addEventListener("click", function (e) {
+$(document)
+    .off("click.quantityHandler")
+    .on("click.quantityHandler", ".increment", function (e) {
+console.clear();
 
-    if (e.target.closest(".increment")) {
+console.log(
+    jQuery._data(document, "events").click
+        .map((x, i) => ({
+            index: i,
+            namespace: x.namespace,
+            selector: x.selector,
+            guid: x.guid,
+            handler: x.handler.toString()
+        }))
+);
+        e.preventDefault();
+        e.stopPropagation();
 
-        const quantityBox = e.target.closest(".input-area");
+        const quantityBox = this.closest(".input-area");
         const input = quantityBox.querySelector(".number");
 
-        input.value = (parseInt(input.value) || 1) + 1;
+        let qty = parseInt(input.value) || 1;
+
+        input.value = qty + 1;
 
         updateTotalPrice();
-    }
+    })
+    .off("click.quantityHandler", ".decrement")
+    .on("click.quantityHandler", ".decrement", function (e) {
 
-    if (e.target.closest(".decrement")) {
+        e.preventDefault();
+        e.stopPropagation();
 
-        const quantityBox = e.target.closest(".input-area");
+        const quantityBox = this.closest(".input-area");
         const input = quantityBox.querySelector(".number");
 
         let qty = parseInt(input.value) || 1;
@@ -639,9 +631,7 @@ document.addEventListener("click", function (e) {
         }
 
         updateTotalPrice();
-    }
-
-});
+    });
 
 function updateTotalPrice() {
 

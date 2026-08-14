@@ -45,6 +45,10 @@ $table->unsignedBigInteger('user_id')->nullable();
 $table->string('guest_id')->nullable();
 $table->boolean('payment_status')->default(0);
 $table->string('order_status')->default('Pending');
+$table->string('currency')->nullable();
+$table->decimal('paid_amount', 10, 2)->nullable();
+$table->string('payment_intent')->nullable();
+$table->string('stripe_session_id')->nullable();
             $table->timestamps();
         });
     }

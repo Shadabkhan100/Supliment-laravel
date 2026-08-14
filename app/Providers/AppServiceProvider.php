@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\View;
 use App\Models\CartModel;
 use Illuminate\Support\Facades\Auth;
 use App\Models\WebModel;
+use App\Models\PromoCode;
+
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,11 +36,13 @@ class AppServiceProvider extends ServiceProvider
         $symbol = $config['symbol'] ?? '$';
 
         $cartItems = collect();
-
+        $promoCode = null;
         if ($user) {
 
             // AUTH USER CART
-            $cartItems = CartModel::where('user_id', $user->id)->get();
+            $cartItems = CartModel::where('user_id', $user->id)->get(); 
+           $promoCode = PromoCode::where('user_id', $user->id)
+    ->where('is_used', 0)->latest()->first();
 
         } else {
 
@@ -61,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
             'currencySymbol' => $symbol,
             'authUser' => $user,
             'websiteSetting'  => $websiteSetting,
+            'promoCode' => $promoCode
         ]);
     });
 }

@@ -107,6 +107,7 @@ app(UserEmailService::class)->sendUserEmail(
             'success' => true,
             'message' => 'Bundle order created successfully.',
             'order_id' => $bundleOrder->id,
+             'type' => 'type',
             'data' => $bundleOrder
         ], 201);
 

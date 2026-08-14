@@ -1,8 +1,17 @@
 @extends('layout.Main')
 
 @section('content')
-
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <style>
+.auth-btn:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+}
+
+.auth-btn i {
+    margin-right: 8px;
+}
 .auth-wrapper{
     min-height: 100vh;
     display:flex;
@@ -152,8 +161,8 @@
             <button id="signupTab">Sign Up</button>
         </div>
 
-       <form id="loginForm" method="POST" action="/login">
-    @csrf
+       <form id="loginForm">
+   
 
     <div class="input-group">
         <input type="email"
@@ -171,7 +180,9 @@
                required>
     </div>
 
-    <button type="submit" class="auth-btn">Login</button>
+    <button type="submit" class="auth-btn" id="loginBtn">
+    Login
+</button>
  <button type="button"
         class="auth-btn"
         style="margin-top:10px; background:#1c1c1c; color:#aaa;"
@@ -342,57 +353,7 @@ async function getUserLocation() {
 
 
 
-loginForm.addEventListener("submit", async (e) => {
 
-    e.preventDefault();
-
-    showLoader();
-
-    try {
-
-        const geo = await getUserLocation();
-
-        const res = await fetch("/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                email: document.getElementById("login_email").value,
-                password: document.getElementById("login_password").value,
-
-                latitude: geo?.latitude || null,
-                longitude: geo?.longitude || null,
-
-                location: geo?.location || null
-            })
-        });
-
-        const data = await res.json();
-
-        Swal.fire({
-            toast: true,
-            position: "top-end",
-            icon: data.success ? "success" : "error",
-            title: data.message || "Request Failed",
-            showConfirmButton: false,
-            timer: 3000
-        });
-
-        if (data.success) {
-            window.location.href = data.redirect || "/";
-        }
-
-    } catch (err) {
-
-        console.error(err);
-
-    } finally {
-
-        hideLoader();
-    }
-});
 
 // SIGNUP API
 signupForm.addEventListener("submit", async (e) => {
@@ -531,6 +492,78 @@ document.querySelectorAll('.password-toggle').forEach(toggle => {
 });
 
 
+
+
+
+const loginBtn = document.getElementById("loginBtn");
+
+loginForm.addEventListener("submit", async function (e) {
+
+    e.preventDefault();
+
+    const originalText = loginBtn.innerHTML;
+
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = `
+        <i class="fas fa-spinner fa-spin"></i>
+        Loading...
+    `;
+
+    try {
+
+        const formData = new FormData(loginForm);
+
+        // append location fields if they exist
+        formData.append("latitude", selectedLat ?? "");
+        formData.append("longitude", selectedLng ?? "");
+        formData.append(
+            "location",
+            document.getElementById("selectedCoords")?.innerText || ""
+        );
+
+        const response = await fetch(loginForm.action, {
+            method: "POST",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRF-TOKEN": document.querySelector(
+                    'meta[name="csrf-token"]'
+                ).content
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+
+            loginBtn.innerHTML = `
+                <i class="fas fa-check"></i>
+                Success
+            `;
+
+            setTimeout(() => {
+                window.location.href = data.redirect;
+            }, 300);
+
+        } else {
+
+            alert(data.message || "Login failed.");
+
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = originalText;
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Something went wrong. Please try again.");
+
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = originalText;
+    }
+
+});
 
 </script>
 @include("modules.subscribe-us")

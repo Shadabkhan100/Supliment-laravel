@@ -71,4 +71,93 @@ class TestimonialsController extends Controller
         'message' => 'Testimonial deleted successfully'
     ]);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   public function update(Request $request, $id)
+{
+    $testimonial = Testimonials::findOrFail($id);
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'role' => 'nullable|string|max:255',
+        'message' => 'required|string',
+        'rating' => 'nullable|integer|min:1|max:5',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update basic information
+    |--------------------------------------------------------------------------
+    */
+
+    $testimonial->name = $request->name;
+    $testimonial->role = $request->role ?? 'Customer';
+    $testimonial->message = $request->message;
+    $testimonial->rating = $request->rating ?? 5;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update image only if a new image was uploaded
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->hasFile('image')) {
+
+        $imagePath = SupabaseStorageService::upload(
+            $request->file('image'),
+            'Testimonials'
+        );
+
+        $testimonial->image = $imagePath;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save testimonial
+    |--------------------------------------------------------------------------
+    */
+
+    $testimonial->save();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create public image URL for frontend
+    |--------------------------------------------------------------------------
+    */
+
+    $testimonial->image = $testimonial->image
+        ? SupabaseStorageService::getPublicUrl(
+            $testimonial->image
+        )
+        : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Testimonial updated successfully',
+        'data' => $testimonial
+    ]);
+}
 }

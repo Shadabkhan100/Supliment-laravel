@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Http;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
 use App\Services\OneSignalService;
-
+use App\Models\BundleOrder;
 
 
 
@@ -34,11 +34,13 @@ class PaymentController extends Controller
 {
 
 
-
 public function checkout(Request $request)
 {
     $total = (float) $request->total;
     $orderIds = explode(',', $request->order_ids);
+
+    // New field
+    $type = $request->type ?? 'order';
 
     Stripe::setApiKey(config('services.stripe.secret'));
 
@@ -59,6 +61,9 @@ public function checkout(Request $request)
 
         'metadata' => [
             'order_ids' => implode(',', $orderIds),
+
+            // Newly added field
+            'type' => $type,
         ],
 
         'success_url' => route('stripe.success') . '?session_id={CHECKOUT_SESSION_ID}',
@@ -85,6 +90,9 @@ public function success(Request $request)
             ? array_filter(explode(',', $session->metadata->order_ids))
             : [];
 
+        // New field (defaults to the old behaviour)
+        $type = $session->metadata->type ?? 'order';
+
         if (empty($orderIds)) {
             return view('payment-gateway.success', [
                 'message' => 'No order IDs found in Stripe session',
@@ -93,21 +101,40 @@ public function success(Request $request)
         }
 
         // Actual Stripe values
-        $currency = strtoupper($session->currency);          // GBP, USD, SAR...
-        $amountPaid = $session->amount_total / 100;          // Stripe returns cents
+        $currency = strtoupper($session->currency);
+        $amountPaid = $session->amount_total / 100;
 
-        GuestOrder::whereIn('id', $orderIds)
-            ->update([
-                'payment_status' => 1,
-                'currency'       => $currency,
-                'paid_amount'    => $amountPaid,
-                'stripe_session_id' => $session->id,
-                'payment_intent' => $session->payment_intent,
-            ]);
+        $updateData = [
+            'payment_status'   => 1,
+            'currency'         => $currency,
+            'paid_amount'      => $amountPaid,
+            'stripe_session_id' => $session->id,
+            'payment_intent'   => $session->payment_intent,
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update the appropriate model
+        |--------------------------------------------------------------------------
+        */
+
+        if ($type === 'bundle') {
+
+            BundleOrder::whereIn('id', $orderIds)
+                ->update($updateData);
+
+        } else {
+
+            // Old functionality remains unchanged
+            GuestOrder::whereIn('id', $orderIds)
+                ->update($updateData);
+        }
+
         app(OneSignalService::class)->sendToAdmins(
-    '💳 Payment Received',
-    "Payment of {$currency} {$amountPaid} has been received for Order(s): #" . implode(', #', $orderIds)
-);
+            '💳 Payment Received',
+            "Payment of {$currency} {$amountPaid} has been received for Order(s): #" . implode(', #', $orderIds)
+        );
+
         return view('payment-gateway.success', [
             'message' => 'Payment successful',
             'orders' => $orderIds,
@@ -123,7 +150,6 @@ public function success(Request $request)
         ], 500);
     }
 }
-
 
 private function createOrdersFromAuthCart(array $cartIds, Request $request)
 {

@@ -1,13 +1,16 @@
 <!-- BENEFITS SECTION START -->
 <section class="benefit-section py-40">
   <div class="container-fluid">
-    
+
     <div class="d-flex align-content-end justify-content-between flex-sm-row flex-column gap-sm-0 gap-24 mb-48">
       <div>
         <h2 class="fw-600 mb-12" style="color:#9eef0b;">Why Choose Us</h2>
         <p style="color:white;">
-We are dedicated to delivering premium quality, purity, and performance in every product we create. From detox teas to shilajit resin, shilajit coffee, and collagen electrolytes, each formula is crafted using carefully sourced ingredients and strict quality standards. Designed for real results, our products elevate your daily wellness routine—helping you feel energised, balanced, and at your best.
-       </p>
+          We are dedicated to delivering premium quality, purity, and performance in every product we create. From detox
+          teas to shilajit resin, shilajit coffee, and collagen electrolytes, each formula is crafted using carefully
+          sourced ingredients and strict quality standards. Designed for real results, our products elevate your daily
+          wellness routine—helping you feel energised, balanced, and at your best.
+        </p>
       </div>
     </div>
 
@@ -59,8 +62,8 @@ We are dedicated to delivering premium quality, purity, and performance in every
       </div>
 
       <!-- LIVE CHAT -->
-      <div class="col-xl-3 col-lg-4 col-sm-6">
-        <a href="/live-chat" style="text-decoration:none; color:inherit; display:block;">
+      <div onclick="openLiveChat()" class="col-xl-3 col-lg-4 col-sm-6" style="cursor:pointer;">
+        <a style="text-decoration:none; color:inherit; display:block;">
           <div class="benefit-block d-flex flex-column gap-24 p-24">
             <div class="benefit-icon">
               <img src="images/quality-icon-4.png" alt="Live Chat" />

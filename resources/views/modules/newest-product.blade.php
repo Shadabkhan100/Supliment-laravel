@@ -2,7 +2,7 @@
 
 
 <div class="coming-soon-wrapper" style="justify-content: center;display: flex;margin: auto;">
-    <img src="{{ asset('images/home/coming-soon.png') }}" alt="Coming Soon">
+    <img style="margin-top: -117px;" src="{{ asset('images/home/coming-soon.png') }}" alt="Coming Soon">
 </div>
 
 <!-- NEWEST PRODUCTS START -->
