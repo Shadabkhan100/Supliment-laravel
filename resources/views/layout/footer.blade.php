@@ -21,8 +21,22 @@
 </style>
 <!-- Footer Disclaimer Section -->
 <div
-  style="background:#111; border:2px solid #9eef0b; border-radius:12px; padding:30px; margin-top:40px; color:#fff; font-size:14px; line-height:1.8;">
 
+
+
+  style="background:black; border:2px solid #9eef0b; border-radius:12px; padding:30px; margin-top:40px; color:#fff; font-size:14px; line-height:1.8;">
+<div style="width:100%; text-align:center;">
+    <img 
+        src="{{ asset('images/home/footlocker.jpeg') }}"
+        alt="Footlocker"
+        style="
+            width:70%;
+            height:auto;
+            display:block;
+            margin:0 auto;
+        "
+    >
+</div>
   <h3
     style="color:#9eef0b; margin:0 0 15px; font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
     DISCLAIMER
@@ -60,11 +74,13 @@
   <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
     Money-Back Guarantee
   </h4>
-
-  <p style="margin:0 0 20px; color:#fff;">
+<p style="margin:0 0 20px; color:#fff;">
     We offer a money-back guarantee on all purchases, subject to our Terms and Conditions.
     Please review these for full details.
-  </p>
+    <a href="{{ url('/return-policy') }}" style="color:#fff; text-decoration:underline;">
+        Refund &amp; Return Policy
+    </a>
+</p>
 
   <h4 style="color:#9eef0b; margin:25px 0 10px; font-size:18px; font-weight:600;">
     Website Imagery Disclaimer

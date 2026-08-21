@@ -725,9 +725,11 @@
             <!-- SETTINGS -->
             <div class="tab-content hideX9" id="settings">
               <div class="userTitleX9">Settings</div>
-              <div class="userInfoBoxX9">
-                <button class="userBtnX9">Change Password</button>
-              </div>
+             <div class="userInfoBoxX9">
+    <a href="{{ url('/reset-password') }}" class="userBtnX9">
+        Change Password
+    </a>
+</div>
             </div>
             <div class="tab-content hideX9" id="subscription">
               <div class="userTitleX9">

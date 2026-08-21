@@ -1,4 +1,16 @@
 <!-- FEATURE PRODUCTS START -->
+
+<style>
+.add-to-wishlist.active {
+    background-color: #a4fd0c !important;
+}
+
+.add-to-wishlist.active i {
+    color: #000 !important;
+}
+
+
+</style>
 <section class="feature-products p-40">
   <div class="container-fluid">
 
@@ -81,7 +93,14 @@ async function loadProducts() {
     json.data.forEach(product => {
 
       const mainImage = product.main_image || '';
+        const wishlist = JSON.parse(
+          localStorage.getItem('wishlist') || '[]'
+      );
 
+      // Check if this product is already in wishlist
+      const isInWishlist = wishlist.some(
+          item => Number(item.id) === Number(product.id)
+      );
       const discountLabel = product.old_price
         ? `-${Math.round(((product.old_price - product.price) / product.old_price) * 100)}%`
         : '';
@@ -129,9 +148,16 @@ async function loadProducts() {
               <i class="fa-regular fa-eye"></i>
              </a>
 
-              <a href="javascript:;">
-                <i class="fa-light fa-heart"></i>
-              </a>
+   <a href="javascript:;" 
+   class="add-to-wishlist ${isInWishlist ? 'active' : ''}"
+   data-product='${encodeURIComponent(JSON.stringify(product))}'
+   style="${isInWishlist ? 'background-color:#a4fd0c !important;' : ''}">
+   
+    <i class="${isInWishlist ? 'fa-solid' : 'fa-light'} fa-heart"
+       style="${isInWishlist ? 'color:#000 !important;' : ''}">
+    </i>
+
+</a>
 
              
             </div>
@@ -242,5 +268,157 @@ async function loadProducts() {
 }
 
 loadProducts();
+
+
+
+
+
+document.addEventListener('click', function (e) {
+
+    const wishlistBtn = e.target.closest('.add-to-wishlist');
+
+    if (!wishlistBtn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+
+        const product = JSON.parse(
+            decodeURIComponent(wishlistBtn.dataset.product)
+        );
+
+        let wishlist = JSON.parse(
+            localStorage.getItem('wishlist') || '[]'
+        );
+
+        const existingIndex = wishlist.findIndex(
+            item => Number(item.id) === Number(product.id)
+        );
+
+        const icon = wishlistBtn.querySelector('i');
+
+        // ==========================================
+        // REMOVE FROM WISHLIST
+        // ==========================================
+
+        if (existingIndex !== -1) {
+
+            wishlist.splice(existingIndex, 1);
+
+            localStorage.setItem(
+                'wishlist',
+                JSON.stringify(wishlist)
+            );
+
+            wishlistBtn.classList.remove('active');
+
+            wishlistBtn.style.removeProperty('background-color');
+
+            if (icon) {
+
+                icon.classList.remove('fa-solid');
+                icon.classList.add('fa-light');
+
+                icon.style.removeProperty('color');
+
+            }
+
+            // Success message
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Removed from wishlist',
+                text: product.name,
+                showConfirmButton: false,
+                timer: 2200,
+                timerProgressBar: true
+            });
+
+            console.log(
+                'Removed from wishlist:',
+                product.name
+            );
+
+        }
+
+        // ==========================================
+        // ADD TO WISHLIST
+        // ==========================================
+
+        else {
+
+            wishlist.push(product);
+
+            localStorage.setItem(
+                'wishlist',
+                JSON.stringify(wishlist)
+            );
+
+            wishlistBtn.classList.add('active');
+
+            wishlistBtn.style.setProperty(
+                'background-color',
+                '#a4fd0c',
+                'important'
+            );
+
+            if (icon) {
+
+                icon.classList.remove('fa-light');
+                icon.classList.add('fa-solid');
+
+                icon.style.setProperty(
+                    'color',
+                    '#000',
+                    'important'
+                );
+
+            }
+
+            // Success message
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Added to wishlist',
+                text: product.name,
+                showConfirmButton: false,
+                timer: 2200,
+                timerProgressBar: true
+            });
+
+            console.log(
+                'Added to wishlist:',
+                product
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            'Error updating wishlist:',
+            error
+        );
+
+        // Error message
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Something went wrong',
+            text: 'We couldn’t update your wishlist. Please try again.',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+    }
+
+});
+
+
 
 </script>

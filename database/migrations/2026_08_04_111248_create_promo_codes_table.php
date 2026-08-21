@@ -15,7 +15,11 @@ return new class extends Migration
     $table->id();
 
     $table->foreignId('user_id')->nullable();
-
+  $table->string('order_id')
+  $table->string('guest_id')
+        ->nullable()
+        ->index()
+        ->after('user_id');
     $table->string('code')->unique();
 
     $table->integer('discount');

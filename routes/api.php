@@ -12,6 +12,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TestimonialsController;
+use App\Http\Controllers\PaymentController;
+
+Route::post('/test-upsell-promotion', [PaymentController::class, 'testUpsellPromotion']);
 
 
 

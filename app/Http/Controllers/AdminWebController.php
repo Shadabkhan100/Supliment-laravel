@@ -25,6 +25,9 @@ use App\Services\UserEmailService;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderStatusMail;
 use App\Models\ContactForm;
+use App\Models\PromoCode;
+
+
 
 class AdminWebController extends Controller
 {
@@ -227,11 +230,20 @@ public function showLogin()
         return view('admin.auth.forgot');
     }
 
+
+
 public function getOrdersView()
 {
     $orders = GuestOrder::latest()->get()->map(function ($order) {
 
         $product = ProductsModel::find($order->product_id);
+
+        // Get promo assigned to this order
+        $promo = null;
+
+        if (!empty($order->promo_id)) {
+            $promo = PromoCode::find($order->promo_id);
+        }
 
         return [
             'id' => $order->id,
@@ -240,19 +252,31 @@ public function getOrdersView()
             'payment_status' => $order->payment_status,
             'order_status' => $order->order_status,
             'created_at' => $order->created_at,
-            'lat' =>  $order->lat,
-             'lng' =>  $order->lng,
-             'paid_amount' =>  $order->paid_amount,
+            'lat' => $order->lat,
+            'lng' => $order->lng,
+            'paid_amount' => $order->paid_amount,
             'name' => $order->name,
             'email' => $order->email,
             'phone' => $order->phone,
 
-            'product' => $product ? $this->formatProduct($product) : null,
+            // IMPORTANT
+            'promo' => $promo ? [
+                'id' => $promo->id,
+                'code' => $promo->code,
+                'discount' => $promo->discount,
+                'is_used' => $promo->is_used,
+            ] : null,
+
+            'product' => $product
+                ? $this->formatProduct($product)
+                : null,
         ];
     });
-
+     
     return view('admin.orders', compact('orders'));
 }
+
+
 private function formatProduct($product, $categories = null)
 {
     $categories = $categories ?? CategoriesModel::pluck('name', 'id');

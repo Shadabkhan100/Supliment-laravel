@@ -219,7 +219,32 @@ $emails = [
 
 
 
+public function LoginUser(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
+    if (Auth::attempt([
+        'email' => $request->email,
+        'password' => $request->password
+    ])) {
+
+        $request->session()->regenerate();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User logged in successfully.',
+            'redirect' => '/profile'
+        ]);
+    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Invalid email or password.'
+    ], 401);
+}
 public function loginAdmin(Request $request)
 {
     $request->validate([
@@ -356,4 +381,315 @@ if ($request->hasFile('avatar')) {
         ]);
     }
 
+
+
+
+
+
+
+     public function resetPasswordView(){
+
+       return view("pages.reset_password_form");
+
+     }
+
+
+
+
+     public function sendResetOtp(Request $request)
+{
+    try {
+
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Don't reveal whether the email exists
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$user) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'We could not find an account with that email address.'
+            ], 404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate 6 digit OTP
+        |--------------------------------------------------------------------------
+        */
+
+        $otp = (string) random_int(100000, 999999);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Store OTP
+        |--------------------------------------------------------------------------
+        */
+
+        $user->password_reset_otp = $otp;
+
+        $user->password_reset_otp_expires_at = now()->addMinutes(10);
+
+        $user->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Send OTP through your existing email service
+        |--------------------------------------------------------------------------
+        */
+
+        $emailService = app(UserEmailService::class);
+
+        $emailService->sendUserEmail(
+            $user,
+            'password_reset_otp',
+            [
+                'otp' => $otp
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'A verification code has been sent to your email.'
+        ]);
+
+    } catch (ValidationException $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Please enter a valid email address.',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Password Reset OTP Error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to send the verification code.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+
+           public function verifyResetOtp(Request $request)
+{
+    try {
+
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification request.'
+            ], 404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check OTP
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !$user->password_reset_otp ||
+            $user->password_reset_otp !== $request->otp
+        ) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification code.'
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check expiration
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !$user->password_reset_otp_expires_at ||
+            now()->greaterThan($user->password_reset_otp_expires_at)
+        ) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'This verification code has expired. Please request a new code.'
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mark OTP as verified
+        |--------------------------------------------------------------------------
+        |
+        | We use the session temporarily so the user can proceed
+        | to the password step.
+        |
+        */
+
+        session([
+            'password_reset_user_id' => $user->id,
+            'password_reset_verified' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP verified successfully.'
+        ]);
+
+    } catch (ValidationException $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid OTP.',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Password Reset OTP Verification Error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to verify the code.'
+        ], 500);
+    }
+}
+
+
+
+
+
+   public function updateResetPassword(Request $request)
+{
+    try {
+
+        $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check OTP verification
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !session('password_reset_verified') ||
+            !session('password_reset_user_id')
+        ) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Please verify your email first.'
+            ], 403);
+        }
+
+        $user = User::find(session('password_reset_user_id'));
+
+        if (!$user) {
+
+            session()->forget([
+                'password_reset_user_id',
+                'password_reset_verified'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid password reset request.'
+            ], 404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update password
+        |--------------------------------------------------------------------------
+        */
+
+        $user->password = Hash::make($request->password);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear OTP
+        |--------------------------------------------------------------------------
+        */
+
+        $user->password_reset_otp = null;
+        $user->password_reset_otp_expires_at = null;
+
+        $user->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear reset session
+        |--------------------------------------------------------------------------
+        */
+
+        session()->forget([
+            'password_reset_user_id',
+            'password_reset_verified'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your password has been updated successfully.',
+            'redirect' => '/login'
+        ]);
+
+    } catch (ValidationException $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Please check your password.',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Throwable $e) {
+
+        Log::error('Password Reset Update Error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to update your password.'
+        ], 500);
+    }
+}
 }

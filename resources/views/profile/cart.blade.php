@@ -452,7 +452,7 @@ return [
 
 
 
-        @auth
+    
 
         <div class="summaryLineX1 mt-3 align-items-center">
 
@@ -475,7 +475,7 @@ return [
 
         <div id="promoMessage" class="mt-2"></div>
 
-        @endauth
+
 
 
 
@@ -652,22 +652,53 @@ return [
 
     </div>
 
-    <!-- ORDER SUMMARY -->
-    <div class="checkoutSummaryX1">
+<!-- ORDER SUMMARY -->
+<div class="checkoutSummaryX1">
 
-      <div class="summaryLineX1">
+    <div class="summaryLineX1">
         <span>Items</span>
         <span>{{ $cartItems->count() }}</span>
-      </div>
+    </div>
 
-      <div class="summaryLineX1">
-        <span>Total</span>
-        <span>
-          {{ number_format($grandTotal,2) }}
+    <div class="summaryLineX1">
+        <span>Subtotal</span>
+        <span id="checkoutSubtotal"
+              class="currency-price"
+              data-value="{{ $grandTotal }}">
+            {{ number_format($grandTotal, 2) }}
         </span>
-      </div>
+    </div>
+
+    <div class="summaryLineX1">
+        <span>
+            Discount
+            <small id="checkoutDiscountPercentage"></small>
+        </span>
+
+        <span id="checkoutDiscountAmount"
+              class="currency-price"
+              data-value="0">
+            £0.00
+        </span>
+    </div>
+
+    <div class="summaryLineX1"
+         style="border-top:1px solid rgba(255,255,255,.1);
+                margin-top:10px;
+                padding-top:12px;
+                font-weight:800;">
+
+        <span>Total</span>
+
+        <span id="checkoutGrandTotal"
+              class="currency-price"
+              data-value="{{ $grandTotal }}">
+            {{ number_format($grandTotal, 2) }}
+        </span>
 
     </div>
+
+</div>
 
     <button class="checkoutBtnX1">
       <i class="fas fa-lock"></i>
@@ -1588,6 +1619,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     selectedLng,
 
 
+               // PROMO ID
+    promo_id:
+        window.promoApplied
+            ? {{ $promoCode?->id ?? 'null' }}
+            : null,
+
+
                 items:
                     Array.isArray(window.cartItemsPayload)
                         ? window.cartItemsPayload
@@ -1822,6 +1860,22 @@ document.addEventListener('DOMContentLoaded', function () {
         );
 
 
+
+
+   const checkoutSubtotalEl =
+    document.getElementById('checkoutSubtotal');
+
+const checkoutDiscountAmountEl =
+    document.getElementById('checkoutDiscountAmount');
+
+const checkoutDiscountPercentageEl =
+    document.getElementById('checkoutDiscountPercentage');
+
+const checkoutGrandTotalEl =
+    document.getElementById('checkoutGrandTotal');
+
+
+
     /*
     |--------------------------------------------------------------------------
     | Promo discount from Laravel
@@ -1898,15 +1952,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
 
 
-                grandTotalEl.dataset.value =
-                    currentSubtotal;
+             grandTotalEl.dataset.value =
+    currentSubtotal;
 
-                payTotalEl.dataset.value =
-                    currentSubtotal;
+payTotalEl.dataset.value =
+    currentSubtotal;
 
-                checkoutTotalEl.value =
-                    currentSubtotal.toFixed(2);
+checkoutTotalEl.value =
+    currentSubtotal.toFixed(2);
 
+
+/*
+|--------------------------------------------------------------------------
+| RESET SECOND CHECKOUT SUMMARY
+|--------------------------------------------------------------------------
+*/
+
+if (checkoutSubtotalEl) {
+    checkoutSubtotalEl.dataset.value =
+        currentSubtotal;
+}
+
+if (checkoutDiscountAmountEl) {
+    checkoutDiscountAmountEl.dataset.value =
+        0;
+}
+
+if (checkoutDiscountPercentageEl) {
+    checkoutDiscountPercentageEl.innerText =
+        '';
+}
+
+if (checkoutGrandTotalEl) {
+    checkoutGrandTotalEl.dataset.value =
+        currentSubtotal;
+}
+
+
+
+            
 
                 discountAmountEl.dataset.value =
                     0;
@@ -2005,14 +2089,41 @@ document.addEventListener('DOMContentLoaded', function () {
             |--------------------------------------------------------------------------
             */
 
-            grandTotalEl.dataset.value =
-                discountedTotal;
+          grandTotalEl.dataset.value =
+    discountedTotal;
 
-            payTotalEl.dataset.value =
-                discountedTotal;
+payTotalEl.dataset.value =
+    discountedTotal;
 
-            checkoutTotalEl.value =
-                discountedTotal.toFixed(2);
+checkoutTotalEl.value =
+    discountedTotal.toFixed(2);
+
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE SECOND CHECKOUT SUMMARY
+|--------------------------------------------------------------------------
+*/
+
+if (checkoutSubtotalEl) {
+    checkoutSubtotalEl.dataset.value =
+        originalTotal;
+}
+
+if (checkoutDiscountAmountEl) {
+    checkoutDiscountAmountEl.dataset.value =
+        discountAmount;
+}
+
+if (checkoutDiscountPercentageEl) {
+    checkoutDiscountPercentageEl.innerText =
+        `(${promoDiscount}% OFF)`;
+}
+
+if (checkoutGrandTotalEl) {
+    checkoutGrandTotalEl.dataset.value =
+        discountedTotal;
+}
 
 
             /*
@@ -2461,8 +2572,57 @@ function recalculateCartTotals() {
         finalTotal =
             subtotal -
             discountAmount;
-    }
 
+
+    }
+/*
+|--------------------------------------------------------------------------
+| UPDATE SECOND CHECKOUT SUMMARY
+|--------------------------------------------------------------------------
+*/
+
+const checkoutSubtotalEl =
+    document.getElementById('checkoutSubtotal');
+
+const checkoutDiscountAmountEl =
+    document.getElementById('checkoutDiscountAmount');
+
+const checkoutDiscountPercentageEl =
+    document.getElementById('checkoutDiscountPercentage');
+
+const checkoutGrandTotalEl =
+    document.getElementById('checkoutGrandTotal');
+
+
+if (checkoutSubtotalEl) {
+
+    checkoutSubtotalEl.dataset.value =
+        subtotal;
+}
+
+
+if (checkoutDiscountAmountEl) {
+
+    checkoutDiscountAmountEl.dataset.value =
+        discountAmount;
+}
+
+
+if (checkoutDiscountPercentageEl) {
+
+    checkoutDiscountPercentageEl.innerText =
+        window.promoApplied &&
+        window.promoDiscount > 0
+            ? `(${window.promoDiscount}% OFF)`
+            : '';
+}
+
+
+if (checkoutGrandTotalEl) {
+
+    checkoutGrandTotalEl.dataset.value =
+        finalTotal;
+}
 
     /*
     |--------------------------------------------------------------------------

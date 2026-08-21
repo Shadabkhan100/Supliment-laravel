@@ -300,7 +300,7 @@
                     @endif
 
                      <div class="small mt-2" style="color:white;">
-                       {{ $pack * 2 }} Packs Total
+                       {{ $pack  }} Packs Total
                    </div>
                    <span class="small">
                           <span class="small per-pouch" style="color:white;"></span>
@@ -313,11 +313,14 @@
         {{ number_format($basePrice, 2) }}
     </div>
 
-    @if($product->old_price)
-        <p style="color:white" class=" text-decoration-line-through old-price mb-0">
-            {{ number_format($product->old_price * max($pack,1) , 2) }}
-        </p>
-    @endif
+@if($product->old_price)
+    <p
+        style="color:white"
+        class="text-decoration-line-through  mb-0"
+    >
+        {{ number_format((float)$product->old_price  ) }}
+    </p>
+@endif
 
  @if($loop->index == 0)
     <div class="option-badge">

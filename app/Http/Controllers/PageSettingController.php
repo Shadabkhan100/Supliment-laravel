@@ -8,11 +8,15 @@ use App\Models\PageSetting;
 use App\Services\SupabaseStorageService;
 use App\Models\WebModel;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Subscribers;
+use App\Services\UserEmailService;
+
+
 
 class PageSettingController extends Controller
 {
 
-   public function webSettingUpdate(Request $request)
+public function webSettingUpdate(Request $request)
 {
     try {
 
@@ -23,7 +27,6 @@ class PageSettingController extends Controller
             'promotion_text'    => 'nullable|string|max:255',
             'support_email'     => 'required|email|max:255',
             'canonical_url'     => 'required|url|max:255',
-
             'logo'              => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:2048',
             'favicon'           => 'nullable|image|mimes:jpg,jpeg,png,ico,svg|max:1024',
             'og_image'          => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -39,12 +42,31 @@ class PageSettingController extends Controller
 
         }
 
-        // Get existing settings or create new
+        /*
+        |--------------------------------------------------------------------------
+        | Get Existing Settings
+        |--------------------------------------------------------------------------
+        */
+
         $setting = WebModel::first();
 
         if (!$setting) {
             $setting = new WebModel();
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get OLD promotion before changing anything
+        |--------------------------------------------------------------------------
+        */
+
+        $oldPromotionText = $setting->promotion_text;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Settings
+        |--------------------------------------------------------------------------
+        */
 
         $setting->website_title    = $request->website_title;
         $setting->meta_description = $request->meta_description;
@@ -54,7 +76,7 @@ class PageSettingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Upload Images to Supabase
+        | Upload Logo
         |--------------------------------------------------------------------------
         */
 
@@ -66,6 +88,12 @@ class PageSettingController extends Controller
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Upload Favicon
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->hasFile('favicon')) {
 
             $setting->favicon = SupabaseStorageService::upload(
@@ -73,6 +101,12 @@ class PageSettingController extends Controller
                 'website/favicon'
             );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload OG Image
+        |--------------------------------------------------------------------------
+        */
 
         if ($request->hasFile('og_image')) {
 
@@ -82,28 +116,174 @@ class PageSettingController extends Controller
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Save Settings
+        |--------------------------------------------------------------------------
+        */
+
         $setting->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | NEW Promotion Text
+        |--------------------------------------------------------------------------
+        */
+
+        $newPromotionText = $setting->promotion_text;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Whether Promotion Changed
+        |--------------------------------------------------------------------------
+        */
+
+        $promotionChanged = trim((string) $oldPromotionText)
+            !== trim((string) $newPromotionText);
+
+        /*
+        |--------------------------------------------------------------------------
+        | If Promotion Changed
+        |--------------------------------------------------------------------------
+        */
+
+        if ($promotionChanged && !empty(trim((string) $newPromotionText))) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Get Subscribers
+            |--------------------------------------------------------------------------
+            */
+
+            $subscribers = Subscribers::whereNotNull('email')
+                ->where('email', '!=', '')
+                ->get();
+
+            /*
+            |--------------------------------------------------------------------------
+            | No Subscribers
+            |--------------------------------------------------------------------------
+            */
+
+            if ($subscribers->isEmpty()) {
+
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Settings updated, but no subscribers were found.',
+                    'debug' => [
+                        'old_promotion' => $oldPromotionText,
+                        'new_promotion' => $newPromotionText,
+                        'promotion_changed' => true,
+                        'subscriber_count' => 0,
+                    ]
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Send Emails
+            |--------------------------------------------------------------------------
+            */
+
+            $emailService = app(UserEmailService::class);
+
+            $sent = 0;
+            $failed = 0;
+            $errors = [];
+
+            foreach ($subscribers as $subscriber) {
+
+                try {
+
+                    $emailService->sendUserEmail(
+                        $subscriber,
+                        'promotion',
+                        [
+                            'promotion_text' => $newPromotionText
+                        ]
+                    );
+
+                    $sent++;
+
+                } catch (\Throwable $e) {
+
+                    $failed++;
+
+                    $errors[] = [
+                        'email' => $subscriber->email,
+                        'error' => $e->getMessage(),
+                        'file'  => $e->getFile(),
+                        'line'  => $e->getLine(),
+                    ];
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Return Email Result
+            |--------------------------------------------------------------------------
+            */
+
+            if ($failed > 0) {
+
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Settings updated, but some promotion emails failed.',
+                    'debug' => [
+                        'old_promotion' => $oldPromotionText,
+                        'new_promotion' => $newPromotionText,
+                        'promotion_changed' => true,
+                        'subscriber_count' => $subscribers->count(),
+                        'emails_sent' => $sent,
+                        'emails_failed' => $failed,
+                        'errors' => $errors,
+                    ]
+                ], 500);
+            }
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Settings updated and promotion emails sent successfully.',
+                'debug' => [
+                    'old_promotion' => $oldPromotionText,
+                    'new_promotion' => $newPromotionText,
+                    'promotion_changed' => true,
+                    'subscriber_count' => $subscribers->count(),
+                    'emails_sent' => $sent,
+                    'emails_failed' => 0,
+                ]
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Promotion Did NOT Change
+        |--------------------------------------------------------------------------
+        */
 
         return response()->json([
             'status'  => true,
-            'message' => 'Website settings updated successfully.'
+            'message' => 'Website settings updated successfully.',
+            'debug' => [
+                'old_promotion' => $oldPromotionText,
+                'new_promotion' => $newPromotionText,
+                'promotion_changed' => false,
+                'subscriber_count' => 0,
+                'emails_sent' => 0,
+            ]
         ]);
 
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
 
         return response()->json([
             'status'  => false,
-            'message' => 'Something went wrong while updating website settings.',
-            'error'   => config('app.debug') ? $e->getMessage() : null
+            'message' => 'Website settings update failed.',
+            'error'   => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
         ], 500);
-
     }
 }
-
-
-
-
-
 
 
 public function save(Request $request)

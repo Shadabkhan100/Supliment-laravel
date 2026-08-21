@@ -26,7 +26,10 @@ class User extends Authenticatable
     'address',
     'avatar',
     'dob',
-    'status'
+    'status',
+
+    'password_reset_otp',
+    'password_reset_otp_expires_at',
 ];
 
     /**

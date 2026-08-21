@@ -27,47 +27,107 @@ class AppServiceProvider extends ServiceProvider
 
     View::composer('*', function ($view) {
 
-        $user = Auth::user();
+    $user = Auth::user();
 
-        $currency = session('currency', 'GBP');
-        $config = config("currency.currencies.$currency");
+    $currency = session('currency', 'GBP');
+    $config = config("currency.currencies.$currency");
 
-        $rate = $config['rate'] ?? 1;
-        $symbol = $config['symbol'] ?? '$';
+    $rate = $config['rate'] ?? 1;
+    $symbol = $config['symbol'] ?? '£';
 
-        $cartItems = collect();
-        $promoCode = null;
-        if ($user) {
+    $cartItems = collect();
+    $promoCode = null;
 
-            // AUTH USER CART
-            $cartItems = CartModel::where('user_id', $user->id)->get(); 
-           $promoCode = PromoCode::where('user_id', $user->id)
-    ->where('is_used', 0)->latest()->first();
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticated User
+    |--------------------------------------------------------------------------
+    */
 
-        } else {
+    if ($user) {
+
+        // AUTH USER CART
+        $cartItems = CartModel::where('user_id', $user->id)
+            ->get();
+
+        // AUTH USER PROMO
+        $promoCode = PromoCode::where('user_id', $user->id)
+            ->where('is_used', 0)
+            ->where('expires_at', '>', now())
+            ->latest()
+            ->first();
+
+    } else {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guest User
+        |--------------------------------------------------------------------------
+        */
+
+        $guestId = app('request')->cookie('guest_id');
+
+        if ($guestId) {
 
             // GUEST CART
-           $guestId = app('request')->cookie('guest_id');
+            $cartItems = CartModel::where('guest_id', $guestId)
+                ->get();
 
-            if ($guestId) {
-                $cartItems = CartModel::where('guest_id', $guestId)->get();
-            }
+            // GUEST PROMO
+            $promoCode = PromoCode::where('guest_id', $guestId)
+                ->where('is_used', 0)
+                ->where('expires_at', '>', now())
+                ->latest()
+                ->first();
         }
-         $websiteSetting = WebModel::find(2);
-        $cartCount = $cartItems->count();
+    }
 
-        $cartTotal = $cartItems->sum(function ($item) use ($rate) {
-            return ($item->price ?? 0) * ($item->quantity ?? 1) * $rate;
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Website Settings
+    |--------------------------------------------------------------------------
+    */
 
-        $view->with([
-            'cartCount' => $cartCount,
-            'cartTotal' => $cartTotal,
-            'currencySymbol' => $symbol,
-            'authUser' => $user,
-            'websiteSetting'  => $websiteSetting,
-            'promoCode' => $promoCode
-        ]);
+    $websiteSetting = WebModel::find(2);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart Count
+    |--------------------------------------------------------------------------
+    */
+
+    $cartCount = $cartItems->count();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart Total
+    |--------------------------------------------------------------------------
+    */
+
+    $cartTotal = $cartItems->sum(function ($item) use ($rate) {
+
+        return ($item->price ?? 0)
+            * ($item->quantity ?? 1)
+            * $rate;
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Share With All Views
+    |--------------------------------------------------------------------------
+    */
+
+    $view->with([
+
+        'cartCount'      => $cartCount,
+        'cartTotal'      => $cartTotal,
+        'currencySymbol' => $symbol,
+        'authUser'       => $user,
+        'websiteSetting' => $websiteSetting,
+        'promoCode'      => $promoCode,
+
+    ]);
+
+});
 }
 }

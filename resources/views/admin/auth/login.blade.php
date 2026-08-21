@@ -35,7 +35,7 @@
       <button class="btn btn-custom waves-effect">Login</button>
   
       <div class="link">
-       <a href="{{ route('admin.forgot.form') }}">Forgot Password?</a>
+       <a href="/reset-password">Forgot Password?</a>
       </div>
     </form>
 

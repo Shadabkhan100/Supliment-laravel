@@ -16,7 +16,13 @@ return new class extends Migration
 
         $table->string('name');
         $table->string('email')->unique();
+   $table->string('password_reset_otp', 10)
+                ->nullable()
+                ->after('password');
 
+            $table->timestamp('password_reset_otp_expires_at')
+                ->nullable()
+                ->after('password_reset_otp');
         // extra fields
         $table->string('phone')->nullable();
         $table->string('country')->nullable();

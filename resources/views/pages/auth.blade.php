@@ -161,7 +161,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
             <button id="signupTab">Sign Up</button>
         </div>
 
-       <form id="loginForm">
+       <form id="loginForm" action="{{ route('login') }}" method="POST" >
    
 
     <div class="input-group">
@@ -192,6 +192,16 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 </form>
         {{-- Divider --}}
         <div class="hr-line">OR</div>
+<div class="forgot-password">
+    <span style="color:white;">Forgot your password?</span>
+    <a href="/reset-password"
+       style="color:#a4fd0c; text-decoration:none; font-weight:600;">
+        Reset it here
+    </a>
+</div>
+
+
+    
 
         {{-- SIGNUP FORM --}}
         <form id="signupForm" class="hidden">

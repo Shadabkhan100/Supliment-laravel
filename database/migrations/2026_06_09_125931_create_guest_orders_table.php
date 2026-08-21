@@ -39,6 +39,7 @@ return new class extends Migration {
             $table->string('currency')->nullable();
             $table->decimal('paid_amount', 10, 2)->nullable();
             $table->string('payment_intent')->nullable();
+            $table->unsignedBigInteger('promo_id')->nullable()->after('id');
             $table->timestamps();
         });
     }

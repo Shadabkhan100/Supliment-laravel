@@ -353,6 +353,12 @@ $(document).on('submit', '#websiteSettingForm', function(e){
 
         success: function(response){
 
+            console.log('================ AJAX SUCCESS ================');
+            console.log('Full Response:', response);
+            console.log('Message:', response.message);
+            console.log('Status:', response.status);
+            console.log('==============================================');
+
             btn.prop('disabled', false);
             btn.html(oldText);
 
@@ -364,19 +370,34 @@ $(document).on('submit', '#websiteSettingForm', function(e){
 
         },
 
-        error: function(xhr){
+        error: function(xhr, status, error){
+
+            console.error('================ AJAX ERROR ================');
+            console.error('HTTP Status:', xhr.status);
+            console.error('Status Text:', status);
+            console.error('Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            console.error('Response JSON:', xhr.responseJSON);
+            console.error('Full XHR Object:', xhr);
+            console.error('============================================');
 
             btn.prop('disabled', false);
             btn.html(oldText);
 
             let message = 'Something went wrong.';
 
-            if(xhr.responseJSON){
+            if (xhr.responseJSON) {
+
+                console.error('Server Message:', xhr.responseJSON.message);
+                console.error('Server Error:', xhr.responseJSON.error);
+                console.error('Server File:', xhr.responseJSON.file);
+                console.error('Server Line:', xhr.responseJSON.line);
+                console.error('Server Errors:', xhr.responseJSON.errors);
 
                 message = xhr.responseJSON.message ??
+                          xhr.responseJSON.error ??
                           Object.values(xhr.responseJSON.errors ?? {})[0]?.[0] ??
                           message;
-
             }
 
             Swal.fire({

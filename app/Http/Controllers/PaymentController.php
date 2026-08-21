@@ -25,8 +25,7 @@ use Stripe\PaymentIntent;
 use Stripe\Refund;
 use App\Services\OneSignalService;
 use App\Models\BundleOrder;
-
-
+use App\Models\PromoCode;
 
 
 class PaymentController extends Controller
@@ -128,12 +127,28 @@ public function success(Request $request)
             // Old functionality remains unchanged
             GuestOrder::whereIn('id', $orderIds)
                 ->update($updateData);
+               $upsellResult = $this->sendUpsellPromotionIfEligible(
+            $request,
+            $currency,
+            $amountPaid,
+            $orderIds,
+            $type
+        );
         }
 
         app(OneSignalService::class)->sendToAdmins(
             '💳 Payment Received',
             "Payment of {$currency} {$amountPaid} has been received for Order(s): #" . implode(', #', $orderIds)
         );
+       
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK £30 THRESHOLD AND SEND UPSELL EMAIL
+        |--------------------------------------------------------------------------
+        */
+
+
+
 
         return view('payment-gateway.success', [
             'message' => 'Payment successful',
@@ -313,9 +328,12 @@ public function createCartOrders(Request $request)
             'postal' => 'nullable|string',
             'country' => 'nullable|string',
 
+            'promo_id' => 'nullable|integer',
+
             'lat' => 'nullable|numeric',
             'lng' => 'nullable|numeric',
         ]);
+
 
         // =========================
         // USER / GUEST
@@ -330,13 +348,119 @@ public function createCartOrders(Request $request)
             $guestId = 'gst_' . Str::random(24);
         }
 
+
         $orderIds = [];
         $total = 0;
 
         // Added for email
         $orderedProducts = [];
 
+
         DB::beginTransaction();
+
+
+        // =========================
+        // PROMO CODE
+        // =========================
+
+        $promoId = $validated['promo_id'] ?? null;
+
+        $promoRecord = null;
+
+        $promoDiscount = 0;
+
+        $discountAmount = 0;
+
+
+        if ($promoId) {
+
+            // Find promo record
+            $promoRecord = PromoCode::find($promoId);
+           
+
+            // Promo does not exist
+            if (!$promoRecord) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid promo code.'
+                ], 422);
+            }
+
+
+            // =========================
+            // CHECK EXPIRY
+            // =========================
+
+            if (
+                !empty($promoRecord->expired_at) &&
+                now()->greaterThanOrEqualTo($promoRecord->expired_at)
+            ) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Sorry, this promo code has expired.'
+                ], 422);
+            }
+
+
+            // =========================
+            // CHECK IF ALREADY USED
+            // =========================
+
+            if ((int) $promoRecord->is_used === 1) {
+              
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Sorry, this promo code has already been used.'
+                ], 422);
+            }
+
+
+            // =========================
+            // GET DISCOUNT
+            // =========================
+
+            $promoDiscount = $promoRecord->discount;
+
+
+            // Make sure discount is numeric
+            if (!is_numeric($promoDiscount)) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid promo discount value.'
+                ], 422);
+            }
+
+
+            // Convert to float
+            $promoDiscount = (float) $promoDiscount;
+
+
+            // =========================
+            // VALIDATE DISCOUNT RANGE
+            // =========================
+
+            if ($promoDiscount <= 0 || $promoDiscount > 100) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid promo discount percentage.'
+                ], 422);
+            }
+        }
+
 
         // =========================
         // PROCESS ITEMS
@@ -345,7 +469,9 @@ public function createCartOrders(Request $request)
 
             $product = ProductsModel::find($item['product_id']);
 
+
             if (!$product) {
+
                 DB::rollBack();
 
                 return response()->json([
@@ -355,12 +481,16 @@ public function createCartOrders(Request $request)
                 ], 404);
             }
 
+
             // ALWAYS trust DB price
             $price = (float) $product->price;
 
+
             $qty = (int) $item['quantity'];
 
+
             if ($qty <= 0) {
+
                 DB::rollBack();
 
                 return response()->json([
@@ -370,61 +500,178 @@ public function createCartOrders(Request $request)
                 ], 422);
             }
 
+
+            // =========================
+            // PRODUCT SUBTOTAL
+            // =========================
+
             $subtotal = $price * $qty;
+
+
+            // Add original subtotal to total
             $total += $subtotal;
 
+
+            // =========================
+            // CREATE ORDER
+            // =========================
+
             $order = GuestOrder::create([
-                'product_id' => $product->id,
-                'product_option' => json_encode($item['product_option'] ?? null),
-                'quantity' => $qty,
-                'purchase_type' => $item['purchase_type'] ?? 'default',
 
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
+                'product_id' =>
+                    $product->id,
 
-                'address1' => $validated['address1'],
-                'city' => $validated['city'],
-                'postal' => $validated['postal'],
-                'country' => $validated['country'],
+                'product_option' =>
+                    json_encode(
+                        $item['product_option'] ?? null
+                    ),
 
-                'lat' => $validated['lat'],
-                'lng' => $validated['lng'],
+                'quantity' =>
+                    $qty,
 
-                // PAYMENT STATUS (0 = pending, 1 = paid)
-                'payment_status' => 0,
+                'purchase_type' =>
+                    $item['purchase_type'] ?? 'default',
 
-                'user_id' => $userId,
-                'guest_id' => $guestId,
+
+                'name' =>
+                    $validated['name'],
+
+                'email' =>
+                    $validated['email'],
+
+                'phone' =>
+                    $validated['phone'],
+
+
+                'promo_id' =>
+                    $promoId,
+
+
+                'address1' =>
+                    $validated['address1'],
+
+                'city' =>
+                    $validated['city'],
+
+                'postal' =>
+                    $validated['postal'],
+
+                'country' =>
+                    $validated['country'],
+
+
+                'lat' =>
+                    $validated['lat'],
+
+                'lng' =>
+                    $validated['lng'],
+
+
+                // PAYMENT STATUS
+                // 0 = pending
+                // 1 = paid
+                'payment_status' =>
+                    0,
+
+
+                'user_id' =>
+                    $userId,
+
+                'guest_id' =>
+                    $guestId,
             ]);
 
-            $orderIds[] = $order->id;
 
-            // Added for email
+            $orderIds[] =
+                $order->id;
+
+
+            // =========================
+            // ADDED FOR EMAIL
+            // =========================
+
             $orderedProducts[] = [
-                'order' => $order,
-                'product' => $product,
-                'quantity' => $qty,
-                'subtotal' => $subtotal,
+
+                'order' =>
+                    $order,
+
+                'product' =>
+                    $product,
+
+                'quantity' =>
+                    $qty,
+
+                'subtotal' =>
+                    $subtotal,
             ];
         }
 
+
+        // =========================
+        // APPLY PROMO DISCOUNT
+        // =========================
+
+        if ($promoRecord) {
+
+            /*
+            |-----------------------------------------
+            | Calculate discount from FULL CART TOTAL
+            |-----------------------------------------
+            */
+
+            $discountAmount =
+                $total *
+                ($promoDiscount / 100);
+
+
+            /*
+            |-----------------------------------------
+            | Keep discounted amount in total
+            |-----------------------------------------
+            */
+
+            $total =
+                $total -
+                $discountAmount;
+
+             PromoCode::where('id', $request->promo_id)
+    ->update(['is_used' => 1]);
+
+            /*
+            |-----------------------------------------
+            | Prevent negative total
+            |-----------------------------------------
+            */
+
+            if ($total < 0) {
+                $total = 0;
+            }
+        }
+
+
+        // =========================
+        // COMMIT
+        // =========================
+
         DB::commit();
+
 
         // =========================
         // SEND EMAIL
         // =========================
+
         $email = $validated['email'];
+
 
         try {
 
-          Mail::to($email)->send(
-    new CartOrderMail(
-        $orderedProducts,
-        $total,
-        $validated
-    )
-);
+            Mail::to($email)->send(
+                new CartOrderMail(
+                    $orderedProducts,
+                    $total,
+                    $validated
+                )
+            );
 
         } catch (\Throwable $e) {
 
@@ -434,41 +681,93 @@ public function createCartOrders(Request $request)
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ], 500);
-
         }
+
 
         // =========================
         // RESPONSE
         // =========================
+
         $response = response()->json([
-            'status' => true,
-            'message' => 'Order created successfully',
-            'order_ids' => $orderIds,
-            'total_price' => $total,
-            'guest_id' => $guestId,"email" => $orderedProducts
+
+            'status' =>
+                true,
+
+            'message' =>
+                'Order created successfully',
+
+            'order_ids' =>
+                $orderIds,
+
+            'total_price' =>
+                round($total, 2),
+
+            'guest_id' =>
+                $guestId,
+
+            'promo_id' =>
+                $promoId,
+
+            'promo_discount' =>
+                $promoDiscount,
+
+            'discount_amount' =>
+                round($discountAmount, 2),
+
+            'email' =>
+                $orderedProducts
         ]);
 
+
         // IMPORTANT: always attach cookie properly
-        if ($guestId && !$request->cookie('guest_id')) {
-            $response->cookie('guest_id', $guestId, 60 * 24 * 365);
+
+        if (
+            $guestId &&
+            !$request->cookie('guest_id')
+        ) {
+
+            $response->cookie(
+                'guest_id',
+                $guestId,
+                60 * 24 * 365
+            );
         }
 
+
         return $response;
+
 
     } catch (\Illuminate\Validation\ValidationException $e) {
 
         return response()->json([
-            'status' => false,
-            'message' => 'Validation error',
-            'errors' => $e->errors()
+
+            'status' =>
+                false,
+
+            'message' =>
+                'Validation error',
+
+            'errors' =>
+                $e->errors()
+
         ], 422);
+
 
     } catch (\Throwable $e) {
 
         return response()->json([
-            'status' => false,
-            'message' => 'Server error',
-            'error' => config('app.debug') ? $e->getMessage() : null
+
+            'status' =>
+                false,
+
+            'message' =>
+                'Server error',
+
+            'error' =>
+                config('app.debug')
+                    ? $e->getMessage()
+                    : null
+
         ], 500);
     }
 }
@@ -533,6 +832,445 @@ public function refund($id)
         return response()->json([
             'status' => false,
             'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private function sendUpsellPromotionIfEligible(
+    Request $request,
+    string $currency,
+    float $amountPaid,
+    array $orderIds,
+    string $type
+) {
+    try {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Convert Payment To GBP
+        |--------------------------------------------------------------------------
+        */
+
+        $amountInGbp = $this->convertToGbp(
+            $currency,
+            $amountPaid
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Customer Must Spend MORE Than £30
+        |--------------------------------------------------------------------------
+        */
+
+        if ($amountInGbp <= 30) {
+
+            return [
+                'eligible'      => false,
+                'amount_paid'   => $amountPaid,
+                'currency'      => $currency,
+                'amount_in_gbp' => round($amountInGbp, 2),
+                'email_sent'    => false,
+                'message'       => 'Customer is not eligible for the upsell promotion.',
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Customer
+        |--------------------------------------------------------------------------
+        */
+
+        $userId = auth()->id();
+
+        $guestId = $request->cookie('guest_id');
+
+        $order = null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authenticated User
+        |--------------------------------------------------------------------------
+        */
+
+        if ($userId) {
+
+            $order = GuestOrder::whereIn('id', $orderIds)
+                ->where('user_id', $userId)
+                ->where('payment_status', 1)
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->first();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guest User
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$order && $guestId) {
+
+            $order = GuestOrder::whereIn('id', $orderIds)
+                ->where('guest_id', $guestId)
+                ->where('payment_status', 1)
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->first();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fallback - Find Paid Order
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$order) {
+
+            $order = GuestOrder::whereIn('id', $orderIds)
+                ->where('payment_status', 1)
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->first();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Customer / Order Not Found
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$order) {
+
+            return [
+                'eligible'      => true,
+                'email_sent'    => false,
+                'amount_paid'   => $amountPaid,
+                'currency'      => $currency,
+                'amount_in_gbp' => round($amountInGbp, 2),
+                'message'       => 'Customer qualified, but no paid order with a valid email was found.',
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Customer Email
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($order->email)) {
+
+            return [
+                'eligible'      => true,
+                'email_sent'    => false,
+                'amount_in_gbp' => round($amountInGbp, 2),
+                'message'       => 'Customer qualified, but no customer email was found.',
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Customer Identity
+        |--------------------------------------------------------------------------
+        */
+
+        $customerUserId = $order->user_id ?? null;
+
+        $customerGuestId = $order->guest_id ?? null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK EXISTING UPSELL PROMOTION
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        | This must happen AFTER $order has been found.
+        |
+        */
+
+        $existingPromo = PromoCode::where('order_id', $order->id)
+            ->where('code', 'like', 'UPSELL-%')
+            ->first();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Already Generated
+        |--------------------------------------------------------------------------
+        */
+
+        if ($existingPromo) {
+
+            return [
+                'eligible'       => true,
+                'email_sent'     => false,
+                'already_sent'   => true,
+
+                'email'          => $order->email,
+
+                'order_id'       => $order->id,
+
+                'user_id'        => $customerUserId,
+                'guest_id'       => $customerGuestId,
+
+                'promo_code'     => $existingPromo->code,
+                'discount'       => $existingPromo->discount,
+                'expires_at'     => $existingPromo->expires_at,
+
+                'currency'       => $currency,
+                'amount_paid'    => $amountPaid,
+                'amount_in_gbp'  => round($amountInGbp, 2),
+
+                'message'        => 'Upsell promotion was already generated for this order.',
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE NEW 20% PROMO CODE
+        |--------------------------------------------------------------------------
+        */
+
+        $promoCode = PromoCode::create([
+
+            'order_id'   => $order->id,
+
+            'user_id'    => $customerUserId,
+
+            'guest_id'   => $customerGuestId,
+
+            'code'       => 'UPSELL-' . strtoupper(
+                Str::random(8)
+            ),
+
+            'discount'   => 15,
+
+            'expires_at' => now()->addHours(24),
+
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND UPSELL EMAIL
+        |--------------------------------------------------------------------------
+        */
+
+app(UserEmailService::class)->sendUserEmail(
+    $order,
+    'upsell_promotion',
+    [
+        'promo_code'     => $promoCode,
+        'discount'       => $promoCode->discount,
+        'expires_at'     => $promoCode->expires_at,
+        'user_id'        => $customerUserId,
+        'guest_id'       => $customerGuestId,
+        'currency'       => $currency,
+        'amount_paid'    => $amountPaid,
+        'amount_in_gbp'  => round($amountInGbp, 2),
+        'order_id'       => $order->id,
+    ]
+);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUCCESS
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+
+            'eligible'       => true,
+
+            'email_sent'     => true,
+
+            'already_sent'   => false,
+
+            'email'          => $order->email,
+
+            'user_id'        => $customerUserId,
+
+            'guest_id'       => $customerGuestId,
+
+            'order_id'       => $order->id,
+
+            'promo_code'     => $promoCode->code,
+
+            'discount'       => $promoCode->discount,
+
+            'expires_at'     => $promoCode->expires_at,
+
+            'currency'       => $currency,
+
+            'amount_paid'    => $amountPaid,
+
+            'amount_in_gbp'  => round($amountInGbp, 2),
+
+            'message'        => 'Customer qualified and upsell promotion email sent successfully.',
+
+        ];
+
+
+    } catch (\Throwable $e) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | EXACT ERROR
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+
+            'eligible'   => true,
+
+            'email_sent' => false,
+
+            'error'      => $e->getMessage(),
+
+            'file'       => $e->getFile(),
+
+            'line'       => $e->getLine(),
+
+        ];
+    }
+}
+
+
+private function convertToGbp(
+    string $currency,
+    float $amount
+): float {
+
+    $currency = strtoupper($currency);
+
+    /*
+    |--------------------------------------------------------------------------
+    | GBP
+    |--------------------------------------------------------------------------
+    */
+
+    if ($currency === 'GBP') {
+
+        return $amount;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | USD → GBP
+    |--------------------------------------------------------------------------
+    |
+    | Example rate:
+    | 1 USD = 0.79 GBP
+    |
+    */
+
+    if ($currency === 'USD') {
+
+        return $amount * 0.79;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAR → GBP
+    |--------------------------------------------------------------------------
+    |
+    | Example rate:
+    | 1 SAR = 0.21 GBP
+    |
+    */
+
+    if ($currency === 'SAR') {
+
+        return $amount * 0.21;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Unsupported Currency
+    |--------------------------------------------------------------------------
+    */
+
+    throw new \Exception(
+        "Unsupported payment currency: {$currency}"
+    );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public function testUpsellPromotion(Request $request)
+{
+    $validated = $request->validate([
+        'currency' => 'required|string|in:GBP,USD,SAR',
+        'amount_paid' => 'required|numeric|min:0',
+        'order_ids' => 'required|array|min:1',
+        'order_ids.*' => 'required|integer',
+        'type' => 'nullable|string|in:order,bundle',
+    ]);
+
+    try {
+
+        $result = $this->sendUpsellPromotionIfEligible(
+            $request,
+            strtoupper($validated['currency']),
+            (float) $validated['amount_paid'],
+            $validated['order_ids'],
+            $validated['type'] ?? 'order'
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Upsell test completed.',
+            'result' => $result,
+        ]);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Upsell test failed.',
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
         ], 500);
     }
 }

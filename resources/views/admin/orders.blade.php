@@ -357,6 +357,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 <script>
 
 async function deleteOrder(id)
@@ -589,6 +597,10 @@ function refundOrder(button, id) {
 }
 
 function openOrderDrawer(order) {
+
+
+
+
 const adminLat = 17.319183989317914;
 const adminLng = 42.33244612525538;
 
@@ -765,7 +777,7 @@ const paymentBadge = `
 
                 <div class="col-md-6 mb-3">
                     <strong>Category</strong><br>
-                    ${order.product?.category_name ?? '-'}
+                    ${order.product?.category_name ?? '-'}     
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -791,6 +803,35 @@ const paymentBadge = `
                         ${order.paid_amount ?? '0.00'}
                     </span>
                 </div>
+
+
+
+            <div class="col-md-6 mb-3">
+    <strong>Paid Amount</strong><br>
+    <span class="fw-bold text-success">
+        ${order.paid_amount ?? '0.00'}
+    </span>
+<div class="col-md-6 mb-3">
+    <strong>Promo Discount</strong><br>
+    ${
+        order.promo && order.promo.is_used == 1
+        ? `
+            <span class="fw-bold text-danger">
+                ${order.promo.discount}% discount applied
+            </span>
+            <br>
+            <small class="text-muted">
+                Promo: <strong>${order.promo.code}</strong>
+            </small>
+        `
+        : `
+            <span class="text-muted">
+                No promo discount applied
+            </span>
+        `
+    }
+</div>
+</div>
 
             </div>
 

@@ -30,7 +30,8 @@ class GuestOrder extends Model
         'user_id',
         'currency',
         'guest_id',
-        'paid_amount'
+        'paid_amount',
+      'promo_id',
         
     ];
 
