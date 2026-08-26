@@ -23,6 +23,11 @@ use App\Models\BundleOrder;
 use App\Models\EmailCampaign;
   use App\Models\PromoCode;
 use Illuminate\Support\Str;
+use App\Services\OneSignalService;
+
+
+
+
 
 class AuthController extends Controller
 {
@@ -165,6 +170,13 @@ $emails = [
             'promo_code' => $email['promo_code'] ?? null,
         ]);
     }
+
+app(OneSignalService::class)->sendToAdmins(
+    '👤 New User Registered',
+    "A new user, \"{$user->name}\", has successfully registered on the website."
+);
+
+
         return response()
             ->json([
                 'success' => true,

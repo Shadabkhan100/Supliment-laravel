@@ -51,8 +51,9 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
 
 <style>
 #tawkchat-container,
@@ -122,7 +123,6 @@
 
     @include('layout.header')
     @yield('content')
-    <div id="sidebar-cart-curtain" class="close-popup"></div>
     @include('layout.footer')
     @include("products.productQuickView")
     @include("products.comparepopup")
@@ -148,6 +148,14 @@
 
 
 
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/slick.min.js') }}"></script>
+<script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
+<script src="{{ asset('js/slickAnimation.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 
 
 
@@ -190,14 +198,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </script>
 @endif
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
-<script src="{{ asset('js/bootstrap.min.js') }}"></script>
-<script src="{{ asset('js/slick.min.js') }}"></script>
-<script src="{{ asset('js/jquery.countdown.min.js') }}"></script>
-<script src="{{ asset('js/slickAnimation.js') }}"></script>
-<script src="{{ asset('js/app.js') }}"></script>
-
 
 
 
@@ -225,46 +225,65 @@ Tawk_API.onLoad = function () {
 
 
 
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
 <script>
-
-
-
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 
 OneSignalDeferred.push(async function (OneSignal) {
+
     try {
+
         await OneSignal.init({
-            appId: "a41850fa-8b13-4ac9-badf-68cd0fd6b646",
+            appId: @json(config('onesignal.app_id'))
         });
-        // Ask for permission only if not already decided
-        if (Notification.permission === "default") {
-            await OneSignal.Notifications.requestPermission();
+
+        console.log("OneSignal initialized successfully");
+
+        // Check existing subscription
+        const existingId = OneSignal.User.PushSubscription.id;
+
+        if (existingId) {
+
+            console.log("Existing Subscription ID:", existingId);
+
+            await saveSubscription(existingId);
         }
 
-       
-        // Save immediately if already subscribed
-        if (OneSignal.User.PushSubscription.id) {
-            await saveSubscription(OneSignal.User.PushSubscription.id);
-        }
+        // Listen when user subscribes/unsubscribes
+        OneSignal.User.PushSubscription.addEventListener(
+            "change",
+            async function (event) {
 
-        // Listen for future changes
-        OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
-            if (!event.current?.id) {
-                console.warn("No Subscription ID");
-                return;
+                console.log("Subscription changed:", event);
+
+                const subscriptionId = event.current?.id;
+
+                if (subscriptionId) {
+
+                    console.log(
+                        "New Subscription ID:",
+                        subscriptionId
+                    );
+
+                    await saveSubscription(subscriptionId);
+                }
             }
-            await saveSubscription(event.current.id);
+        );
 
-        });
-    } catch (err) {
+    } catch (error) {
+
+        console.error(
+            "OneSignal initialization failed:",
+            error
+        );
 
     }
 
 });
 
-async function saveSubscription(subscriptionId) {
 
- 
+async function saveSubscription(subscriptionId) {
 
     try {
 
@@ -272,34 +291,59 @@ async function saveSubscription(subscriptionId) {
 
             method: 'POST',
 
+            credentials: 'same-origin',
+
             headers: {
-
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-
+                'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                'Accept': 'application/json'
             },
 
             body: JSON.stringify({
-
                 subscription_id: subscriptionId
-
             })
 
         });
 
-
-
         const data = await response.json();
 
-   
+        console.log("Subscription saved:", data);
 
-    } catch (err) {
+    } catch (error) {
 
-        console.error("Fetch Error:", err);
+        console.error(
+            "Failed to save subscription:",
+            error
+        );
 
     }
 
 }
+
+
+
+async function saveSubscription(subscriptionId) {
+    try {
+        const response = await fetch('/onesignal/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                subscription_id: subscriptionId
+            })
+
+        });
+        const data = await response.json();
+    } catch (err) {
+        console.error("Fetch Error:", err);
+    }
+}
+
+
+
+
 
 function refreshCartCount() {
 

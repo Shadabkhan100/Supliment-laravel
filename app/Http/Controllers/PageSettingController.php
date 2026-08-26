@@ -240,7 +240,11 @@ public function webSettingUpdate(Request $request)
                     ]
                 ], 500);
             }
-
+           
+app(App\Services\OneSignalService::class)->sendToAdmins(
+    'New Updates',
+    "Hey Someone Updated Slimza Amin Setting"
+);
             return response()->json([
                 'status'  => true,
                 'message' => 'Settings updated and promotion emails sent successfully.',

@@ -306,12 +306,16 @@ document.addEventListener('click', function (e) {
 
             wishlist.splice(existingIndex, 1);
 
-            localStorage.setItem(
-                'wishlist',
-                JSON.stringify(wishlist)
-            );
+           localStorage.setItem(
+    'wishlist',
+    JSON.stringify(wishlist)
+);
 
-            wishlistBtn.classList.remove('active');
+window.dispatchEvent(
+    new Event('wishlistUpdated')
+);
+
+wishlistBtn.classList.add('active');
 
             wishlistBtn.style.removeProperty('background-color');
 
@@ -351,12 +355,16 @@ document.addEventListener('click', function (e) {
 
             wishlist.push(product);
 
-            localStorage.setItem(
-                'wishlist',
-                JSON.stringify(wishlist)
-            );
+       localStorage.setItem(
+    'wishlist',
+    JSON.stringify(wishlist)
+);
 
-            wishlistBtn.classList.add('active');
+window.dispatchEvent(
+    new Event('wishlistUpdated')
+);
+
+wishlistBtn.classList.remove('active');
 
             wishlistBtn.style.setProperty(
                 'background-color',

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\CategoriesModel;
 use App\Services\SupabaseStorageService;
 use Illuminate\Validation\Rule;
-
+use App\Services\OneSignalService;
 
 class ProductController extends Controller
 {
@@ -109,7 +109,10 @@ class ProductController extends Controller
         'gallery_images' => json_encode($galleryPaths),
         'halal_certification' => $halalCertPath,
     ]);
-
+app(OneSignalService::class)->sendToAdmins(
+    '🛍️ New Product Added',
+    "A new product, \"{$product->name}\", has been successfully added to the website."
+);
     return response()->json([
         'message' => 'Product created successfully',
         'data' => $this->formatProduct(
@@ -446,6 +449,13 @@ if (empty($galleryPaths)) {
           'ingredients' => $request->ingredients,
           
     ]);
+ 
+
+app(OneSignalService::class)->sendToAdmins(
+    '⚠️ Product Modified',
+    "The product \"{$product->name}\" has been edited and updated on the website."
+);
+
 
     return response()->json([
         'message' => 'Product updated successfully',

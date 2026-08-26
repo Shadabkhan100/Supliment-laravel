@@ -1018,36 +1018,107 @@ font-size:30px;
 }
 
 }
+
+.bundle-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+    margin-bottom: 50px;
+}
+
+.bundle-banner-image {
+    width: 50%;
+    text-align: center;
+}
+
+.bundle-banner-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+.bundle-banner-content {
+    width: 50%;
+    text-align: center;
+}
+
+.bundle-title {
+    margin-bottom: 15px;
+}
+
+.bundle-subtitle {
+    margin: 0;
+}
+
+@media (max-width: 767px) {
+
+    .bundle-banner {
+        display: block;
+        margin-bottom: 30px;
+    }
+
+    .bundle-banner-image {
+        width: 70%;
+        margin: 0 auto;
+    }
+
+    .bundle-banner-image img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+    }
+
+    /* Hide title and subtitle on mobile */
+    .bundle-banner-content {
+        display: none;
+    }
+}
 </style>
 
-<section class="bundle-builder py-5">
+<section class="bundle-builder py-5" style="padding:5px;">
+@php
+    $bundleCategory = collect($categories)->first(function ($category) {
+        return (int) $category->id === 30 &&
+               strtolower(trim($category->name)) === 'bundle deals';
+    });
+@endphp
 
-    <div class="container">
+@if($bundleCategory)
+    <div class="bundle-banner">
 
-        <!-- Heading -->
-
-        <div class="text-center mb-5">
-
-            <h1 class="bundle-title">
-                BUILD YOUR BUNDLE
-            </h1>
-
-            <p class="bundle-subtitle">
-                Mix & match your favorites. The more you bundle, the more you save!
-            </p>
-
+        <!-- Bundle Deals Banner -->
+        <div class="bundle-banner-image">
+          <img 
+    src="https://dulladbjjuutgcgyliou.supabase.co/storage/v1/object/public/slimza-images/{{ $bundleCategory->image }}" 
+    alt="{{ $bundleCategory->name }}"
+>
         </div>
+<!-- Text -->
+<div class="bundle-banner-content">
 
-        <!-- Discount Cards -->
+    <h1 class="bundle-title">
+        BUILD YOUR BUNDLE
+    </h1>
+
+    <p class="bundle-subtitle">
+        Mix & match your favorites. The more you bundle, the more you save!
+    </p>
+
+ 
+
+</div>
+    </div>
+@endif
+
+
 
         <div class="row g-2 justify-content-center mb-5 discount-row">
 
             <div class="col discount-col">
 
-                <div class="discount-box"
-     data-items="2"
-     data-discount="10"
-     onclick="selectDiscount(this)">
+                <div class="discount-box" data-items="2" data-discount="10" onclick="selectDiscount(this)">
 
                     <div class="small-text">
                         ANY 2 ITEMS
@@ -1117,7 +1188,7 @@ font-size:30px;
 
         </div>
 
-
+ 
         <!-- Products Heading -->
 
         <div class="section-title">
@@ -1137,7 +1208,7 @@ font-size:30px;
 
 <div class="row g-4 mt-2">
 
- @foreach($products->shuffle()->take(6) as $product)
+ @foreach($products as $product)
 
 <div class="col-lg col-md-4 col-6">
 

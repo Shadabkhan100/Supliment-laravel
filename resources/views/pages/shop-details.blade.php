@@ -33,6 +33,34 @@ $products = $products ?? [];
   font-weight: 700;
   letter-spacing: 1px;
 }
+
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-wrapper .search-input {
+    width: 100%;
+    padding-right: 48px;
+}
+
+.search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    padding: 8px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.search-btn i {
+    font-size: 16px;
+}
 </style>
 <main class="main-wrapper">
 
@@ -54,11 +82,27 @@ $products = $products ?? [];
       <!-- SEARCH ONLY (REPLACED YOUR EMAIL SEARCH WITH PRODUCT SEARCH) -->
       <div class="row row-gap-3 align-items-center mb-16">
 
-        <div class="col-xl-3 col-lg-5">
-          <div class="newsletter-form">
-            <input type="text" id="productSearch" class="form-control search-input" placeholder="Search products..." style="text-color:white;">
-          </div>
-        </div>
+      <div class="col-xl-3 col-lg-5">
+    <div class="newsletter-form search-wrapper">
+
+        <input
+            type="text"
+            id="productSearch"
+            class="form-control search-input"
+            placeholder="Search products..."
+        >
+
+        <button
+            type="button"
+            id="productSearchBtn"
+            class="search-btn"
+            aria-label="Search"
+        >
+            <i class="fa-solid fa-magnifying-glass" style="color:white;"></i>
+        </button>
+
+    </div>
+</div>
 
 
 
@@ -241,6 +285,40 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   searchInput.addEventListener('keyup', filterProducts);
+
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const searchInput = document.getElementById('productSearch');
+    const searchBtn = document.getElementById('productSearchBtn');
+
+    function performSearch() {
+
+        const search = searchInput.value.trim();
+
+        if (!search) {
+            return;
+        }
+
+        window.location.href =
+            '/search-reasult?search=' + encodeURIComponent(search);
+    }
+
+    // Click search icon
+    searchBtn.addEventListener('click', performSearch);
+
+    // Also allow Enter key
+    searchInput.addEventListener('keydown', function (e) {
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearch();
+        }
+
+    });
 
 });
 </script>

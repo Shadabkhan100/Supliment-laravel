@@ -13,7 +13,7 @@ use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Validator;
 use App\Models\SlimzaDeals;
 use App\Models\BundleOrder;
-
+use App\Services\OneSignalService;
 
 
 
@@ -208,7 +208,10 @@ public function subscribe(Request $request)
                 'plan' => $request->plan,
             ]
         );
-
+app(OneSignalService::class)->sendToAdmins(
+    '📧 New Subscriber',
+    "A new user has subscribed to the website newsletter using {$request->email}."
+);
         return response()->json([
             'success' => true,
             'message' => 'Subscribed successfully'

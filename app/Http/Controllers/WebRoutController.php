@@ -328,11 +328,15 @@ public function searchByTag($tag)
         return view('pages.auth');
     }
      
-
 public function shopDetails($slug, $id)
 {
-     // 1. Get category
+    // 1. Get category
     $category = CategoriesModel::findOrFail($id);
+
+    // Bundle Deals redirect
+    if ($category->title === "BUNDLE DEALS") {
+        return redirect("/make-your-own-offer");
+    }
 
     // 2. Convert category image (SUPABASE)
     $category->image = $category->image
@@ -351,15 +355,14 @@ public function shopDetails($slug, $id)
 
         return $product;
     });
-    // 3. Pass slug + products to view
+
+    // 5. Pass slug + products to view
     return view('pages.shop-details', [
         'category_slug' => $slug,
-         "category" => $category,
+        'category' => $category,
         'products' => $products,
     ]);
 }
-
-
 
 
 
@@ -507,14 +510,168 @@ public function getGuestProfileView(Request $request)
 
 public function mixMatchView()
 {
-    $products = ProductsModel::all();
+    $bundleCategoryId = 30;
+
     $categories = CategoriesModel::all();
     $cat = CategoriesModel::pluck('name', 'id');
 
+    // Only Bundle Deals products
+    $products = ProductsModel::where('category_id', $bundleCategoryId)
+        ->latest()
+        ->get();
+
+    // Format products using your existing formatter
     $products = $products->map(function ($product) use ($cat) {
         return $this->formatProduct($product, $cat);
     });
 
-    return view('pages.mix-match', compact('products','categories'));
+    return view('pages.mix-match', compact(
+        'products',
+        'categories'
+    ));
 }
+
+
+
+
+public function searchResult(Request $request)
+{
+    $search = trim($request->query('search', ''));
+
+    // Empty search
+    if ($search === '') {
+        return view('products.searchProducts', [
+            'products' => collect(),
+            'search' => $search,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 1. Find matching categories
+    |--------------------------------------------------------------------------
+    | Example:
+    | search = "teas"
+    | Category "Teas" -> ID 5
+    */
+    $categoryIds = CategoriesModel::where('name', 'LIKE', '%' . $search . '%')
+        ->pluck('id')
+        ->toArray();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 2. Find matching deals
+    |--------------------------------------------------------------------------
+    | Example:
+    | search = "summer"
+    | Deal "Summer Sale" -> ID 3
+    */
+    $dealIds = SlimzaDeals::where('title', 'LIKE', '%' . $search . '%')
+        ->pluck('id')
+        ->toArray();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 3. Search products
+    |--------------------------------------------------------------------------
+    */
+    $products = ProductsModel::query()
+
+        // Product fields
+        ->where(function ($query) use ($search, $categoryIds, $dealIds) {
+
+            // Product name
+            $query->where('name', 'LIKE', '%' . $search . '%')
+
+                // Description
+                ->orWhere('description', 'LIKE', '%' . $search . '%')
+
+                // SKU
+                ->orWhere('sku', 'LIKE', '%' . $search . '%')
+
+                // Category match
+                ->when(!empty($categoryIds), function ($query) use ($categoryIds) {
+                    $query->orWhereIn('category_id', $categoryIds);
+                })
+
+                // Deal match
+                ->when(!empty($dealIds), function ($query) use ($dealIds) {
+                    $query->orWhereIn('deal_id', $dealIds);
+                })
+
+                // Tags JSON
+                ->orWhere('tags', 'LIKE', '%' . $search . '%');
+        })
+
+        ->latest()
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 4. Price Search
+    |--------------------------------------------------------------------------
+    | If user searches:
+    |
+    | 20
+    | £20
+    | $20
+    | 20.00
+    |
+    | also include products with that price.
+    */
+    $priceSearch = preg_replace('/[^0-9.]/', '', $search);
+
+    if ($priceSearch !== '' && is_numeric($priceSearch)) {
+
+        $price = (float) $priceSearch;
+
+        $priceProducts = ProductsModel::query()
+            ->where(function ($query) use ($price) {
+                $query->where('price', $price)
+                    ->orWhere('old_price', $price);
+            })
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Merge price results without duplicates
+        |--------------------------------------------------------------------------
+        */
+        $products = $products
+            ->merge($priceProducts)
+            ->unique('id')
+            ->values();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5. Format products
+    |--------------------------------------------------------------------------
+    */
+    $categories = CategoriesModel::pluck('name', 'id');
+
+    $products = $products->map(function ($product) use ($categories) {
+
+        return $this->formatProduct($product, $categories);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 6. Return search results
+    |--------------------------------------------------------------------------
+    */
+    return view('products.searchProductsQuery', compact(
+        'products',
+        'search'
+    ));
+}
+
+
+            
 }

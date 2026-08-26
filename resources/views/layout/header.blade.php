@@ -277,7 +277,7 @@
             <div class="header-buttons">
 
               <div class="logo-icon d-sm-block d-none">
-                <form action="{{ url('/') }}">
+                <form action="{{ url('/search-reasult') }}">
                   <div class="search-block">
                     <input type="search" class="input-search form-control" name="search" id="search"
                       placeholder="Search...">
@@ -288,6 +288,62 @@
                   </div>
                 </form>
               </div>
+
+
+<!-- Wishlist -->
+<a href="javascript:void(0);"
+   class="wishlist-header-btn"
+   id="open-wishlist-modal"
+   style="
+       display:flex;
+       flex-direction:column;
+       align-items:center;
+       gap:10px;
+       color:white;
+       text-decoration:none;
+       position:relative;
+       cursor:pointer;
+   ">
+
+    <span style="
+        position:relative;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+    ">
+
+        <i class="fa-light fa-heart"></i>
+
+        <span id="wishlist-count"
+              style="
+                  position:absolute;
+                  top:-6px;
+                  right:-10px;
+                  background:#9eef0b;
+                  color:#000;
+                  font-size:10px;
+                  padding:2px 6px;
+                  border-radius:50px;
+                  font-weight:bold;
+                  line-height:1;
+                  min-width:16px;
+                  text-align:center;
+              ">
+            0
+        </span>
+
+    </span>
+
+    <span style="
+        font-size:8px;
+        color:#fff;
+        white-space:nowrap;
+        margin-top:-13px;
+    ">
+        Wishlist
+    </span>
+
+</a>
               @if(Auth::check())
               <a href="{{ url('/profile') }}" class="account-btn">
                 <i class="fa-light fa-user"></i>
@@ -349,7 +405,7 @@
   <!-- Sticky Header End -->
 </header>
 <!-- Header Menu End -->
-
+@include('profile.wishlist-modal')
 <!-- Back To Top Start -->
 
 
@@ -455,9 +511,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         </li>
         ${categories.map(cat => `
             <li>
-                <a href="/shop/${cat.name}/${cat.id}">
-                    ${cat.name}
-                </a>
+           <a href="${cat.name.toLowerCase() === 'bundle deals' 
+    ? '/make-your-own-offer' 
+    : `/shop/${cat.name}/${cat.id}`}">
+    ${cat.name}
+</a>
             </li>
         `).join('')}
     `;
@@ -523,4 +581,47 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
 });
+
+
+
+function updateWishlistCount() {
+
+    const wishlistCountElement =
+        document.getElementById('wishlist-count');
+
+    if (!wishlistCountElement) return;
+
+    try {
+
+        const wishlist = JSON.parse(
+            localStorage.getItem('wishlist') || '[]'
+        );
+
+        wishlistCountElement.textContent = wishlist.length;
+
+    } catch (error) {
+
+        console.error(
+            'Error reading wishlist:',
+            error
+        );
+
+        wishlistCountElement.textContent = '0';
+    }
+}
+
+
+// Update when page loads
+document.addEventListener(
+    'DOMContentLoaded',
+    updateWishlistCount
+);
+
+
+// Update automatically when wishlist changes
+window.addEventListener(
+    'wishlistUpdated',
+    updateWishlistCount
+);
+
 </script>

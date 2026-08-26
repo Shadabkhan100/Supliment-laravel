@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ContactForm;
-
+use App\Services\OneSignalService;
 
 
 class ContactController extends Controller
@@ -26,7 +26,10 @@ class ContactController extends Controller
         'message' => $validated['message'],
         'remember' => $request->boolean('remember'),
     ]);
-
+app(OneSignalService::class)->sendToAdmins(
+    '📩 New Contact Message',
+    "You have received a new message from {$validated['name']} ({$validated['email']})."
+);
     return response()->json([
         'success' => true,
         'message' => 'Your message has been sent successfully.',

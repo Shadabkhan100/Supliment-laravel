@@ -137,7 +137,7 @@ public function success(Request $request)
         }
 
         app(OneSignalService::class)->sendToAdmins(
-            '💳 Payment Received',
+            '💳 You Got New Order'',
             "Payment of {$currency} {$amountPaid} has been received for Order(s): #" . implode(', #', $orderIds)
         );
        

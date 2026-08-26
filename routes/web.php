@@ -92,6 +92,8 @@ Route::get('/shipping-cost', [WebRoutController::class, 'shippingCost'])->name('
 Route::get('/30-days-guarantee', [WebRoutController::class, 'thirtyDaysGuarantee'])->name('guarantee.30days');
 Route::get('/privacy-policy', [WebRoutController::class, 'privacyPolicy'])->name('privacy.policy');
 Route::get('/search-product/{tag}', [WebRoutController::class, 'searchByTag']);
+Route::get('/search-reasult', [WebRoutController::class, 'searchResult']);
+
 Route::get('/find-product/{slug}/{id}', [WebRoutController::class, 'getFindProducts']);
 Route::get('/all-blogs', [WebRoutController::class, 'getAllBlogs']);
 Route::get('/blog-details/{slug}/{id}', [BlogsController::class, 'blogsDetailsView']);
@@ -137,6 +139,9 @@ Route::post('/admin/login/form', [AuthController::class, 'loginAdmin'])->name('a
 
 
 Route::middleware(['admin'])->group(function () {
+Route::delete('/admin/users/{id}', [AdminWebController::class, 'deleteUser'])
+    ->name('admin.users.delete');
+
 Route::post(
     '/testimonials/edit/{id}',
     [TestimonialsController::class, 'update']

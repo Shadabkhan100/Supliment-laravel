@@ -37,6 +37,9 @@
         "
     >
 </div>
+<button id="enableNotifications">
+    🔔 Enable Notifications
+</button>
   <h3
     style="color:#9eef0b; margin:0 0 15px; font-size:22px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
     DISCLAIMER

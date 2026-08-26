@@ -401,11 +401,13 @@ public function getSettingsView(Request $request)
 
 
 
+
 public function getUsersView()
 {
-    return view('admin.users');
-}
+    $users = User::latest()->paginate(8);
 
+    return view('admin.users', compact('users'));
+}
 
 
 public function addProductPack(Request $request, $p_id)
@@ -692,6 +694,20 @@ public function messageDelete($id)
         'success' => true,
         'message' => 'Message deleted successfully.',
     ]);
+}
+
+
+
+
+    public function deleteUser($id)
+{
+    $user = User::findOrFail($id);
+
+    $user->delete();
+
+    return redirect()
+        ->back()
+        ->with('success', 'User deleted successfully.');
 }
 
 }
